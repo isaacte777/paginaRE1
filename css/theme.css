@@ -1,0 +1,56 @@
+/* TEMA: Colores y variables globales */
+:root {
+  --bg0: #0b0c0d;
+  --bg1: #131416;
+  --bg2: #1a1c1e;
+  --bg3: #222527;
+  --line: #2e3134;
+  --line2: #43474b;
+  --tx0: #f2f2f2;
+  --tx1: #c9ccd0;
+  --tx2: #8b9095;
+  --tx3: #5c6166;
+  --white: #e9e9e9;
+  --black: #101112;
+  --accent: #ec4899;
+  --success: #10b981;
+  --error: #ef4444;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  background: var(--bg0);
+  color: var(--tx1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--line2);
+  color: #fff;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Animaciones */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+@keyframes pulseCur {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 255, 255, .65)); }
+  50% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, .95)); }
+}
