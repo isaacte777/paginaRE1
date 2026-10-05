@@ -253,8 +253,10 @@ export default function FinanceFlow() {
     if (values.length === 0) return null
 
     const anomalies = detectAnomalies(values, labels)
-    const width = cell.width - 40
-    const height = cell.height - 100
+    // Ajustar dimensiones según el tamaño de la celda
+    const padding = 20
+    const width = Math.max(100, cell.width - padding * 2)
+    const height = Math.max(80, cell.height - 100)
     const maxValue = Math.max(...values)
     const minValue = Math.min(...values)
     const range = maxValue - minValue || 1
@@ -272,16 +274,16 @@ export default function FinanceFlow() {
     })
 
     return (
-      <div style={{ marginTop: 10 }}>
-        <svg width={cell.width - 20} height={height + 40}>
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={height + 40} viewBox={`0 0 ${cell.width} ${height + 40}`} preserveAspectRatio="xMidYMid meet">
           {/* Grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
             <line
               key={i}
-              x1={20}
-              y1={20 + ratio * (height - 20)}
-              x2={width + 20}
-              y2={20 + ratio * (height - 20)}
+              x1={padding}
+              y1={padding + ratio * (height - padding)}
+              x2={width + padding}
+              y2={padding + ratio * (height - padding)}
               stroke="#333"
               strokeWidth="1"
               strokeDasharray="2,2"
@@ -298,8 +300,8 @@ export default function FinanceFlow() {
           
           {/* Points with labels and warnings */}
           {values.map((val, i) => {
-            const x = (i / (values.length - 1)) * width + 20
-            const y = height - ((val - minValue) / range) * (height - 20) + 20
+            const x = (i / (values.length - 1)) * width + padding
+            const y = height - ((val - minValue) / range) * (height - padding) + padding
             const change = changes[i]
             const anomaly = anomalies.find(a => a.index === i)
             const color = anomaly ? (anomaly.severity === 'high' ? '#ef4444' : anomaly.severity === 'medium' ? '#f59e0b' : '#a3a3a3') : (change > 0 ? '#d4d4d4' : change < 0 ? '#737373' : '#a3a3a3')
@@ -362,16 +364,20 @@ export default function FinanceFlow() {
     if (total === 0) return null
 
     const anomalies = detectAnomalies(values, labels)
-    const centerX = (cell.width - 20) / 2
-    const centerY = (cell.height - 120) / 2
+    // Ajustar dimensiones según el tamaño de la celda
+    const padding = 20
+    const svgWidth = Math.max(100, cell.width - padding)
+    const svgHeight = Math.max(80, cell.height - 100)
+    const centerX = svgWidth / 2
+    const centerY = svgHeight / 2
     const radius = Math.min(centerX, centerY) - 10
 
     let currentAngle = -90
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626']
 
     return (
-      <div style={{ marginTop: 10 }}>
-        <svg width={cell.width - 20} height={cell.height - 100}>
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="xMidYMid meet">
           {values.map((val, i) => {
             const percentage = val / total
             const angle = percentage * 360
@@ -487,15 +493,17 @@ export default function FinanceFlow() {
     if (values.length === 0) return null
 
     const anomalies = detectAnomalies(values, labels)
-    const width = cell.width - 40
-    const height = cell.height - 100
+    // Ajustar dimensiones según el tamaño de la celda
+    const padding = 20
+    const width = Math.max(100, cell.width - padding * 2)
+    const height = Math.max(80, cell.height - 100)
     const maxValue = Math.max(...values)
-    const barWidth = (width - 20) / values.length - 10
+    const barWidth = Math.max(20, (width - 20) / values.length - 10)
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252']
 
     return (
-      <div style={{ marginTop: 10 }}>
-        <svg width={cell.width - 20} height={height + 40}>
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={height + 40} viewBox={`0 0 ${cell.width} ${height + 40}`} preserveAspectRatio="xMidYMid meet">
           {/* Grid lines */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
             <line
@@ -617,10 +625,12 @@ export default function FinanceFlow() {
 
     const anomalies = detectAnomalies(values, labels)
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040']
-    const barHeight = 24
+    // Ajustar altura de barras según el tamaño de la celda
+    const availableHeight = cell.height - 80
+    const barHeight = Math.max(16, Math.min(32, availableHeight / values.length - 10))
 
     return (
-      <div style={{ padding: 10, marginTop: 10 }}>
+      <div style={{ padding: 10, marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
         {values.map((val, i) => {
           const percentage = (val / total) * 100
           const anomaly = anomalies.find(a => a.index === i)
@@ -810,6 +820,39 @@ export default function FinanceFlow() {
       return
     }
 
+    if (resizing) {
+      const deltaX = (e.clientX - resizing.startX) / (zoom / 100)
+      const deltaY = (e.clientY - resizing.startY) / (zoom / 100)
+
+      let newWidth = resizing.startWidth
+      let newHeight = resizing.startHeight
+      let newX = resizing.startCellX
+      let newY = resizing.startCellY
+
+      // Calcular nuevo tamaño según la esquina
+      if (resizing.corner.includes('right')) {
+        newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, resizing.startWidth + deltaX))
+      }
+      if (resizing.corner.includes('left')) {
+        newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, resizing.startWidth - deltaX))
+        newX = resizing.startCellX + (resizing.startWidth - newWidth)
+      }
+      if (resizing.corner.includes('bottom')) {
+        newHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, resizing.startHeight + deltaY))
+      }
+      if (resizing.corner.includes('top')) {
+        newHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, resizing.startHeight - deltaY))
+        newY = resizing.startCellY + (resizing.startHeight - newHeight)
+      }
+
+      setCells(prev => prev.map(c => 
+        c.id === resizing.cellId 
+          ? { ...c, width: newWidth, height: newHeight, x: newX, y: newY }
+          : c
+      ))
+      return
+    }
+
     if (dragging) {
       const rect = viewportRef.current?.getBoundingClientRect()
       if (rect) {
@@ -835,6 +878,11 @@ export default function FinanceFlow() {
   const handleMouseUp = (e: React.MouseEvent) => {
     if (isPanning) {
       setIsPanning(false)
+      return
+    }
+
+    if (resizing) {
+      setResizing(null)
       return
     }
 
@@ -1189,6 +1237,72 @@ export default function FinanceFlow() {
                     background: '#666',
                     border: '3px solid #0b0c0d',
                     cursor: 'crosshair'
+                  }}
+                />
+
+                {/* Resize Handles */}
+                {/* Top-Left */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'top-left')}
+                  style={{
+                    position: 'absolute',
+                    left: -6,
+                    top: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nwse-resize',
+                    zIndex: 10
+                  }}
+                />
+                {/* Top-Right */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'top-right')}
+                  style={{
+                    position: 'absolute',
+                    right: -6,
+                    top: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nesw-resize',
+                    zIndex: 10
+                  }}
+                />
+                {/* Bottom-Left */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'bottom-left')}
+                  style={{
+                    position: 'absolute',
+                    left: -6,
+                    bottom: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nesw-resize',
+                    zIndex: 10
+                  }}
+                />
+                {/* Bottom-Right */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'bottom-right')}
+                  style={{
+                    position: 'absolute',
+                    right: -6,
+                    bottom: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nwse-resize',
+                    zIndex: 10
                   }}
                 />
               </div>
