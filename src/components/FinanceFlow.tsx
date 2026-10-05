@@ -43,8 +43,76 @@ let idCounter = 0
 const genId = () => `fn${++idCounter}`
 
 export default function FinanceFlow() {
-  const [nodes, setNodes] = useState<FinanceNode[]>([])
-  const [edges, setEdges] = useState<FinanceEdge[]>([])
+  const [nodes, setNodes] = useState<FinanceNode[]>([
+    // Ingresos
+    { id: 'fn1', type: 'income', x: 100, y: 100, label: 'Salario', amount: 2500, category: 'Salario', date: '2026-02-01', status: 'completed' },
+    { id: 'fn2', type: 'income', x: 100, y: 280, label: 'Freelance', amount: 800, category: 'Freelance', date: '2026-02-05', status: 'completed' },
+    { id: 'fn3', type: 'investment', x: 100, y: 460, label: 'Inversiones', amount: 350, category: 'Inversiones', date: '2026-02-10', status: 'completed' },
+    
+    // Total Ingresos
+    { id: 'fn4', type: 'total', x: 400, y: 200, label: 'Total Ingresos', amount: 3650, category: 'Total', date: '2026-02-28', status: 'completed' },
+    
+    // Gastos principales
+    { id: 'fn5', type: 'expense', x: 700, y: 80, label: 'Alquiler', amount: 800, category: 'Vivienda', date: '2026-02-01', status: 'completed' },
+    { id: 'fn6', type: 'expense', x: 700, y: 220, label: 'Supermercado', amount: 450, category: 'Alimentación', date: '2026-02-15', status: 'completed' },
+    { id: 'fn7', type: 'expense', x: 700, y: 360, label: 'Transporte', amount: 150, category: 'Transporte', date: '2026-02-20', status: 'completed' },
+    { id: 'fn8', type: 'expense', x: 700, y: 500, label: 'Netflix + Spotify', amount: 25, category: 'Entretenimiento', date: '2026-02-01', status: 'completed' },
+    
+    // Pagos
+    { id: 'fn9', type: 'payment', x: 1000, y: 150, label: 'Tarjeta Crédito', amount: 300, category: 'Tarjetas', date: '2026-02-25', status: 'completed' },
+    { id: 'fn10', type: 'payment', x: 1000, y: 350, label: 'Préstamo Auto', amount: 250, category: 'Préstamos', date: '2026-02-15', status: 'completed' },
+    
+    // Total Gastos
+    { id: 'fn11', type: 'total', x: 1300, y: 250, label: 'Total Gastos', amount: 1975, category: 'Total', date: '2026-02-28', status: 'completed' },
+    
+    // Ahorro
+    { id: 'fn12', type: 'savings', x: 1600, y: 200, label: 'Ahorro Mensual', amount: 1675, category: 'Ahorro', date: '2026-02-28', status: 'completed' },
+    
+    // Gráficos
+    { id: 'fn13', type: 'chart_pie', x: 1600, y: 400, label: 'Distribución', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
+    { id: 'fn14', type: 'chart_line', x: 1900, y: 200, label: 'Tendencia', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
+    
+    // Métricas
+    { id: 'fn15', type: 'budget', x: 1900, y: 400, label: 'Presupuesto', amount: 2000, category: 'Presupuesto', date: '2026-02-28', status: 'completed' },
+    { id: 'fn16', type: 'metric', x: 2200, y: 300, label: 'Balance Final', amount: 1675, category: 'Balance', date: '2026-02-28', status: 'completed' },
+  ])
+  
+  const [edges, setEdges] = useState<FinanceEdge[]>([
+    // Ingresos -> Total Ingresos
+    { id: 'fe1', from: 'fn1', to: 'fn4' },
+    { id: 'fe2', from: 'fn2', to: 'fn4' },
+    { id: 'fe3', from: 'fn3', to: 'fn4' },
+    
+    // Total Ingresos -> Gastos
+    { id: 'fe4', from: 'fn4', to: 'fn5' },
+    { id: 'fe5', from: 'fn4', to: 'fn6' },
+    { id: 'fe6', from: 'fn4', to: 'fn7' },
+    { id: 'fe7', from: 'fn4', to: 'fn8' },
+    
+    // Gastos -> Pagos
+    { id: 'fe8', from: 'fn5', to: 'fn9' },
+    { id: 'fe9', from: 'fn6', to: 'fn9' },
+    { id: 'fe10', from: 'fn7', to: 'fn10' },
+    
+    // Pagos -> Total Gastos
+    { id: 'fe11', from: 'fn9', to: 'fn11' },
+    { id: 'fe12', from: 'fn10', to: 'fn11' },
+    
+    // Total Ingresos - Total Gastos -> Ahorro
+    { id: 'fe13', from: 'fn4', to: 'fn12' },
+    { id: 'fe14', from: 'fn11', to: 'fn12' },
+    
+    // Ahorro -> Gráficos
+    { id: 'fe15', from: 'fn12', to: 'fn13' },
+    { id: 'fe16', from: 'fn12', to: 'fn14' },
+    
+    // Total Gastos -> Presupuesto
+    { id: 'fe17', from: 'fn11', to: 'fn15' },
+    
+    // Ahorro + Presupuesto -> Balance Final
+    { id: 'fe18', from: 'fn12', to: 'fn16' },
+    { id: 'fe19', from: 'fn15', to: 'fn16' },
+  ])
   const [selected, setSelected] = useState<string | null>(null)
   const [zoom, setZoom] = useState(100)
   const [pan, setPan] = useState({ x: 0, y: 0 })
