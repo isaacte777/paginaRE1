@@ -15,6 +15,12 @@ interface CellNode {
   calculatedValue: number
 }
 
+// Constantes de tamaño
+const MIN_WIDTH = 150
+const MIN_HEIGHT = 80
+const MAX_WIDTH = 500
+const MAX_HEIGHT = 400
+
 interface Connection {
   id: string
   from: string
@@ -126,6 +132,8 @@ export default function FinanceFlow() {
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [editingCell, setEditingCell] = useState<CellNode | null>(null)
+  const [resizing, setResizing] = useState<{ cellId: string; corner: string; startX: number; startY: number; startWidth: number; startHeight: number; startCellX: number; startCellY: number } | null>(null)
+  const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; content: string; type: 'warning' | 'info' }>({ visible: false, x: 0, y: 0, content: '', type: 'warning' })
   const viewportRef = useRef<HTMLDivElement>(null)
 
   // MOTOR DE CÁLCULO - Propaga cambios
@@ -211,20 +219,77 @@ export default function FinanceFlow() {
     }
   }
 
+  // Función para mostrar tooltip
+  const showTooltip = (e: React.MouseEvent, content: string, type: 'warning' | 'info' = 'warning') => {
+    setTooltip({
+      visible: true,
+      x: e.clientX + 15,
+      y: e.clientY + 15,
+      content,
+      type
+    })
+  }
+
+  const hideTooltip = () => {
+    setTooltip({ ...tooltip, visible: false })
+  }
+
+  const updateTooltipPosition = (e: React.MouseEvent) => {
+    if (tooltip.visible) {
+      setTooltip({
+        ...tooltip,
+        x: e.clientX + 15,
+        y: e.clientY + 15
+      })
+    }
+  }
+
+  // Funciones de detección de anomalías
+  const detectAnomalies = (values: number[], labels: string[]) => {
+    const total = values.reduce((sum, val) => sum + val, 0)
+    const avg = total / values.length
+    const anomalies: { index: number; type: string; severity: 'low' | 'medium' | 'high' }[] = []
+    
+    values.forEach((val, i) => {
+      const percentage = (val / total) * 100
+      
+      // Detectar valores muy bajos (< 5% del total)
+      if (percentage < 5 && val > 0) {
+        anomalies.push({ index: i, type: 'Valor muy bajo', severity: 'medium' })
+      }
+      
+      // Detectar valores cero
+      if (val === 0) {
+        anomalies.push({ index: i, type: 'Sin valor', severity: 'high' })
+      }
+      
+      // Detectar desviación significativa de la media
+      if (val < avg * 0.3 && val > 0) {
+        anomalies.push({ index: i, type: 'Muy por debajo del promedio', severity: 'low' })
+      }
+    })
+    
+    return anomalies
+  }
+
   // Funciones de renderizado de gráficos
   const renderLineChart = (cell: CellNode) => {
     const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
     if (values.length === 0) return null
 
-    const width = cell.width - 40
-    const height = cell.height - 80
+    const anomalies = detectAnomalies(values, labels)
+    // Ajustar dimensiones con más espacio para evitar superposiciones
+    const padding = 30
+    const width = Math.max(150, cell.width - padding * 2)
+    const height = Math.max(100, cell.height - 120)
     const maxValue = Math.max(...values)
     const minValue = Math.min(...values)
     const range = maxValue - minValue || 1
 
     const points = values.map((val, i) => {
-      const x = (i / (values.length - 1)) * width + 20
-      const y = height - ((val - minValue) / range) * (height - 20) + 20
+      const x = (i / (values.length - 1)) * width + padding
+      const y = height - ((val - minValue) / range) * (height - 40) + 20
       return `${x},${y}`
     }).join(' ')
 
@@ -235,51 +300,102 @@ export default function FinanceFlow() {
     })
 
     return (
-      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-          <line
-            key={i}
-            x1={20}
-            y1={20 + ratio * (height - 20)}
-            x2={width + 20}
-            y2={20 + ratio * (height - 20)}
-            stroke="#333"
-            strokeWidth="1"
-            strokeDasharray="2,2"
-          />
-        ))}
-        
-        {/* Line */}
-        <polyline
-          points={points}
-          fill="none"
-          stroke="#a3a3a3"
-          strokeWidth="2"
-        />
-        
-        {/* Points with colors based on change */}
-        {values.map((val, i) => {
-          const x = (i / (values.length - 1)) * width + 20
-          const y = height - ((val - minValue) / range) * (height - 20) + 20
-          const change = changes[i]
-          const color = change > 0 ? '#ef4444' : change < 0 ? '#10b981' : '#a3a3a3'
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={height + 60} viewBox={`0 0 ${cell.width} ${height + 60}`} preserveAspectRatio="xMidYMid meet">
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line
+              key={i}
+              x1={padding}
+              y1={20 + ratio * (height - 40)}
+              x2={width + padding}
+              y2={20 + ratio * (height - 40)}
+              stroke="#333"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+            />
+          ))}
           
-          return (
-            <g key={i}>
-              <circle cx={x} cy={y} r="4" fill={color} />
-              <text x={x} y={y - 10} textAnchor="middle" fill="#666" fontSize="9">
-                {formatValue(val, 'currency').replace('Gs. ', '')}
-              </text>
-            </g>
-          )
-        })}
+          {/* Line */}
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#a3a3a3"
+            strokeWidth="2"
+          />
+          
+          {/* Points with labels and warnings */}
+          {values.map((val, i) => {
+            const x = (i / (values.length - 1)) * width + padding
+            const y = height - ((val - minValue) / range) * (height - 40) + 20
+            const change = changes[i]
+            const anomaly = anomalies.find(a => a.index === i)
+            const color = anomaly ? (anomaly.severity === 'high' ? '#ef4444' : anomaly.severity === 'medium' ? '#f59e0b' : '#a3a3a3') : (change > 0 ? '#d4d4d4' : change < 0 ? '#737373' : '#a3a3a3')
+            
+            // Alternar posición de etiquetas para evitar superposición
+            const labelOffset = i % 2 === 0 ? -25 : -40
+            
+            return (
+              <g key={i}>
+                {/* Warning indicator */}
+                {anomaly && (
+                  <g 
+                    onMouseEnter={(e) => showTooltip(e, `${labels[i]}: ${anomaly.type}\nValor: ${formatValue(val, 'currency')}\nRecomendación: Revisar con detalle este ítem`, 'warning')}
+                    onMouseLeave={hideTooltip}
+                    onMouseMove={updateTooltipPosition}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <circle cx={x} cy={y} r="14" fill="none" stroke={color} strokeWidth="2" strokeDasharray="3,3">
+                      <animate attributeName="stroke-dashoffset" from="0" to="6" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                  </g>
+                )}
+                
+                {/* Point */}
+                <circle cx={x} cy={y} r="5" fill={color} />
+                
+                {/* Value label - alternando posición */}
+                <text x={x} y={y + labelOffset} textAnchor="middle" fill="#ccc" fontSize="9" fontWeight="600">
+                  {formatValue(val, 'currency').replace('Gs. ', '')}
+                </text>
+                
+                {/* Item name - en la parte inferior con más espacio */}
+                <text x={x} y={height + 25} textAnchor="middle" fill="#888" fontSize="9">
+                  {labels[i].substring(0, 15)}
+                </text>
+                
+                {/* Warning icon */}
+                {anomaly && (
+                  <g 
+                    onMouseEnter={(e) => showTooltip(e, `⚠ ADVERTENCIA\n${labels[i]}\n${anomaly.type}\nValor actual: ${formatValue(val, 'currency')}`, 'warning')}
+                    onMouseLeave={hideTooltip}
+                    onMouseMove={updateTooltipPosition}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <text x={x + 10} y={y - 10} fill={color} fontSize="14" fontWeight="bold">
+                      ⚠
+                    </text>
+                  </g>
+                )}
+              </g>
+            )
+          })}
+        </svg>
         
-        {/* Legend */}
-        <text x={width / 2 + 20} y={height + 15} textAnchor="middle" fill="#888" fontSize="10">
-          Tendencia de valores
-        </text>
-      </svg>
+        {/* Legend with warnings */}
+        {anomalies.length > 0 && (
+          <div style={{ padding: '8px 10px', marginTop: 4, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
+            <div style={{ fontSize: 9, color: '#f59e0b', marginBottom: 4, fontWeight: 600 }}>
+              ⚠ Advertencias ({anomalies.length})
+            </div>
+            {anomalies.slice(0, 3).map((a, i) => (
+              <div key={i} style={{ fontSize: 8, color: '#888', marginBottom: 2 }}>
+                • {labels[a.index].substring(0, 20)}: {a.type}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -290,63 +406,152 @@ export default function FinanceFlow() {
     
     if (total === 0) return null
 
-    const centerX = (cell.width - 20) / 2
-    const centerY = (cell.height - 80) / 2
-    const radius = Math.min(centerX, centerY) - 10
+    const anomalies = detectAnomalies(values, labels)
+    // Ajustar dimensiones con más espacio para etiquetas externas
+    const padding = 30
+    const svgWidth = Math.max(150, cell.width - padding)
+    const svgHeight = Math.max(120, cell.height - 120)
+    const centerX = svgWidth / 2
+    const centerY = svgHeight / 2
+    const radius = Math.min(centerX, centerY) - 30
 
     let currentAngle = -90
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626']
 
     return (
-      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
-        {values.map((val, i) => {
-          const percentage = val / total
-          const angle = percentage * 360
-          const startAngle = currentAngle
-          const endAngle = currentAngle + angle
-          currentAngle = endAngle
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`} preserveAspectRatio="xMidYMid meet">
+          {values.map((val, i) => {
+            const percentage = val / total
+            const angle = percentage * 360
+            const startAngle = currentAngle
+            const endAngle = currentAngle + angle
+            const midAngle = startAngle + angle / 2
+            currentAngle = endAngle
 
-          const startRad = (startAngle * Math.PI) / 180
-          const endRad = (endAngle * Math.PI) / 180
+            const startRad = (startAngle * Math.PI) / 180
+            const endRad = (endAngle * Math.PI) / 180
+            const midRad = (midAngle * Math.PI) / 180
 
-          const x1 = centerX + radius * Math.cos(startRad)
-          const y1 = centerY + radius * Math.sin(startRad)
-          const x2 = centerX + radius * Math.cos(endRad)
-          const y2 = centerY + radius * Math.sin(endRad)
+            const x1 = centerX + radius * Math.cos(startRad)
+            const y1 = centerY + radius * Math.sin(startRad)
+            const x2 = centerX + radius * Math.cos(endRad)
+            const y2 = centerY + radius * Math.sin(endRad)
 
-          const largeArcFlag = angle > 180 ? 1 : 0
+            const largeArcFlag = angle > 180 ? 1 : 0
 
-          const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
+            const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
 
-          return (
-            <g key={i}>
-              <path d={path} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="2" />
-              {percentage > 0.05 && (
-                <text
-                  x={centerX + (radius * 0.6) * Math.cos((startAngle + angle / 2) * Math.PI / 180)}
-                  y={centerY + (radius * 0.6) * Math.sin((startAngle + angle / 2) * Math.PI / 180)}
-                  textAnchor="middle"
-                  fill="#fff"
-                  fontSize="10"
-                  fontWeight="bold"
-                >
-                  {(percentage * 100).toFixed(1)}%
-                </text>
-              )}
-            </g>
-          )
-        })}
+            const anomaly = anomalies.find(a => a.index === i)
+            const isAnomaly = !!anomaly
+
+            return (
+              <g key={i}>
+                {/* Warning ring for anomalies */}
+                {isAnomaly && (
+                  <path
+                    d={path}
+                    fill="none"
+                    stroke={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                    strokeWidth="4"
+                    strokeDasharray="5,5"
+                    opacity="0.6"
+                  >
+                    <animate attributeName="stroke-dashoffset" from="0" to="10" dur="1s" repeatCount="indefinite" />
+                  </path>
+                )}
+                
+                {/* Main slice */}
+                <path d={path} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="2" />
+                
+                {/* Percentage inside */}
+                {percentage > 0.05 && (
+                  <text
+                    x={centerX + (radius * 0.6) * Math.cos(midRad)}
+                    y={centerY + (radius * 0.6) * Math.sin(midRad)}
+                    textAnchor="middle"
+                    fill="#fff"
+                    fontSize="11"
+                    fontWeight="bold"
+                  >
+                    {(percentage * 100).toFixed(1)}%
+                  </text>
+                )}
+                
+                {/* Label outside - con más espacio */}
+                {percentage > 0.03 && (
+                  <text
+                    x={centerX + (radius + 25) * Math.cos(midRad)}
+                    y={centerY + (radius + 25) * Math.sin(midRad)}
+                    textAnchor="middle"
+                    fill="#ccc"
+                    fontSize="9"
+                    fontWeight="600"
+                  >
+                    {labels[i].substring(0, 18)}
+                  </text>
+                )}
+                
+                {/* Warning icon with tooltip */}
+                {isAnomaly && percentage > 0.05 && (
+                  <g 
+                    onMouseEnter={(e) => showTooltip(e, `⚠ ADVERTENCIA\n${labels[i]}\n${anomaly?.type}\nValor: ${formatValue(val, 'currency')}\nPorcentaje: ${(percentage * 100).toFixed(1)}%\nRecomendación: Revisar este ítem`, 'warning')}
+                    onMouseLeave={hideTooltip}
+                    onMouseMove={updateTooltipPosition}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <text
+                      x={centerX + (radius * 0.85) * Math.cos(midRad)}
+                      y={centerY + (radius * 0.85) * Math.sin(midRad)}
+                      textAnchor="middle"
+                      fill={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                      fontSize="16"
+                      fontWeight="bold"
+                    >
+                      ⚠
+                    </text>
+                  </g>
+                )}
+              </g>
+            )
+          })}
+        </svg>
         
-        {/* Legend */}
-        {labels.slice(0, 4).map((label, i) => (
-          <g key={i}>
-            <rect x={10} y={cell.height - 70 + i * 14} width={8} height={8} fill={colors[i % colors.length]} />
-            <text x={22} y={cell.height - 63 + i * 14} fill="#888" fontSize="9">
-              {label.substring(0, 15)}
-            </text>
-          </g>
-        ))}
-      </svg>
+        {/* Legend with warnings */}
+        <div style={{ padding: '8px 10px', marginTop: 4, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
+          {labels.slice(0, 5).map((label, i) => {
+            const percentage = (values[i] / total) * 100
+            const anomaly = anomalies.find(a => a.index === i)
+            return (
+              <div 
+                key={i} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 6, 
+                  marginBottom: 3, 
+                  fontSize: 9,
+                  cursor: anomaly ? 'pointer' : 'default'
+                }}
+                onMouseEnter={(e) => anomaly && showTooltip(e, `${label}\nValor: ${formatValue(values[i], 'currency')}\nPorcentaje: ${percentage.toFixed(1)}%\n${anomaly.type}`, 'warning')}
+                onMouseLeave={hideTooltip}
+                onMouseMove={updateTooltipPosition}
+              >
+                <div style={{ width: 8, height: 8, background: colors[i % colors.length], borderRadius: 2 }} />
+                <span style={{ color: '#ccc', flex: 1 }}>{label.substring(0, 18)}</span>
+                <span style={{ color: '#888' }}>{percentage.toFixed(1)}%</span>
+                {anomaly && (
+                  <span 
+                    style={{ color: anomaly.severity === 'high' ? '#ef4444' : '#f59e0b', fontWeight: 'bold' }}
+                  >
+                    ⚠
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     )
   }
 
@@ -356,67 +561,148 @@ export default function FinanceFlow() {
     
     if (values.length === 0) return null
 
-    const width = cell.width - 40
-    const height = cell.height - 80
+    const anomalies = detectAnomalies(values, labels)
+    // Ajustar dimensiones con más espacio
+    const padding = 30
+    const width = Math.max(150, cell.width - padding * 2)
+    const height = Math.max(100, cell.height - 120)
     const maxValue = Math.max(...values)
-    const barWidth = (width - 20) / values.length - 10
+    const barWidth = Math.max(25, (width - 30) / values.length - 15)
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252']
 
     return (
-      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-          <line
-            key={i}
-            x1={20}
-            y1={height - ratio * height + 10}
-            x2={width + 20}
-            y2={height - ratio * height + 10}
-            stroke="#333"
-            strokeWidth="1"
-            strokeDasharray="2,2"
-          />
-        ))}
-        
-        {/* Bars */}
-        {values.map((val, i) => {
-          const barHeight = (val / maxValue) * (height - 20)
-          const x = 25 + i * (barWidth + 10)
-          const y = height - barHeight + 10
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={height + 60} viewBox={`0 0 ${cell.width} ${height + 60}`} preserveAspectRatio="xMidYMid meet">
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line
+              key={i}
+              x1={20}
+              y1={height - ratio * height + 10}
+              x2={width + 20}
+              y2={height - ratio * height + 10}
+              stroke="#333"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+            />
+          ))}
+          
+          {/* Bars */}
+          {values.map((val, i) => {
+            const barHeight = (val / maxValue) * (height - 30)
+            const x = 30 + i * (barWidth + 15)
+            const y = height - barHeight + 15
+            const anomaly = anomalies.find(a => a.index === i)
+            const isAnomaly = !!anomaly
 
-          return (
-            <g key={i}>
-              <rect
-                x={x}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                fill={colors[i % colors.length]}
-                stroke="#0b0c0d"
-                strokeWidth="1"
-              />
-              <text
-                x={x + barWidth / 2}
-                y={y - 5}
-                textAnchor="middle"
-                fill="#888"
-                fontSize="9"
-              >
-                {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 8)}
-              </text>
-              <text
-                x={x + barWidth / 2}
-                y={height + 15}
-                textAnchor="middle"
-                fill="#666"
-                fontSize="8"
-              >
-                {labels[i].substring(0, 8)}
-              </text>
-            </g>
-          )
-        })}
-      </svg>
+            return (
+              <g key={i}>
+                {/* Warning border for anomalies */}
+                {isAnomaly && (
+                  <g 
+                    onMouseEnter={(e) => showTooltip(e, `⚠ ADVERTENCIA\n${labels[i]}\n${anomaly?.type}\nValor: ${formatValue(val, 'currency')}\nRecomendación: Revisar con detalle`, 'warning')}
+                    onMouseLeave={hideTooltip}
+                    onMouseMove={updateTooltipPosition}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <rect
+                      x={x - 3}
+                      y={y - 3}
+                      width={barWidth + 6}
+                      height={barHeight + 6}
+                      fill="none"
+                      stroke={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                      strokeWidth="2"
+                      strokeDasharray="4,4"
+                      rx="2"
+                    >
+                      <animate attributeName="stroke-dashoffset" from="0" to="8" dur="1s" repeatCount="indefinite" />
+                    </rect>
+                  </g>
+                )}
+                
+                {/* Main bar with tooltip */}
+                <g
+                  onMouseEnter={(e) => showTooltip(e, `${labels[i]}\nValor: ${formatValue(val, 'currency')}${isAnomaly ? `\n⚠ ${anomaly?.type}` : ''}`, isAnomaly ? 'warning' : 'info')}
+                  onMouseLeave={hideTooltip}
+                  onMouseMove={updateTooltipPosition}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <rect
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={barHeight}
+                    fill={colors[i % colors.length]}
+                    stroke="#0b0c0d"
+                    strokeWidth="1"
+                    rx="2"
+                  />
+                </g>
+                
+                {/* Value label - con más espacio */}
+                <text
+                  x={x + barWidth / 2}
+                  y={y - 10}
+                  textAnchor="middle"
+                  fill="#ccc"
+                  fontSize="10"
+                  fontWeight="600"
+                >
+                  {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 12)}
+                </text>
+                
+                {/* Item name - con más espacio */}
+                <text
+                  x={x + barWidth / 2}
+                  y={height + 25}
+                  textAnchor="middle"
+                  fill="#888"
+                  fontSize="9"
+                  fontWeight="500"
+                >
+                  {labels[i].substring(0, 12)}
+                </text>
+                
+                {/* Warning icon with tooltip */}
+                {isAnomaly && (
+                  <g
+                    onMouseEnter={(e) => showTooltip(e, `⚠ ADVERTENCIA\n${labels[i]}\n${anomaly?.type}\nValor: ${formatValue(val, 'currency')}\nSe recomienda revisar este ítem`, 'warning')}
+                    onMouseLeave={hideTooltip}
+                    onMouseMove={updateTooltipPosition}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <text
+                      x={x + barWidth / 2}
+                      y={y + barHeight / 2}
+                      textAnchor="middle"
+                      fill={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                      fontSize="18"
+                      fontWeight="bold"
+                    >
+                      ⚠
+                    </text>
+                  </g>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+        
+        {/* Warnings panel */}
+        {anomalies.length > 0 && (
+          <div style={{ padding: '8px 10px', marginTop: 4, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
+            <div style={{ fontSize: 9, color: '#f59e0b', marginBottom: 4, fontWeight: 600 }}>
+              ⚠ Atención requerida ({anomalies.length})
+            </div>
+            {anomalies.slice(0, 3).map((a, i) => (
+              <div key={i} style={{ fontSize: 8, color: '#888', marginBottom: 2 }}>
+                • {labels[a.index].substring(0, 20)}: {a.type}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -427,32 +713,118 @@ export default function FinanceFlow() {
     
     if (total === 0) return null
 
+    const anomalies = detectAnomalies(values, labels)
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040']
-    const barHeight = 20
+    // Ajustar altura de barras según el tamaño de la celda
+    const availableHeight = cell.height - 80
+    const barHeight = Math.max(16, Math.min(32, availableHeight / values.length - 10))
 
     return (
-      <div style={{ padding: 10, marginTop: 10 }}>
+      <div style={{ padding: 10, marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
         {values.map((val, i) => {
           const percentage = (val / total) * 100
+          const anomaly = anomalies.find(a => a.index === i)
+          const isAnomaly = !!anomaly
+          const warningColor = anomaly?.severity === 'high' ? '#ef4444' : anomaly?.severity === 'medium' ? '#f59e0b' : '#a3a3a3'
+
           return (
-            <div key={i} style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 10 }}>
-                <span style={{ color: '#ccc' }}>{labels[i].substring(0, 20)}</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{percentage.toFixed(1)}%</span>
+            <div key={i} style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+                  {isAnomaly && (
+                    <span style={{ color: warningColor, fontSize: 12, fontWeight: 'bold' }}>⚠</span>
+                  )}
+                  <span style={{ color: '#ccc', fontSize: 10, fontWeight: isAnomaly ? '600' : '400' }}>
+                    {labels[i].substring(0, 25)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#888', fontSize: 9 }}>
+                    {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 12)}
+                  </span>
+                  <span style={{ color: '#fff', fontWeight: 700, fontSize: 11, minWidth: 45, textAlign: 'right' }}>
+                    {percentage.toFixed(1)}%
+                  </span>
+                </div>
               </div>
-              <div style={{ height: barHeight, background: '#1a1a1a', borderRadius: 4, overflow: 'hidden', border: '1px solid #333' }}>
+              
+              {/* Progress bar */}
+              <div style={{ 
+                height: barHeight, 
+                background: '#1a1a1a', 
+                borderRadius: 4, 
+                overflow: 'hidden', 
+                border: isAnomaly ? `2px solid ${warningColor}` : '1px solid #333',
+                position: 'relative'
+              }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${percentage}%`,
-                    background: colors[i % colors.length],
-                    transition: 'width 0.3s ease'
+                    background: isAnomaly ? warningColor : colors[i % colors.length],
+                    transition: 'width 0.3s ease',
+                    position: 'relative'
                   }}
                 />
+                
+                {/* Warning overlay for low percentages */}
+                {isAnomaly && percentage < 10 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `repeating-linear-gradient(
+                      45deg,
+                      transparent,
+                      transparent 5px,
+                      ${warningColor}22 5px,
+                      ${warningColor}22 10px
+                    )`,
+                    animation: 'moveStripes 1s linear infinite'
+                  }} />
+                )}
               </div>
+              
+              {/* Warning message */}
+              {isAnomaly && (
+                <div style={{ 
+                  marginTop: 4, 
+                  padding: '4px 8px', 
+                  background: `${warningColor}11`, 
+                  borderRadius: 3,
+                  border: `1px solid ${warningColor}33`,
+                  fontSize: 8,
+                  color: warningColor,
+                  fontWeight: '500'
+                }}>
+                  ⚠ {anomaly?.type} - Revisar con detalle
+                </div>
+              )}
             </div>
           )
         })}
+        
+        {/* Summary warnings */}
+        {anomalies.length > 0 && (
+          <div style={{ 
+            marginTop: 12, 
+            padding: '10px', 
+            background: '#1a1a1a', 
+            borderRadius: 4, 
+            border: '1px solid #333' 
+          }}>
+            <div style={{ fontSize: 10, color: '#f59e0b', marginBottom: 6, fontWeight: 700 }}>
+              ⚠ Resumen de Advertencias ({anomalies.length})
+            </div>
+            {anomalies.map((a, i) => (
+              <div key={i} style={{ fontSize: 9, color: '#888', marginBottom: 3, paddingLeft: 12 }}>
+                • <span style={{ color: '#ccc' }}>{labels[a.index].substring(0, 20)}</span>: {a.type}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
@@ -515,9 +887,59 @@ export default function FinanceFlow() {
     }
   }
 
+  const handleResizeStart = (e: React.MouseEvent, cellId: string, corner: string) => {
+    e.stopPropagation()
+    const cell = cells.find(c => c.id === cellId)
+    if (!cell) return
+
+    setResizing({
+      cellId,
+      corner,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: cell.width,
+      startHeight: cell.height,
+      startCellX: cell.x,
+      startCellY: cell.y
+    })
+  }
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (isPanning) {
       setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y })
+      return
+    }
+
+    if (resizing) {
+      const deltaX = (e.clientX - resizing.startX) / (zoom / 100)
+      const deltaY = (e.clientY - resizing.startY) / (zoom / 100)
+
+      let newWidth = resizing.startWidth
+      let newHeight = resizing.startHeight
+      let newX = resizing.startCellX
+      let newY = resizing.startCellY
+
+      // Calcular nuevo tamaño según la esquina
+      if (resizing.corner.includes('right')) {
+        newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, resizing.startWidth + deltaX))
+      }
+      if (resizing.corner.includes('left')) {
+        newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, resizing.startWidth - deltaX))
+        newX = resizing.startCellX + (resizing.startWidth - newWidth)
+      }
+      if (resizing.corner.includes('bottom')) {
+        newHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, resizing.startHeight + deltaY))
+      }
+      if (resizing.corner.includes('top')) {
+        newHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, resizing.startHeight - deltaY))
+        newY = resizing.startCellY + (resizing.startHeight - newHeight)
+      }
+
+      setCells(prev => prev.map(c => 
+        c.id === resizing.cellId 
+          ? { ...c, width: newWidth, height: newHeight, x: newX, y: newY }
+          : c
+      ))
       return
     }
 
@@ -546,6 +968,11 @@ export default function FinanceFlow() {
   const handleMouseUp = (e: React.MouseEvent) => {
     if (isPanning) {
       setIsPanning(false)
+      return
+    }
+
+    if (resizing) {
+      setResizing(null)
       return
     }
 
@@ -902,6 +1329,72 @@ export default function FinanceFlow() {
                     cursor: 'crosshair'
                   }}
                 />
+
+                {/* Resize Handles */}
+                {/* Top-Left */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'top-left')}
+                  style={{
+                    position: 'absolute',
+                    left: -6,
+                    top: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nwse-resize',
+                    zIndex: 10
+                  }}
+                />
+                {/* Top-Right */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'top-right')}
+                  style={{
+                    position: 'absolute',
+                    right: -6,
+                    top: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nesw-resize',
+                    zIndex: 10
+                  }}
+                />
+                {/* Bottom-Left */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'bottom-left')}
+                  style={{
+                    position: 'absolute',
+                    left: -6,
+                    bottom: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nesw-resize',
+                    zIndex: 10
+                  }}
+                />
+                {/* Bottom-Right */}
+                <div
+                  onMouseDown={e => handleResizeStart(e, cell.id, 'bottom-right')}
+                  style={{
+                    position: 'absolute',
+                    right: -6,
+                    bottom: -6,
+                    width: 12,
+                    height: 12,
+                    background: '#404040',
+                    border: '2px solid #0b0c0d',
+                    borderRadius: '50%',
+                    cursor: 'nwse-resize',
+                    zIndex: 10
+                  }}
+                />
               </div>
             )
           })}
@@ -1033,6 +1526,49 @@ export default function FinanceFlow() {
             Eliminar Celda
           </button>
         </aside>
+      )}
+
+      {/* Tooltip Flotante */}
+      {tooltip.visible && (
+        <div
+          style={{
+            position: 'fixed',
+            left: tooltip.x,
+            top: tooltip.y,
+            background: tooltip.type === 'warning' ? '#1a1a1a' : '#262626',
+            border: `2px solid ${tooltip.type === 'warning' ? '#f59e0b' : '#666'}`,
+            borderRadius: 8,
+            padding: '12px 16px',
+            maxWidth: 300,
+            zIndex: 10000,
+            pointerEvents: 'none',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.8)',
+            fontSize: 11,
+            lineHeight: 1.6
+          }}
+        >
+          {tooltip.type === 'warning' && (
+            <div style={{ 
+              color: '#f59e0b', 
+              fontWeight: 700, 
+              marginBottom: 6,
+              fontSize: 12,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6
+            }}>
+              <span style={{ fontSize: 16 }}>⚠</span>
+              ADVERTENCIA
+            </div>
+          )}
+          <div style={{ 
+            color: '#e5e5e5', 
+            whiteSpace: 'pre-line',
+            fontWeight: tooltip.type === 'warning' ? 500 : 400
+          }}>
+            {tooltip.content}
+          </div>
+        </div>
       )}
 
       {/* Edit Modal */}
