@@ -386,6 +386,48 @@ export default function FamilyFinanceFlow() {
     setDragging(null)
   }
 
+  // Función para encontrar todas las conexiones en cadena (recorrido completo)
+  const findConnectedPath = (nodeId: string): { connections: string[]; nodes: string[] } => {
+    const connectedConnections = new Set<string>()
+    const connectedNodes = new Set<string>([nodeId])
+    
+    // Recorrido hacia adelante (outputs)
+    const traverseForward = (currentNodeId: string, visited: Set<string>) => {
+      if (visited.has(currentNodeId)) return
+      visited.add(currentNodeId)
+      
+      connections.forEach(conn => {
+        if (conn.from === currentNodeId) {
+          connectedConnections.add(conn.id)
+          connectedNodes.add(conn.to)
+          traverseForward(conn.to, visited)
+        }
+      })
+    }
+    
+    // Recorrido hacia atrás (inputs)
+    const traverseBackward = (currentNodeId: string, visited: Set<string>) => {
+      if (visited.has(currentNodeId)) return
+      visited.add(currentNodeId)
+      
+      connections.forEach(conn => {
+        if (conn.to === currentNodeId) {
+          connectedConnections.add(conn.id)
+          connectedNodes.add(conn.from)
+          traverseBackward(conn.from, visited)
+        }
+      })
+    }
+    
+    traverseForward(nodeId, new Set())
+    traverseBackward(nodeId, new Set())
+    
+    return {
+      connections: Array.from(connectedConnections),
+      nodes: Array.from(connectedNodes)
+    }
+  }
+
   const handleViewportClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).id === 'world') {
       setSelected(null)
@@ -527,11 +569,12 @@ export default function FamilyFinanceFlow() {
               const x2 = toCell.x
               const y2 = toCell.y + toCell.height / 2
 
-              // Determinar si esta conexión debe resaltarse
-              const isHighlighted = selected && highlightConnections && (conn.from === selected || conn.to === selected)
+              // Determinar si esta conexión debe resaltarse (recorrido completo)
+              const pathInfo = selected && highlightConnections ? findConnectedPath(selected) : null
+              const isHighlighted = pathInfo?.connections.includes(conn.id) || false
               const strokeColor = isHighlighted ? '#fff' : (conn.color || '#555')
               const strokeWidth = isHighlighted ? 3 : 2
-              const opacity = selected && highlightConnections && !isHighlighted ? 0.2 : 1
+              const opacity = selected && highlightConnections && !isHighlighted ? 0.15 : 1
 
               return (
                 <g key={conn.id}>
@@ -577,14 +620,15 @@ export default function FamilyFinanceFlow() {
             const isSelected = selected === cell.id
             const cellTypeInfo = CELL_TYPES.find(t => t.name === cell.category)
             
-            // Determinar si esta celda está conectada al nodo seleccionado
-            const isConnected = selected && highlightConnections && connections.some(
-              conn => (conn.from === selected && conn.to === cell.id) || (conn.to === selected && conn.from === cell.id)
-            )
+            // Determinar si esta celda está en el recorrido completo
+            const pathInfo = selected && highlightConnections ? findConnectedPath(selected) : null
+            const isInPath = pathInfo?.nodes.includes(cell.id) || false
             
             // Determinar el color del borde
             let borderColor = '#404040'
             if (isSelected) {
+              borderColor = '#fff'
+            } else if (isInPath) {
               borderColor = '#fff'
             } else if (cell.color) {
               borderColor = cell.color
@@ -592,8 +636,8 @@ export default function FamilyFinanceFlow() {
             
             // Determinar la opacidad de la celda
             let opacity = 1
-            if (selected && highlightConnections && !isSelected && !isConnected) {
-              opacity = 0.3
+            if (selected && highlightConnections && !isInPath) {
+              opacity = 0.2
             }
 
             return (
@@ -970,6 +1014,40 @@ export default function FamilyFinanceFlow() {
               {formatValue(selectedCell.calculatedValue, selectedCell.format)}
             </div>
           </div>
+
+          {highlightConnections && (
+            <div style={{ marginBottom: 20, padding: 12, background: '#1a1a1a', borderRadius: 6, border: '1px solid #333' }}>
+              <div style={{ fontSize: 10, color: '#666', marginBottom: 8, textTransform: 'uppercase' }}>Recorrido Completo</div>
+              {(() => {
+                const pathInfo = findConnectedPath(selectedCell.id)
+                return (
+                  <>
+                    <div style={{ fontSize: 11, color: '#ccc', marginBottom: 4 }}>
+                      🔗 <strong>{pathInfo.connections.length}</strong> conexiones
+                    </div>
+                    <div style={{ fontSize: 11, color: '#ccc', marginBottom: 8 }}>
+                      📦 <strong>{pathInfo.nodes.length}</strong> nodos en el camino
+                    </div>
+                    <div style={{ fontSize: 9, color: '#888', lineHeight: 1.6 }}>
+                      {pathInfo.nodes.map((nodeId, index) => {
+                        const node = cells.find(c => c.id === nodeId)
+                        return (
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                            <span style={{ color: nodeId === selectedCell.id ? '#fff' : '#666' }}>
+                              {index === 0 ? '→' : '↳'}
+                            </span>
+                            <span style={{ color: nodeId === selectedCell.id ? '#fff' : '#aaa' }}>
+                              {node?.label || nodeId}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          )}
 
           <button onClick={() => setEditingCell(selectedCell)} style={{
             width: '100%', padding: '10px', background: '#404040', border: 'none',
