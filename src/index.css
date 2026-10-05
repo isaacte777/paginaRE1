@@ -1,67 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-}
-
 :root {
-    --main-bg-color: #000000;
-    --secundary-bg-color: #0a0a0a;
-    --third-bg-color: #111111;
-    --primary-font-color: #f0f0f0;
-    --main-font-color: #ffffff;
-    --nav-bg-color: #22c55e;
-    --nav-bg-hover: #4ade80;
-    --container-head-color: #1a1a1a;
-    --ks-border: rgba(255, 255, 255, 0.08);
-    --ks-border-hover: rgba(255, 255, 255, 0.15);
-    --ks-border-accent: rgba(34, 197, 94, 0.25);
-    --ks-surface: #111111;
-    --ks-surface-hover: rgba(34, 197, 94, 0.05);
-    --ks-text-muted: #555555;
-    --ks-text-secondary: #888888;
-    --ks-text-dim: #333333;
-    --ks-accent: #22c55e;
-    --ks-accent-soft: #4ade80;
-    --ks-accent-glow: rgba(34, 197, 94, 0.1);
-    --ks-accent-glow-strong: rgba(34, 197, 94, 0.25);
-    --ks-gold: #f59e0b;
-    --ks-glass: rgba(0, 0, 0, 0.7);
-    --ks-glass-border: rgba(255, 255, 255, 0.08);
-    --ks-radius: 12px;
-    --ks-radius-sm: 8px;
-    --ks-radius-xs: 6px;
-    --ks-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-    --ks-shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.6);
-    --ks-shadow-glow: 0 0 30px rgba(34, 197, 94, 0.08);
-    --ks-transition: 0.2s ease;
-    --ks-transition-fast: 0.12s ease;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-    background: var(--main-bg-color);
-    color: var(--primary-font-color);
-    font-family: var(--font-sans);
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
 }
 
-.scroll-minimalista::-webkit-scrollbar {
-    width: 6px;
-}
-.scroll-minimalista::-webkit-scrollbar-track {
-    background: transparent;
-}
-.scroll-minimalista::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-}
-.scroll-minimalista::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-}
-
-@layer base {
-  body {
-    @apply antialiased;
-  }
+#root {
+  width: 100%;
 }
