@@ -387,9 +387,10 @@ export default function FamilyFinanceFlow() {
   }
 
   // Función para encontrar todas las conexiones en cadena (recorrido completo)
-  const findConnectedPath = (nodeId: string): { connections: string[]; nodes: string[] } => {
+  // Calcular el path completo solo cuando cambie la selección o highlightConnections
+  const connectedPath = selected && highlightConnections ? (() => {
     const connectedConnections = new Set<string>()
-    const connectedNodes = new Set<string>([nodeId])
+    const connectedNodes = new Set<string>([selected])
     
     // Recorrido hacia adelante (outputs)
     const traverseForward = (currentNodeId: string, visited: Set<string>) => {
@@ -419,14 +420,14 @@ export default function FamilyFinanceFlow() {
       })
     }
     
-    traverseForward(nodeId, new Set())
-    traverseBackward(nodeId, new Set())
+    traverseForward(selected, new Set())
+    traverseBackward(selected, new Set())
     
     return {
       connections: Array.from(connectedConnections),
       nodes: Array.from(connectedNodes)
     }
-  }
+  })() : null
 
   const handleViewportClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).id === 'world') {
@@ -570,8 +571,7 @@ export default function FamilyFinanceFlow() {
               const y2 = toCell.y + toCell.height / 2
 
               // Determinar si esta conexión debe resaltarse (recorrido completo)
-              const pathInfo = selected && highlightConnections ? findConnectedPath(selected) : null
-              const isHighlighted = pathInfo?.connections.includes(conn.id) || false
+              const isHighlighted = connectedPath?.connections.includes(conn.id) || false
               const strokeColor = isHighlighted ? '#fff' : (conn.color || '#555')
               const strokeWidth = isHighlighted ? 3 : 2
               const opacity = selected && highlightConnections && !isHighlighted ? 0.15 : 1
@@ -621,8 +621,7 @@ export default function FamilyFinanceFlow() {
             const cellTypeInfo = CELL_TYPES.find(t => t.name === cell.category)
             
             // Determinar si esta celda está en el recorrido completo
-            const pathInfo = selected && highlightConnections ? findConnectedPath(selected) : null
-            const isInPath = pathInfo?.nodes.includes(cell.id) || false
+            const isInPath = connectedPath?.nodes.includes(cell.id) || false
             
             // Determinar el color del borde
             let borderColor = '#404040'
@@ -1015,37 +1014,30 @@ export default function FamilyFinanceFlow() {
             </div>
           </div>
 
-          {highlightConnections && (
+          {highlightConnections && connectedPath && (
             <div style={{ marginBottom: 20, padding: 12, background: '#1a1a1a', borderRadius: 6, border: '1px solid #333' }}>
               <div style={{ fontSize: 10, color: '#666', marginBottom: 8, textTransform: 'uppercase' }}>Recorrido Completo</div>
-              {(() => {
-                const pathInfo = findConnectedPath(selectedCell.id)
-                return (
-                  <>
-                    <div style={{ fontSize: 11, color: '#ccc', marginBottom: 4 }}>
-                      🔗 <strong>{pathInfo.connections.length}</strong> conexiones
+              <div style={{ fontSize: 11, color: '#ccc', marginBottom: 4 }}>
+                🔗 <strong>{connectedPath.connections.length}</strong> conexiones
+              </div>
+              <div style={{ fontSize: 11, color: '#ccc', marginBottom: 8 }}>
+                📦 <strong>{connectedPath.nodes.length}</strong> nodos en el camino
+              </div>
+              <div style={{ fontSize: 9, color: '#888', lineHeight: 1.6 }}>
+                {connectedPath.nodes.map((nodeId: string, index: number) => {
+                  const node = cells.find(c => c.id === nodeId)
+                  return (
+                    <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                      <span style={{ color: nodeId === selectedCell.id ? '#fff' : '#666' }}>
+                        {index === 0 ? '→' : '↳'}
+                      </span>
+                      <span style={{ color: nodeId === selectedCell.id ? '#fff' : '#aaa' }}>
+                        {node?.label || nodeId}
+                      </span>
                     </div>
-                    <div style={{ fontSize: 11, color: '#ccc', marginBottom: 8 }}>
-                      📦 <strong>{pathInfo.nodes.length}</strong> nodos en el camino
-                    </div>
-                    <div style={{ fontSize: 9, color: '#888', lineHeight: 1.6 }}>
-                      {pathInfo.nodes.map((nodeId, index) => {
-                        const node = cells.find(c => c.id === nodeId)
-                        return (
-                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                            <span style={{ color: nodeId === selectedCell.id ? '#fff' : '#666' }}>
-                              {index === 0 ? '→' : '↳'}
-                            </span>
-                            <span style={{ color: nodeId === selectedCell.id ? '#fff' : '#aaa' }}>
-                              {node?.label || nodeId}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </>
-                )
-              })()}
+                  )
+                })}
+              </div>
             </div>
           )}
 
