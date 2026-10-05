@@ -1,965 +1,856 @@
-import { useState } from 'react';
-import {
-  allMonths,
-  creditCards,
-  debts,
-  paymentSchedules,
-  tools,
-  formatCurrency,
-  calculateTotalDebt,
-  calculateTotalToolsPending,
-  getMonthlyComparison,
-} from '../data/familyFinanceData';
+import { useState, useRef, useEffect } from 'react'
 
-type ViewType = 'overview' | 'monthly' | 'debts' | 'payments' | 'tools';
+interface CellNode {
+  id: string
+  x: number
+  y: number
+  width: number
+  height: number
+  label: string
+  value: number | string
+  formula: string
+  format: 'number' | 'currency' | 'percentage' | 'text'
+  category: string
+  inputs: string[]
+  calculatedValue: number
+}
+
+interface Connection {
+  id: string
+  from: string
+  to: string
+  fromPort: string
+  toPort: string
+}
+
+const CELL_TYPES = [
+  { id: 'input', name: 'Entrada', icon: 'I', desc: 'Valor manual', color: '#d4d4d4' },
+  { id: 'income', name: 'Ingreso', icon: '+', desc: 'Fuente de ingreso', color: '#a3a3a3' },
+  { id: 'expense', name: 'Gasto', icon: '-', desc: 'Gasto fijo o variable', color: '#737373' },
+  { id: 'debt', name: 'Deuda', icon: 'D', desc: 'Cuota de deuda', color: '#525252' },
+  { id: 'calc', name: 'Cálculo', icon: 'C', desc: 'Fórmula matemática', color: '#404040' },
+  { id: 'sum', name: 'Suma', icon: 'S', desc: 'SUM(inputs)', color: '#262626' },
+  { id: 'total', name: 'Total', icon: 'T', desc: 'Total general', color: '#171717' },
+  { id: 'currency', name: 'Moneda', icon: '$', desc: 'Formato Gs.', color: '#d4d4d4' },
+  { id: 'line_chart', name: 'Gráfico Línea', icon: 'L', desc: 'Tendencia escalera', color: '#e5e5e5' },
+  { id: 'pie_chart', name: 'Gráfico Circular', icon: 'O', desc: 'Distribución %', color: '#d4d4d4' },
+  { id: 'bar_chart', name: 'Gráfico Barras', icon: 'B', desc: 'Comparación', color: '#a3a3a3' },
+  { id: 'percentage_chart', name: 'Porcentaje', icon: '%', desc: 'Visualización %', color: '#737373' },
+]
+
+let idCounter = 0
+const genId = () => `cell_${++idCounter}`
 
 export default function FamilyFinanceFlow() {
-  const [currentView, setCurrentView] = useState<ViewType>('overview');
-  const [selectedMonth, setSelectedMonth] = useState(4); // Octubre (último mes)
+  const [cells, setCells] = useState<CellNode[]>([
+    // INGRESOS DEL MES (Octubre 2026)
+    { id: 'cell_1', x: 50, y: 50, width: 180, height: 100, label: 'Sueldo Gere', value: 3500000, formula: '', format: 'currency', category: 'Ingreso', inputs: [], calculatedValue: 3500000 },
+    { id: 'cell_2', x: 50, y: 180, width: 180, height: 100, label: 'Sueldo Milki', value: 2800000, formula: '', format: 'currency', category: 'Ingreso', inputs: [], calculatedValue: 2800000 },
+    { id: 'cell_3', x: 50, y: 310, width: 180, height: 100, label: 'Proyecto Web', value: 1500000, formula: '', format: 'currency', category: 'Ingreso', inputs: [], calculatedValue: 1500000 },
+    { id: 'cell_4', x: 50, y: 440, width: 180, height: 100, label: 'Freelance', value: 800000, formula: '', format: 'currency', category: 'Ingreso', inputs: [], calculatedValue: 800000 },
 
-  const monthlyComparison = getMonthlyComparison();
-  const totalDebt = calculateTotalDebt();
-  const totalToolsPending = calculateTotalToolsPending();
+    // TOTAL INGRESOS
+    { id: 'cell_5', x: 300, y: 200, width: 200, height: 120, label: 'TOTAL INGRESOS', value: 0, formula: 'SUM(cell_1, cell_2, cell_3, cell_4)', format: 'currency', category: 'Total', inputs: ['cell_1', 'cell_2', 'cell_3', 'cell_4'], calculatedValue: 8600000 },
+
+    // GASTOS FIJOS
+    { id: 'cell_6', x: 600, y: 50, width: 180, height: 100, label: 'Alquiler', value: 1500000, formula: '', format: 'currency', category: 'Gasto Fijo', inputs: [], calculatedValue: 1500000 },
+    { id: 'cell_7', x: 600, y: 180, width: 180, height: 100, label: 'Supermercado', value: 850000, formula: '', format: 'currency', category: 'Gasto Fijo', inputs: [], calculatedValue: 850000 },
+    { id: 'cell_8', x: 600, y: 310, width: 180, height: 100, label: 'Servicios (Luz/Agua)', value: 250000, formula: '', format: 'currency', category: 'Gasto Fijo', inputs: [], calculatedValue: 250000 },
+    { id: 'cell_9', x: 600, y: 440, width: 180, height: 100, label: 'Internet', value: 180000, formula: '', format: 'currency', category: 'Gasto Fijo', inputs: [], calculatedValue: 180000 },
+    { id: 'cell_10', x: 600, y: 570, width: 180, height: 100, label: 'Diezmo', value: 245000, formula: '', format: 'currency', category: 'Gasto Fijo', inputs: [], calculatedValue: 245000 },
+
+    // GASTOS VARIABLES
+    { id: 'cell_11', x: 850, y: 50, width: 180, height: 100, label: 'Combustible', value: 300000, formula: '', format: 'currency', category: 'Gasto Variable', inputs: [], calculatedValue: 300000 },
+    { id: 'cell_12', x: 850, y: 180, width: 180, height: 100, label: 'Comidas Fuera', value: 200000, formula: '', format: 'currency', category: 'Gasto Variable', inputs: [], calculatedValue: 200000 },
+    { id: 'cell_13', x: 850, y: 310, width: 180, height: 100, label: 'Entretenimiento', value: 150000, formula: '', format: 'currency', category: 'Gasto Variable', inputs: [], calculatedValue: 150000 },
+    { id: 'cell_14', x: 850, y: 440, width: 180, height: 100, label: 'Salud', value: 100000, formula: '', format: 'currency', category: 'Gasto Variable', inputs: [], calculatedValue: 100000 },
+
+    // DEUDAS
+    { id: 'cell_15', x: 1100, y: 50, width: 180, height: 100, label: 'Cuota UENO Gere', value: 539718, formula: '', format: 'currency', category: 'Deuda', inputs: [], calculatedValue: 539718 },
+    { id: 'cell_16', x: 1100, y: 180, width: 180, height: 100, label: 'Cuota UENO Milki', value: 342000, formula: '', format: 'currency', category: 'Deuda', inputs: [], calculatedValue: 342000 },
+    { id: 'cell_17', x: 1100, y: 310, width: 180, height: 100, label: 'Cuota Tablet', value: 347000, formula: '', format: 'currency', category: 'Deuda', inputs: [], calculatedValue: 347000 },
+    { id: 'cell_18', x: 1100, y: 440, width: 180, height: 100, label: 'Cuota iPhone', value: 300000, formula: '', format: 'currency', category: 'Deuda', inputs: [], calculatedValue: 300000 },
+
+    // TOTAL GASTOS FIJOS
+    { id: 'cell_19', x: 1350, y: 150, width: 220, height: 140, label: 'TOTAL GASTOS FIJOS', value: 0, formula: 'SUM(cell_6, cell_7, cell_8, cell_9, cell_10)', format: 'currency', category: 'Total', inputs: ['cell_6', 'cell_7', 'cell_8', 'cell_9', 'cell_10'], calculatedValue: 3025000 },
+
+    // TOTAL GASTOS VARIABLES
+    { id: 'cell_20', x: 1350, y: 350, width: 220, height: 140, label: 'TOTAL GASTOS VARIABLES', value: 0, formula: 'SUM(cell_11, cell_12, cell_13, cell_14)', format: 'currency', category: 'Total', inputs: ['cell_11', 'cell_12', 'cell_13', 'cell_14'], calculatedValue: 750000 },
+
+    // TOTAL DEUDAS
+    { id: 'cell_21', x: 1350, y: 550, width: 220, height: 140, label: 'TOTAL DEUDAS', value: 0, formula: 'SUM(cell_15, cell_16, cell_17, cell_18)', format: 'currency', category: 'Total', inputs: ['cell_15', 'cell_16', 'cell_17', 'cell_18'], calculatedValue: 1528718 },
+
+    // TOTAL EGRESOS
+    { id: 'cell_22', x: 1650, y: 300, width: 240, height: 160, label: 'TOTAL EGRESOS', value: 0, formula: 'SUM(cell_19, cell_20, cell_21)', format: 'currency', category: 'Total', inputs: ['cell_19', 'cell_20', 'cell_21'], calculatedValue: 5303718 },
+
+    // BALANCE
+    { id: 'cell_23', x: 1950, y: 200, width: 240, height: 160, label: 'BALANCE DEL MES', value: 0, formula: 'cell_5 - cell_22', format: 'currency', category: 'Total', inputs: ['cell_5', 'cell_22'], calculatedValue: 3296282 },
+
+    // PORCENTAJE DE AHORRO
+    { id: 'cell_24', x: 1950, y: 420, width: 240, height: 140, label: '% AHORRO', value: 0, formula: '(cell_23 / cell_5) * 100', format: 'percentage', category: 'Métrica', inputs: ['cell_23', 'cell_5'], calculatedValue: 38.33 },
+
+    // GRÁFICOS
+    { id: 'cell_25', x: 2250, y: 50, width: 300, height: 220, label: 'Distribución de Gastos', value: 0, formula: '', format: 'percentage', category: 'Gráfico Circular', inputs: ['cell_19', 'cell_20', 'cell_21'], calculatedValue: 0 },
+    { id: 'cell_26', x: 2250, y: 300, width: 300, height: 220, label: 'Ingresos vs Egresos', value: 0, formula: '', format: 'currency', category: 'Gráfico Barras', inputs: ['cell_5', 'cell_22'], calculatedValue: 0 },
+    { id: 'cell_27', x: 2250, y: 550, width: 300, height: 200, label: 'Evolución Mensual', value: 0, formula: '', format: 'currency', category: 'Gráfico Línea', inputs: ['cell_1', 'cell_2', 'cell_3', 'cell_4', 'cell_5'], calculatedValue: 0 },
+    { id: 'cell_28', x: 2600, y: 200, width: 280, height: 250, label: 'Porcentaje por Categoría', value: 0, formula: '', format: 'percentage', category: 'Porcentaje', inputs: ['cell_6', 'cell_7', 'cell_11', 'cell_15'], calculatedValue: 0 },
+  ])
+
+  const [connections, setConnections] = useState<Connection[]>([
+    // Ingresos -> Total Ingresos
+    { id: 'conn_1', from: 'cell_1', to: 'cell_5', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_2', from: 'cell_2', to: 'cell_5', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_3', from: 'cell_3', to: 'cell_5', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_4', from: 'cell_4', to: 'cell_5', fromPort: 'output', toPort: 'input4' },
+
+    // Gastos Fijos -> Total Gastos Fijos
+    { id: 'conn_5', from: 'cell_6', to: 'cell_19', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_6', from: 'cell_7', to: 'cell_19', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_7', from: 'cell_8', to: 'cell_19', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_8', from: 'cell_9', to: 'cell_19', fromPort: 'output', toPort: 'input4' },
+    { id: 'conn_9', from: 'cell_10', to: 'cell_19', fromPort: 'output', toPort: 'input5' },
+
+    // Gastos Variables -> Total Gastos Variables
+    { id: 'conn_10', from: 'cell_11', to: 'cell_20', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_11', from: 'cell_12', to: 'cell_20', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_12', from: 'cell_13', to: 'cell_20', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_13', from: 'cell_14', to: 'cell_20', fromPort: 'output', toPort: 'input4' },
+
+    // Deudas -> Total Deudas
+    { id: 'conn_14', from: 'cell_15', to: 'cell_21', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_15', from: 'cell_16', to: 'cell_21', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_16', from: 'cell_17', to: 'cell_21', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_17', from: 'cell_18', to: 'cell_21', fromPort: 'output', toPort: 'input4' },
+
+    // Totales -> Total Egresos
+    { id: 'conn_18', from: 'cell_19', to: 'cell_22', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_19', from: 'cell_20', to: 'cell_22', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_20', from: 'cell_21', to: 'cell_22', fromPort: 'output', toPort: 'input3' },
+
+    // Balance
+    { id: 'conn_21', from: 'cell_5', to: 'cell_23', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_22', from: 'cell_22', to: 'cell_23', fromPort: 'output', toPort: 'input2' },
+
+    // Porcentaje de Ahorro
+    { id: 'conn_23', from: 'cell_23', to: 'cell_24', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_24', from: 'cell_5', to: 'cell_24', fromPort: 'output', toPort: 'input2' },
+
+    // Gráficos
+    { id: 'conn_25', from: 'cell_19', to: 'cell_25', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_26', from: 'cell_20', to: 'cell_25', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_27', from: 'cell_21', to: 'cell_25', fromPort: 'output', toPort: 'input3' },
+
+    { id: 'conn_28', from: 'cell_5', to: 'cell_26', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_29', from: 'cell_22', to: 'cell_26', fromPort: 'output', toPort: 'input2' },
+
+    { id: 'conn_30', from: 'cell_1', to: 'cell_27', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_31', from: 'cell_2', to: 'cell_27', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_32', from: 'cell_3', to: 'cell_27', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_33', from: 'cell_4', to: 'cell_27', fromPort: 'output', toPort: 'input4' },
+    { id: 'conn_34', from: 'cell_5', to: 'cell_27', fromPort: 'output', toPort: 'input5' },
+
+    { id: 'conn_35', from: 'cell_6', to: 'cell_28', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_36', from: 'cell_7', to: 'cell_28', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_37', from: 'cell_11', to: 'cell_28', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_38', from: 'cell_15', to: 'cell_28', fromPort: 'output', toPort: 'input4' },
+  ])
+
+  const [selected, setSelected] = useState<string | null>(null)
+  const [zoom, setZoom] = useState(100)
+  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [dragging, setDragging] = useState<string | null>(null)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [connecting, setConnecting] = useState<{ cellId: string; port: string } | null>(null)
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 })
+  const [editingCell, setEditingCell] = useState<CellNode | null>(null)
+  const [resizing, setResizing] = useState<{ cellId: string; corner: string; startX: number; startY: number; startWidth: number; startHeight: number; startCellX: number; startCellY: number } | null>(null)
+  const [tooltip, setTooltip] = useState<{ visible: boolean; x: number; y: number; content: string; type: 'warning' | 'info' }>({ visible: false, x: 0, y: 0, content: '', type: 'warning' })
+  const viewportRef = useRef<HTMLDivElement>(null)
+
+  const calculateCell = (cell: CellNode, allCells: CellNode[]): number => {
+    if (!cell.formula) {
+      return typeof cell.value === 'number' ? cell.value : 0
+    }
+
+    try {
+      let formula = cell.formula
+      
+      const funcMatch = formula.match(/(SUM|AVG|MIN|MAX|COUNT)\(([^)]+)\)/)
+      if (funcMatch) {
+        const [, func, args] = funcMatch
+        const cellIds = args.split(',').map(s => s.trim())
+        const values = cellIds
+          .map(id => allCells.find(c => c.id === id)?.calculatedValue || 0)
+        
+        switch (func) {
+          case 'SUM': return values.reduce((a, b) => a + b, 0)
+          case 'AVG': return values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0
+          case 'MIN': return Math.min(...values)
+          case 'MAX': return Math.max(...values)
+          case 'COUNT': return values.length
+        }
+      }
+
+      allCells.forEach(c => {
+        const regex = new RegExp(`\\b${c.id}\\b`, 'g')
+        formula = formula.replace(regex, c.calculatedValue.toString())
+      })
+
+      const result = Function(`"use strict"; return (${formula})`)()
+      return typeof result === 'number' && !isNaN(result) ? result : 0
+    } catch (error) {
+      console.error('Error calculando fórmula:', error)
+      return 0
+    }
+  }
+
+  useEffect(() => {
+    const recalculate = () => {
+      let changed = true
+      let iterations = 0
+      const maxIterations = 10
+
+      while (changed && iterations < maxIterations) {
+        changed = false
+        iterations++
+
+        setCells(prevCells => {
+          const newCells = prevCells.map(cell => {
+            const newValue = calculateCell(cell, prevCells)
+            if (newValue !== cell.calculatedValue) {
+              changed = true
+              return { ...cell, calculatedValue: newValue }
+            }
+            return cell
+          })
+          return newCells
+        })
+      }
+    }
+
+    recalculate()
+  }, [cells, connections])
+
+  const formatValue = (value: number, format: string): string => {
+    switch (format) {
+      case 'currency':
+        return 'Gs. ' + value.toLocaleString('es-PY', { maximumFractionDigits: 0 })
+      case 'percentage':
+        return value.toFixed(2) + '%'
+      case 'number':
+        return value.toLocaleString('es-PY', { maximumFractionDigits: 2 })
+      default:
+        return value.toString()
+    }
+  }
+
+  const addCell = (cellType: string) => {
+    const type = CELL_TYPES.find(t => t.id === cellType)
+    if (!type) return
+
+    const newCell: CellNode = {
+      id: genId(),
+      x: 200 + Math.random() * 200,
+      y: 150 + Math.random() * 200,
+      width: 180,
+      height: 100,
+      label: type.name,
+      value: 0,
+      formula: '',
+      format: cellType === 'currency' || cellType === 'total' ? 'currency' : 'number',
+      category: type.name,
+      inputs: [],
+      calculatedValue: 0
+    }
+
+    setCells(prev => [...prev, newCell])
+  }
+
+  const deleteSelected = () => {
+    if (!selected) return
+    setCells(prev => prev.filter(c => c.id !== selected))
+    setConnections(prev => prev.filter(c => c.from !== selected && c.to !== selected))
+    setSelected(null)
+  }
+
+  const handleMouseDown = (e: React.MouseEvent, cellId?: string, port?: string) => {
+    if (e.button === 1 || (e.button === 0 && e.altKey)) {
+      setIsPanning(true)
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y })
+      e.preventDefault()
+      return
+    }
+
+    if (port && cellId) {
+      setConnecting({ cellId, port })
+      return
+    }
+
+    if (cellId && e.button === 0) {
+      const cell = cells.find(c => c.id === cellId)
+      if (cell) {
+        setSelected(cellId)
+        setDragging(cellId)
+        const rect = viewportRef.current?.getBoundingClientRect()
+        if (rect) {
+          setDragOffset({
+            x: (e.clientX - rect.left - pan.x) / (zoom / 100) - cell.x,
+            y: (e.clientY - rect.top - pan.y) / (zoom / 100) - cell.y
+          })
+        }
+      }
+    }
+  }
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (isPanning) {
+      setPan({ x: e.clientX - panStart.x, y: e.clientY - panStart.y })
+      return
+    }
+
+    if (dragging) {
+      const rect = viewportRef.current?.getBoundingClientRect()
+      if (rect) {
+        let newX = (e.clientX - rect.left - pan.x) / (zoom / 100) - dragOffset.x
+        let newY = (e.clientY - rect.top - pan.y) / (zoom / 100) - dragOffset.y
+        newX = Math.round(newX / 10) * 10
+        newY = Math.round(newY / 10) * 10
+        setCells(prev => prev.map(c => c.id === dragging ? { ...c, x: newX, y: newY } : c))
+      }
+    }
+
+    if (connecting) {
+      const rect = viewportRef.current?.getBoundingClientRect()
+      if (rect) {
+        setMousePos({
+          x: (e.clientX - rect.left - pan.x) / (zoom / 100),
+          y: (e.clientY - rect.top - pan.y) / (zoom / 100)
+        })
+      }
+    }
+  }
+
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (isPanning) {
+      setIsPanning(false)
+      return
+    }
+
+    if (connecting) {
+      const target = (e.target as HTMLElement).closest('[data-cell-id][data-port]')
+      if (target) {
+        const targetCellId = target.getAttribute('data-cell-id')
+        const targetPort = target.getAttribute('data-port')
+        if (targetCellId && targetPort && targetCellId !== connecting.cellId) {
+          const newConn: Connection = {
+            id: `conn_${Date.now()}`,
+            from: connecting.cellId,
+            to: targetCellId,
+            fromPort: connecting.port,
+            toPort: targetPort
+          }
+          setConnections(prev => [...prev, newConn])
+          
+          setCells(prev => prev.map(c => 
+            c.id === targetCellId 
+              ? { ...c, inputs: [...c.inputs, connecting.cellId] }
+              : c
+          ))
+        }
+      }
+      setConnecting(null)
+    }
+
+    setDragging(null)
+  }
+
+  const handleViewportClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget || (e.target as HTMLElement).id === 'world') {
+      setSelected(null)
+    }
+  }
+
+  const updateCell = (cellId: string, updates: Partial<CellNode>) => {
+    setCells(prev => prev.map(c => c.id === cellId ? { ...c, ...updates } : c))
+  }
+
+  const selectedCell = cells.find(c => c.id === selected)
 
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
+      flex: 1,
+      display: 'flex',
+      overflow: 'hidden',
       background: '#0b0c0d',
-      color: '#e5e5e5',
-      fontFamily: "'JetBrains Mono', monospace",
-      overflow: 'auto',
+      color: '#c9ccd0',
+      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+      fontSize: '12px'
     }}>
-      {/* Header con selector de vista */}
-      <div style={{
-        padding: '20px',
-        borderBottom: '2px solid #333',
-        background: '#1a1a1a',
+      {/* LEFT TOOLBOX */}
+      <aside style={{
+        width: 240,
+        background: '#131416',
+        borderRight: '1px solid #2e3134',
+        overflowY: 'auto',
+        padding: '16px',
+        flexShrink: 0
       }}>
-        <h1 style={{ margin: '0 0 15px 0', fontSize: '24px', color: '#fff' }}>
-          Sistema Financiero Familiar - Gere y Milki
-        </h1>
-        
-        {/* Selector de vistas */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <h4 style={{ color: '#a3a3a3', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
+          Tipos de Celdas
+        </h4>
+
+        {CELL_TYPES.map(cellType => (
           <button
-            onClick={() => setCurrentView('overview')}
+            key={cellType.id}
+            onClick={() => addCell(cellType.id)}
             style={{
-              padding: '10px 20px',
-              background: currentView === 'overview' ? '#404040' : '#2a2a2a',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              width: '100%',
+              padding: '10px 12px',
+              background: '#1a1a1a',
+              border: '1px solid #333',
+              borderRadius: 6,
+              color: '#ccc',
               cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: currentView === 'overview' ? 'bold' : 'normal',
+              fontSize: 11,
+              marginBottom: 6,
+              textAlign: 'left'
             }}
           >
-            📊 Resumen General
-          </button>
-          <button
-            onClick={() => setCurrentView('monthly')}
-            style={{
-              padding: '10px 20px',
-              background: currentView === 'monthly' ? '#404040' : '#2a2a2a',
-              border: '1px solid #555',
-              borderRadius: '6px',
+            <span style={{
+              fontSize: 16,
+              fontWeight: 700,
               color: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: currentView === 'monthly' ? 'bold' : 'normal',
-            }}
-          >
-            📅 Detalle Mensual
+              fontFamily: 'monospace',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#2a2a2a',
+              borderRadius: 4,
+              border: '2px solid #404040'
+            }}>{cellType.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#e5e5e5' }}>{cellType.name}</div>
+              <div style={{ fontSize: 9, color: '#666' }}>{cellType.desc}</div>
+            </div>
           </button>
-          <button
-            onClick={() => setCurrentView('debts')}
-            style={{
-              padding: '10px 20px',
-              background: currentView === 'debts' ? '#404040' : '#2a2a2a',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: currentView === 'debts' ? 'bold' : 'normal',
-            }}
-          >
-            💳 Deudas
-          </button>
-          <button
-            onClick={() => setCurrentView('payments')}
-            style={{
-              padding: '10px 20px',
-              background: currentView === 'payments' ? '#404040' : '#2a2a2a',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: currentView === 'payments' ? 'bold' : 'normal',
-            }}
-          >
-            📆 Calendario de Pagos
-          </button>
-          <button
-            onClick={() => setCurrentView('tools')}
-            style={{
-              padding: '10px 20px',
-              background: currentView === 'tools' ? '#404040' : '#2a2a2a',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: currentView === 'tools' ? 'bold' : 'normal',
-            }}
-          >
-            🛠️ Herramientas
-          </button>
+        ))}
+
+        <div style={{ marginTop: 20, padding: 12, background: '#1a1a1a', borderRadius: 6, fontSize: 10, color: '#666', lineHeight: 1.8 }}>
+          <b style={{ color: '#a3a3a3' }}>Controles:</b><br />
+          - <b>clic</b> = seleccionar celda<br />
+          - <b>drag</b> = mover celda<br />
+          - <b>drag puerto</b> = conectar<br />
+          - <b>2x clic</b> = editar<br />
+          - <b>del</b> = eliminar<br />
+          - <b>rueda</b> = zoom<br />
+          - <b>alt+drag</b> = pan
         </div>
-      </div>
+      </aside>
 
-      {/* Contenido principal */}
-      <div style={{ padding: '20px' }}>
-        {currentView === 'overview' && (
-          <OverviewView
-            monthlyComparison={monthlyComparison}
-            totalDebt={totalDebt}
-            totalToolsPending={totalToolsPending}
-          />
-        )}
-
-        {currentView === 'monthly' && (
-          <MonthlyView
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
-          />
-        )}
-
-        {currentView === 'debts' && <DebtsView />}
-
-        {currentView === 'payments' && <PaymentsView />}
-
-        {currentView === 'tools' && <ToolsView />}
-      </div>
-    </div>
-  );
-}
-
-// VISTA: RESUMEN GENERAL
-function OverviewView({
-  monthlyComparison,
-  totalDebt,
-  totalToolsPending,
-}: {
-  monthlyComparison: any[];
-  totalDebt: number;
-  totalToolsPending: number;
-}) {
-  const latestMonth = monthlyComparison[monthlyComparison.length - 1];
-
-  return (
-    <div>
-      <h2 style={{ color: '#fff', marginBottom: '20px' }}>📊 Resumen General</h2>
-
-      {/* Tarjetas de resumen */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '30px',
-      }}>
-        <div style={{
-          padding: '20px',
-          background: '#1a1a1a',
-          border: '2px solid #333',
-          borderRadius: '8px',
+      {/* VIEWPORT */}
+      <div
+        ref={viewportRef}
+        onMouseDown={e => handleMouseDown(e)}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onClick={handleViewportClick}
+        onWheel={e => {
+          e.preventDefault()
+          setZoom(z => Math.max(20, Math.min(300, z - e.deltaY * 0.1)))
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected()
+        }}
+        tabIndex={0}
+        style={{
+          flex: 1,
+          position: 'relative',
+          overflow: 'hidden',
+          background: '#0b0c0d',
+          cursor: isPanning ? 'grabbing' : 'default'
+        }}
+      >
+        <div id="world" style={{
+          position: 'absolute',
+          width: 5000,
+          height: 5000,
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`,
+          transformOrigin: '0 0',
+          backgroundImage: 'radial-gradient(circle, #2e3134 1px, transparent 1px)',
+          backgroundSize: '20px 20px'
         }}>
-          <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-            Balance Actual ({latestMonth.month} {latestMonth.year})
-          </div>
-          <div style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: latestMonth.savings >= 0 ? '#10b981' : '#ef4444',
-          }}>
-            {formatCurrency(latestMonth.savings)}
-          </div>
-          <div style={{
-            fontSize: '14px',
-            color: latestMonth.percentageChange >= 0 ? '#10b981' : '#ef4444',
-            marginTop: '5px',
-          }}>
-            {latestMonth.percentageChange >= 0 ? '↑' : '↓'} {Math.abs(latestMonth.percentageChange)}%
-          </div>
-        </div>
+          {/* SVG Connections */}
+          <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+            <defs>
+              <marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8.5" refY="4.5" orient="auto">
+                <path d="M0,0 L9,4.5 L0,9 Z" fill="#666"></path>
+              </marker>
+            </defs>
+            {connections.map(conn => {
+              const fromCell = cells.find(c => c.id === conn.from)
+              const toCell = cells.find(c => c.id === conn.to)
+              if (!fromCell || !toCell) return null
 
-        <div style={{
-          padding: '20px',
-          background: '#1a1a1a',
-          border: '2px solid #333',
-          borderRadius: '8px',
-        }}>
-          <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-            Deuda Total Pendiente
-          </div>
-          <div style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#ef4444',
-          }}>
-            {formatCurrency(totalDebt)}
-          </div>
-        </div>
+              const x1 = fromCell.x + fromCell.width
+              const y1 = fromCell.y + fromCell.height / 2
+              const x2 = toCell.x
+              const y2 = toCell.y + toCell.height / 2
 
-        <div style={{
-          padding: '20px',
-          background: '#1a1a1a',
-          border: '2px solid #333',
-          borderRadius: '8px',
-        }}>
-          <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-            Herramientas Pendientes
-          </div>
-          <div style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#f59e0b',
-          }}>
-            {formatCurrency(totalToolsPending)}
-          </div>
-        </div>
+              return (
+                <path
+                  key={conn.id}
+                  d={`M${x1},${y1} C${x1 + 50},${y1} ${x2 - 50},${y2} ${x2},${y2}`}
+                  stroke="#555"
+                  strokeWidth="2"
+                  fill="none"
+                  markerEnd="url(#arrow)"
+                />
+              )
+            })}
+            {connecting && (
+              <path
+                d={`M${(cells.find(c => c.id === connecting.cellId)?.x || 0) + (cells.find(c => c.id === connecting.cellId)?.width || 0)},${(cells.find(c => c.id === connecting.cellId)?.y || 0) + (cells.find(c => c.id === connecting.cellId)?.height || 0) / 2} L${mousePos.x},${mousePos.y}`}
+                stroke="#a3a3a3"
+                strokeWidth="2"
+                strokeDasharray="5,5"
+                fill="none"
+              />
+            )}
+          </svg>
 
-        <div style={{
-          padding: '20px',
-          background: '#1a1a1a',
-          border: '2px solid #333',
-          borderRadius: '8px',
-        }}>
-          <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-            Gastos del Mes
-          </div>
-          <div style={{
-            fontSize: '28px',
-            fontWeight: 'bold',
-            color: '#ef4444',
-          }}>
-            {formatCurrency(latestMonth.expenses)}
-          </div>
-        </div>
-      </div>
-
-      {/* Gráfico de evolución mensual */}
-      <div style={{
-        padding: '20px',
-        background: '#1a1a1a',
-        border: '2px solid #333',
-        borderRadius: '8px',
-        marginBottom: '20px',
-      }}>
-        <h3 style={{ color: '#fff', marginBottom: '20px' }}>📈 Evolución del Ahorro</h3>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '15px', height: '200px' }}>
-          {monthlyComparison.map((month, index) => {
-            const maxSavings = Math.max(...monthlyComparison.map(m => Math.abs(m.savings)));
-            const height = Math.abs(month.savings) / maxSavings * 150;
-            const isPositive = month.savings >= 0;
+          {/* Cells */}
+          {cells.map(cell => {
+            const isSelected = selected === cell.id
+            const cellTypeInfo = CELL_TYPES.find(t => t.name === cell.category)
+            const borderColor = isSelected ? '#fff' : '#404040'
 
             return (
               <div
-                key={index}
+                key={cell.id}
+                data-cell-id={cell.id}
+                onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id) }}
+                onDoubleClick={() => setEditingCell(cell)}
                 style={{
-                  flex: 1,
+                  position: 'absolute',
+                  left: cell.x,
+                  top: cell.y,
+                  width: cell.width,
+                  height: cell.height,
+                  background: '#1a1a1a',
+                  border: `3px solid ${borderColor}`,
+                  borderRadius: 8,
+                  cursor: 'grab',
+                  userSelect: 'none',
+                  boxShadow: isSelected ? '0 0 25px rgba(255,255,255,0.25)' : '0 6px 16px rgba(0,0,0,0.6)',
+                  transition: dragging === cell.id ? 'none' : 'box-shadow 0.2s',
                   display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '5px',
+                  flexDirection: 'column'
                 }}
               >
-                <div style={{ fontSize: '10px', color: '#888' }}>
-                  {formatCurrency(month.savings)}
+                {/* Header */}
+                <div style={{
+                  padding: '8px 12px',
+                  background: '#222',
+                  borderBottom: '2px solid #333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  borderRadius: '5px 5px 0 0'
+                }}>
+                  <span style={{
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: '#fff',
+                    fontFamily: 'monospace',
+                    width: 24,
+                    height: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#333',
+                    borderRadius: 4,
+                    border: '2px solid #555'
+                  }}>{cellTypeInfo?.icon || '?'}</span>
+                  <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#e5e5e5' }}>{cell.label}</div>
                 </div>
+
+                {/* Content */}
+                <div style={{ padding: '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  {cell.formula && (
+                    <div style={{ fontSize: 9, color: '#666', marginBottom: 4, fontFamily: 'monospace' }}>
+                      = {cell.formula}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
+                    {formatValue(cell.calculatedValue, cell.format)}
+                  </div>
+                  {cell.inputs.length > 0 && (
+                    <div style={{ fontSize: 9, color: '#888', marginTop: 4 }}>
+                      {cell.inputs.length} input{cell.inputs.length > 1 ? 's' : ''}
+                    </div>
+                  )}
+                </div>
+
+                {/* Input Ports */}
                 <div
+                  data-cell-id={cell.id}
+                  data-port="input1"
+                  onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input1') }}
                   style={{
-                    width: '100%',
-                    height: `${height}px`,
-                    background: isPositive ? '#10b981' : '#ef4444',
-                    borderRadius: '4px 4px 0 0',
-                    transition: 'height 0.3s',
+                    position: 'absolute',
+                    left: -8,
+                    top: '30%',
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    background: '#444',
+                    border: '3px solid #0b0c0d',
+                    cursor: 'crosshair'
                   }}
                 />
-                <div style={{ fontSize: '11px', color: '#ccc' }}>
-                  {month.month}
-                </div>
-                <div style={{ fontSize: '10px', color: '#888' }}>
-                  {month.year}
-                </div>
+                <div
+                  data-cell-id={cell.id}
+                  data-port="input2"
+                  onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input2') }}
+                  style={{
+                    position: 'absolute',
+                    left: -8,
+                    top: '70%',
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    background: '#444',
+                    border: '3px solid #0b0c0d',
+                    cursor: 'crosshair'
+                  }}
+                />
+
+                {/* Output Port */}
+                <div
+                  data-cell-id={cell.id}
+                  data-port="output"
+                  onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'output') }}
+                  style={{
+                    position: 'absolute',
+                    right: -8,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    background: '#666',
+                    border: '3px solid #0b0c0d',
+                    cursor: 'crosshair'
+                  }}
+                />
               </div>
-            );
+            )
           })}
         </div>
+
+        {/* Zoom controls */}
+        <div style={{
+          position: 'absolute',
+          bottom: 10,
+          right: 10,
+          display: 'flex',
+          gap: 4,
+          alignItems: 'center',
+          background: '#131416',
+          border: '1px solid #333',
+          borderRadius: 6,
+          padding: '6px 10px'
+        }}>
+          <button onClick={() => setZoom(z => Math.max(20, z - 10))} style={{
+            background: '#1a1a1a', border: '1px solid #333', color: '#ccc',
+            width: 28, height: 28, borderRadius: 4, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14
+          }}>-</button>
+          <span style={{ fontSize: 12, minWidth: 50, textAlign: 'center', fontWeight: 600 }}>{Math.round(zoom)}%</span>
+          <button onClick={() => setZoom(z => Math.min(300, z + 10))} style={{
+            background: '#1a1a1a', border: '1px solid #333', color: '#ccc',
+            width: 28, height: 28, borderRadius: 4, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14
+          }}>+</button>
+          <button onClick={() => { setZoom(100); setPan({ x: 0, y: 0 }) }} style={{
+            background: '#1a1a1a', border: '1px solid #333', color: '#ccc',
+            padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600
+          }}>1:1</button>
+        </div>
       </div>
 
-      {/* Tarjetas de crédito */}
-      <div style={{
-        padding: '20px',
-        background: '#1a1a1a',
-        border: '2px solid #333',
-        borderRadius: '8px',
-      }}>
-        <h3 style={{ color: '#fff', marginBottom: '20px' }}>💳 Tarjetas de Crédito</h3>
-        <div style={{ display: 'grid', gap: '15px' }}>
-          {creditCards.map((card, index) => (
-            <div
-              key={index}
-              style={{
-                padding: '15px',
-                background: '#2a2a2a',
-                border: '1px solid #444',
-                borderRadius: '6px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>
-                    {card.bank}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>
-                    {card.owner}
-                  </div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: '12px', color: '#888' }}>Límite</div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
-                    {formatCurrency(card.totalLimit)}
-                  </div>
-                </div>
-              </div>
-              <div style={{
-                height: '8px',
-                background: '#1a1a1a',
-                borderRadius: '4px',
-                overflow: 'hidden',
-              }}>
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${(card.consumed / card.totalLimit) * 100}%`,
-                    background: card.consumed / card.totalLimit > 0.8 ? '#ef4444' : '#f59e0b',
-                    transition: 'width 0.3s',
-                  }}
+      {/* RIGHT PANEL - Properties */}
+      {selectedCell && (
+        <aside style={{
+          width: 300,
+          background: '#131416',
+          borderLeft: '1px solid #2e3134',
+          padding: 20,
+          overflowY: 'auto',
+          flexShrink: 0
+        }}>
+          <h3 style={{ color: '#a3a3a3', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 20 }}>
+            Propiedades de Celda
+          </h3>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>ID</label>
+            <div style={{ background: '#1a1a1a', padding: '8px 12px', borderRadius: 4, fontSize: 11, fontFamily: 'monospace' }}>{selectedCell.id}</div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Etiqueta</label>
+            <input
+              value={selectedCell.label}
+              onChange={e => updateCell(selectedCell.id, { label: e.target.value })}
+              style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '8px 12px', borderRadius: 4, fontFamily: 'inherit', fontSize: 12 }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Valor</label>
+            <input
+              type="number"
+              value={selectedCell.value}
+              onChange={e => updateCell(selectedCell.id, { value: parseFloat(e.target.value) || 0 })}
+              style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '8px 12px', borderRadius: 4, fontFamily: 'inherit', fontSize: 12 }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Fórmula</label>
+            <input
+              value={selectedCell.formula}
+              onChange={e => updateCell(selectedCell.id, { formula: e.target.value })}
+              placeholder="ej: cell_1 * cell_2"
+              style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '8px 12px', borderRadius: 4, fontFamily: 'monospace', fontSize: 11 }}
+            />
+          </div>
+
+          <div style={{ marginBottom: 20, padding: 12, background: '#1a1a1a', borderRadius: 6 }}>
+            <div style={{ fontSize: 10, color: '#666', marginBottom: 4, textTransform: 'uppercase' }}>Valor Calculado</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#fff' }}>
+              {formatValue(selectedCell.calculatedValue, selectedCell.format)}
+            </div>
+          </div>
+
+          <button onClick={() => setEditingCell(selectedCell)} style={{
+            width: '100%', padding: '10px', background: '#404040', border: 'none',
+            borderRadius: 6, color: '#fff', cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 12, fontWeight: 600, marginBottom: 10
+          }}>
+            Editar Avanzado
+          </button>
+
+          <button onClick={deleteSelected} style={{
+            width: '100%', padding: '10px', background: '#333', border: 'none',
+            borderRadius: 6, color: '#ccc', cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 12, fontWeight: 600
+          }}>
+            Eliminar Celda
+          </button>
+        </aside>
+      )}
+
+      {/* Edit Modal */}
+      {editingCell && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', display: 'flex',
+          alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }} onClick={() => setEditingCell(null)}>
+          <div style={{
+            background: '#131416', border: '2px solid #333',
+            borderRadius: 10, padding: 28, width: 500, maxWidth: '90vw'
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 24px', color: '#a3a3a3', fontSize: 16 }}>Editar Celda Avanzado</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 6 }}>Etiqueta</label>
+                <input
+                  value={editingCell.label}
+                  onChange={e => setEditingCell({ ...editingCell, label: e.target.value })}
+                  style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '10px 12px', borderRadius: 6, fontFamily: 'inherit', fontSize: 13 }}
                 />
               </div>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                marginTop: '10px',
-                fontSize: '11px',
-              }}>
-                <span style={{ color: '#888' }}>
-                  Consumido: {formatCurrency(card.consumed)}
-                </span>
-                <span style={{ color: '#10b981' }}>
-                  Disponible: {formatCurrency(card.remaining)}
-                </span>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 6 }}>Valor Manual</label>
+                  <input
+                    type="number"
+                    value={editingCell.value}
+                    onChange={e => setEditingCell({ ...editingCell, value: parseFloat(e.target.value) || 0 })}
+                    style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '10px 12px', borderRadius: 6, fontFamily: 'inherit', fontSize: 13 }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 6 }}>Formato</label>
+                  <select
+                    value={editingCell.format}
+                    onChange={e => setEditingCell({ ...editingCell, format: e.target.value as any })}
+                    style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '10px 12px', borderRadius: 6, fontFamily: 'inherit', fontSize: 13 }}
+                  >
+                    <option value="number">Número</option>
+                    <option value="currency">Moneda</option>
+                    <option value="percentage">Porcentaje</option>
+                    <option value="text">Texto</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 11, color: '#666', marginBottom: 6 }}>Fórmula (tipo Excel)</label>
+                <input
+                  value={editingCell.formula}
+                  onChange={e => setEditingCell({ ...editingCell, formula: e.target.value })}
+                  placeholder="ej: cell_1 * cell_2 + cell_3"
+                  style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '10px 12px', borderRadius: 6, fontFamily: 'monospace', fontSize: 12 }}
+                />
+              </div>
+
+              <div style={{ padding: 16, background: '#1a1a1a', borderRadius: 6 }}>
+                <div style={{ fontSize: 11, color: '#666', marginBottom: 8 }}>Vista Previa del Cálculo</div>
+                <div style={{ fontSize: 24, fontWeight: 700, color: '#fff' }}>
+                  {formatValue(editingCell.calculatedValue, editingCell.format)}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                <button
+                  onClick={() => {
+                    updateCell(editingCell.id, editingCell)
+                    setEditingCell(null)
+                  }}
+                  style={{
+                    flex: 1, padding: '12px', background: '#404040', border: 'none',
+                    borderRadius: 6, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600
+                  }}
+                >
+                  Guardar Cambios
+                </button>
+                <button
+                  onClick={() => setEditingCell(null)}
+                  style={{
+                    flex: 1, padding: '12px', background: '#333', border: 'none',
+                    borderRadius: 6, color: '#ccc', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13
+                  }}
+                >
+                  Cancelar
+                </button>
               </div>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
-  );
-}
-
-// VISTA: DETALLE MENSUAL
-function MonthlyView({
-  selectedMonth,
-  setSelectedMonth,
-}: {
-  selectedMonth: number;
-  setSelectedMonth: (month: number) => void;
-}) {
-  const month = allMonths[selectedMonth];
-
-  return (
-    <div>
-      <h2 style={{ color: '#fff', marginBottom: '20px' }}>📅 Detalle Mensual</h2>
-
-      {/* Selector de mes */}
-      <div style={{
-        display: 'flex',
-        gap: '10px',
-        marginBottom: '20px',
-        flexWrap: 'wrap',
-      }}>
-        {allMonths.map((m, index) => (
-          <button
-            key={index}
-            onClick={() => setSelectedMonth(index)}
-            style={{
-              padding: '10px 20px',
-              background: selectedMonth === index ? '#404040' : '#2a2a2a',
-              border: '1px solid #555',
-              borderRadius: '6px',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: selectedMonth === index ? 'bold' : 'normal',
-            }}
-          >
-            {m.month} {m.year}
-          </button>
-        ))}
-      </div>
-
-      {/* Resumen del mes */}
-      <div style={{
-        padding: '20px',
-        background: '#1a1a1a',
-        border: '2px solid #333',
-        borderRadius: '8px',
-        marginBottom: '20px',
-      }}>
-        <h3 style={{ color: '#fff', marginBottom: '15px' }}>
-          Resumen de {month.month} {month.year}
-        </h3>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '15px',
-        }}>
-          <div>
-            <div style={{ fontSize: '12px', color: '#888' }}>Saldo Inicial</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
-              {formatCurrency(month.initialBalance)}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: '12px', color: '#888' }}>Saldo Final</div>
-            <div style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: month.finalBalance >= month.initialBalance ? '#10b981' : '#ef4444',
-            }}>
-              {formatCurrency(month.finalBalance)}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: '12px', color: '#888' }}>Variación</div>
-            <div style={{
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: month.percentageChange >= 0 ? '#10b981' : '#ef4444',
-            }}>
-              {month.percentageChange >= 0 ? '+' : ''}{month.percentageChange}%
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Gastos del mes */}
-      <div style={{
-        padding: '20px',
-        background: '#1a1a1a',
-        border: '2px solid #333',
-        borderRadius: '8px',
-        marginBottom: '20px',
-      }}>
-        <h3 style={{ color: '#fff', marginBottom: '15px' }}>💸 Gastos del Mes</h3>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '10px',
-          marginBottom: '15px',
-        }}>
-          <div style={{ padding: '10px', background: '#2a2a2a', borderRadius: '6px' }}>
-            <div style={{ fontSize: '11px', color: '#888' }}>Presupuestado</div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
-              {formatCurrency(month.budgetedExpenses)}
-            </div>
-          </div>
-          <div style={{ padding: '10px', background: '#2a2a2a', borderRadius: '6px' }}>
-            <div style={{ fontSize: '11px', color: '#888' }}>Real</div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#ef4444' }}>
-              {formatCurrency(month.actualExpenses)}
-            </div>
-          </div>
-        </div>
-
-        {/* Lista de gastos */}
-        <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-          {month.expenses.map((expense, index) => (
-            <div
-              key={index}
-              style={{
-                padding: '10px',
-                background: '#2a2a2a',
-                border: '1px solid #444',
-                borderRadius: '4px',
-                marginBottom: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>
-                  {expense.category}
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '13px', color: '#ef4444', fontWeight: 'bold' }}>
-                  {formatCurrency(expense.actual)}
-                </div>
-                {expense.budgeted > 0 && (
-                  <div style={{ fontSize: '10px', color: '#888' }}>
-                    Presupuesto: {formatCurrency(expense.budgeted)}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Ingresos del mes */}
-      <div style={{
-        padding: '20px',
-        background: '#1a1a1a',
-        border: '2px solid #333',
-        borderRadius: '8px',
-      }}>
-        <h3 style={{ color: '#fff', marginBottom: '15px' }}>💰 Ingresos del Mes</h3>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '10px',
-          marginBottom: '15px',
-        }}>
-          <div style={{ padding: '10px', background: '#2a2a2a', borderRadius: '6px' }}>
-            <div style={{ fontSize: '11px', color: '#888' }}>Proyectado</div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
-              {formatCurrency(month.budgetedIncome)}
-            </div>
-          </div>
-          <div style={{ padding: '10px', background: '#2a2a2a', borderRadius: '6px' }}>
-            <div style={{ fontSize: '11px', color: '#888' }}>Real</div>
-            <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#10b981' }}>
-              {formatCurrency(month.actualIncome)}
-            </div>
-          </div>
-        </div>
-
-        {/* Lista de ingresos */}
-        <div style={{ maxHeight: '400px', overflow: 'auto' }}>
-          {month.incomes.map((income, index) => (
-            <div
-              key={index}
-              style={{
-                padding: '10px',
-                background: '#2a2a2a',
-                border: '1px solid #444',
-                borderRadius: '4px',
-                marginBottom: '8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#fff' }}>
-                {income.source}
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '13px', color: '#10b981', fontWeight: 'bold' }}>
-                  {formatCurrency(income.actual)}
-                </div>
-                {income.projected > 0 && (
-                  <div style={{ fontSize: '10px', color: '#888' }}>
-                    Proyectado: {formatCurrency(income.projected)}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// VISTA: DEUDAS
-function DebtsView() {
-  return (
-    <div>
-      <h2 style={{ color: '#fff', marginBottom: '20px' }}>💳 Deudas</h2>
-
-      <div style={{ display: 'grid', gap: '20px' }}>
-        {debts.map((debt, index) => (
-          <div
-            key={index}
-            style={{
-              padding: '20px',
-              background: '#1a1a1a',
-              border: `2px solid ${debt.status === 'active' ? '#ef4444' : '#10b981'}`,
-              borderRadius: '8px',
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '15px',
-            }}>
-              <h3 style={{ color: '#fff', margin: 0 }}>{debt.name}</h3>
-              <span
-                style={{
-                  padding: '5px 10px',
-                  background: debt.status === 'active' ? '#ef4444' : '#10b981',
-                  borderRadius: '4px',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                }}
-              >
-                {debt.status === 'active' ? 'ACTIVA' : 'CANCELADA'}
-              </span>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-              gap: '15px',
-              marginBottom: '15px',
-            }}>
-              <div>
-                <div style={{ fontSize: '11px', color: '#888' }}>Total Préstamo</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff' }}>
-                  {formatCurrency(debt.totalAmount)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '11px', color: '#888' }}>Pagado</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#10b981' }}>
-                  {formatCurrency(debt.paid)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '11px', color: '#888' }}>Falta Pagar</div>
-                <div style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: debt.remaining > 0 ? '#ef4444' : '#10b981',
-                }}>
-                  {formatCurrency(Math.abs(debt.remaining))}
-                </div>
-              </div>
-            </div>
-
-            {/* Barra de progreso */}
-            <div style={{
-              height: '10px',
-              background: '#2a2a2a',
-              borderRadius: '5px',
-              overflow: 'hidden',
-              marginBottom: '15px',
-            }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${(debt.paid / debt.totalAmount) * 100}%`,
-                  background: debt.status === 'active' ? '#f59e0b' : '#10b981',
-                  transition: 'width 0.3s',
-                }}
-              />
-            </div>
-
-            {/* Cuotas */}
-            {debt.installments.length > 0 && (
-              <div>
-                <div style={{ fontSize: '12px', color: '#888', marginBottom: '10px' }}>
-                  Cuotas ({debt.installments.length})
-                </div>
-                <div style={{ maxHeight: '200px', overflow: 'auto' }}>
-                  {debt.installments.map((installment, i) => (
-                    <div
-                      key={i}
-                      style={{
-                        padding: '8px',
-                        background: '#2a2a2a',
-                        border: '1px solid #444',
-                        borderRadius: '4px',
-                        marginBottom: '5px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        fontSize: '11px',
-                      }}
-                    >
-                      <span style={{ color: '#fff' }}>Cuota {installment.number}</span>
-                      <span style={{ color: '#888' }}>
-                        {formatCurrency(installment.amount)}
-                      </span>
-                      <span style={{
-                        color: installment.paid > 0 ? '#10b981' : '#ef4444',
-                        fontWeight: 'bold',
-                      }}>
-                        {installment.paid > 0 ? '✓ Pagado' : '⏳ Pendiente'}
-                      </span>
-                      {installment.date && (
-                        <span style={{ color: '#888', fontSize: '10px' }}>
-                          {installment.date}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// VISTA: CALENDARIO DE PAGOS
-function PaymentsView() {
-  return (
-    <div>
-      <h2 style={{ color: '#fff', marginBottom: '20px' }}>📆 Calendario de Pagos</h2>
-
-      <div style={{ display: 'grid', gap: '20px' }}>
-        {paymentSchedules.map((schedule, index) => (
-          <div
-            key={index}
-            style={{
-              padding: '20px',
-              background: '#1a1a1a',
-              border: '2px solid #333',
-              borderRadius: '8px',
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '15px',
-            }}>
-              <h3 style={{ color: '#fff', margin: 0 }}>{schedule.name}</h3>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '11px', color: '#888' }}>Pago Pendiente</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#f59e0b' }}>
-                  {formatCurrency(schedule.pendingAmount)}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ fontSize: '12px', color: '#888', marginBottom: '15px' }}>
-              {schedule.period}
-            </div>
-
-            {/* Tabla de pagos */}
-            <div style={{ overflow: 'auto' }}>
-              <table style={{
-                width: '100%',
-                borderCollapse: 'collapse',
-                fontSize: '11px',
-              }}>
-                <thead>
-                  <tr style={{ background: '#2a2a2a' }}>
-                    <th style={{ padding: '10px', textAlign: 'left', color: '#888' }}>Mes</th>
-                    <th style={{ padding: '10px', textAlign: 'right', color: '#888' }}>Día 5</th>
-                    <th style={{ padding: '10px', textAlign: 'right', color: '#888' }}>Día 13</th>
-                    <th style={{ padding: '10px', textAlign: 'right', color: '#888' }}>Día 30</th>
-                    <th style={{ padding: '10px', textAlign: 'right', color: '#888' }}>Total</th>
-                    <th style={{ padding: '10px', textAlign: 'center', color: '#888' }}>Estado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {schedule.payments.map((payment, i) => (
-                    <tr
-                      key={i}
-                      style={{
-                        background: i % 2 === 0 ? '#1a1a1a' : '#2a2a2a',
-                        borderBottom: '1px solid #333',
-                      }}
-                    >
-                      <td style={{ padding: '10px', color: '#fff' }}>{payment.month}</td>
-                      <td style={{ padding: '10px', textAlign: 'right', color: '#ccc' }}>
-                        {payment.day05 ? formatCurrency(payment.day05) : '-'}
-                      </td>
-                      <td style={{ padding: '10px', textAlign: 'right', color: '#ccc' }}>
-                        {payment.day13 ? formatCurrency(payment.day13) : '-'}
-                      </td>
-                      <td style={{ padding: '10px', textAlign: 'right', color: '#ccc' }}>
-                        {payment.day30 ? formatCurrency(payment.day30) : '-'}
-                      </td>
-                      <td style={{ padding: '10px', textAlign: 'right', color: '#fff', fontWeight: 'bold' }}>
-                        {formatCurrency(payment.total)}
-                      </td>
-                      <td style={{ padding: '10px', textAlign: 'center' }}>
-                        <span
-                          style={{
-                            padding: '3px 8px',
-                            background: payment.status === 'Pagado' ? '#10b981' : payment.status === 'Falta' ? '#f59e0b' : '#666',
-                            borderRadius: '3px',
-                            fontSize: '10px',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          {payment.status || '-'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// VISTA: HERRAMIENTAS
-function ToolsView() {
-  const totalCost = tools.reduce((sum, tool) => sum + tool.cost, 0);
-  const totalPaid = tools.reduce((sum, tool) => sum + tool.paid, 0);
-  const totalPending = tools.reduce((sum, tool) => sum + tool.pending, 0);
-
-  return (
-    <div>
-      <h2 style={{ color: '#fff', marginBottom: '20px' }}>🛠️ Herramientas Pendientes</h2>
-
-      {/* Resumen */}
-      <div style={{
-        padding: '20px',
-        background: '#1a1a1a',
-        border: '2px solid #333',
-        borderRadius: '8px',
-        marginBottom: '20px',
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '15px',
-        }}>
-          <div>
-            <div style={{ fontSize: '12px', color: '#888' }}>Costo Total</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#fff' }}>
-              {formatCurrency(totalCost)}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: '12px', color: '#888' }}>Pagado</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#10b981' }}>
-              {formatCurrency(totalPaid)}
-            </div>
-          </div>
-          <div>
-            <div style={{ fontSize: '12px', color: '#888' }}>Pendiente</div>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#f59e0b' }}>
-              {formatCurrency(totalPending)}
-            </div>
-          </div>
-        </div>
-
-        {/* Barra de progreso */}
-        <div style={{
-          height: '10px',
-          background: '#2a2a2a',
-          borderRadius: '5px',
-          overflow: 'hidden',
-          marginTop: '15px',
-        }}>
-          <div
-            style={{
-              height: '100%',
-              width: `${(totalPaid / totalCost) * 100}%`,
-              background: '#10b981',
-              transition: 'width 0.3s',
-            }}
-          />
-        </div>
-        <div style={{ fontSize: '11px', color: '#888', marginTop: '5px', textAlign: 'center' }}>
-          {((totalPaid / totalCost) * 100).toFixed(1)}% completado
-        </div>
-      </div>
-
-      {/* Lista de herramientas */}
-      <div style={{ display: 'grid', gap: '15px' }}>
-        {tools.map((tool, index) => (
-          <div
-            key={index}
-            style={{
-              padding: '15px',
-              background: '#1a1a1a',
-              border: '2px solid #333',
-              borderRadius: '8px',
-            }}
-          >
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '10px',
-            }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>
-                {tool.name}
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff' }}>
-                  {formatCurrency(tool.cost)}
-                </div>
-              </div>
-            </div>
-
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '10px',
-              marginBottom: '10px',
-            }}>
-              <div>
-                <div style={{ fontSize: '11px', color: '#888' }}>Pagado</div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#10b981' }}>
-                  {formatCurrency(tool.paid)}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '11px', color: '#888' }}>Pendiente</div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: 'bold',
-                  color: tool.pending > 0 ? '#f59e0b' : '#10b981',
-                }}>
-                  {formatCurrency(tool.pending)}
-                </div>
-              </div>
-            </div>
-
-            {/* Barra de progreso */}
-            <div style={{
-              height: '6px',
-              background: '#2a2a2a',
-              borderRadius: '3px',
-              overflow: 'hidden',
-            }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${(tool.paid / tool.cost) * 100}%`,
-                  background: tool.pending === 0 ? '#10b981' : '#f59e0b',
-                  transition: 'width 0.3s',
-                }}
-              />
-            </div>
-            <div style={{ fontSize: '10px', color: '#888', marginTop: '5px', textAlign: 'right' }}>
-              {((tool.paid / tool.cost) * 100).toFixed(1)}%
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+  )
 }
