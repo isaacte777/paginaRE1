@@ -13,6 +13,7 @@ interface CellNode {
   category: string
   inputs: string[]
   calculatedValue: number
+  color?: string
 }
 
 interface Connection {
@@ -21,7 +22,23 @@ interface Connection {
   to: string
   fromPort: string
   toPort: string
+  color?: string
 }
+
+const NODE_COLORS = [
+  '#d4d4d4', // Gris claro
+  '#a3a3a3', // Gris medio
+  '#737373', // Gris oscuro
+  '#525252', // Gris más oscuro
+  '#404040', // Gris muy oscuro
+  '#262626', // Casi negro
+  '#ef4444', // Rojo
+  '#f59e0b', // Amarillo
+  '#10b981', // Verde
+  '#3b82f6', // Azul
+  '#8b5cf6', // Púrpura
+  '#ec4899', // Rosa
+]
 
 const CELL_TYPES = [
   { id: 'input', name: 'Entrada', icon: 'I', desc: 'Valor manual', color: '#d4d4d4' },
@@ -156,6 +173,8 @@ export default function FamilyFinanceFlow() {
   ])
 
   const [selected, setSelected] = useState<string | null>(null)
+  const [selectedConnection, setSelectedConnection] = useState<string | null>(null)
+  const [highlightConnections, setHighlightConnections] = useState(false)
   const [zoom, setZoom] = useState(100)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState<string | null>(null)
@@ -292,6 +311,7 @@ export default function FamilyFinanceFlow() {
       const cell = cells.find(c => c.id === cellId)
       if (cell) {
         setSelected(cellId)
+        setSelectedConnection(null)
         setDragging(cellId)
         const rect = viewportRef.current?.getBoundingClientRect()
         if (rect) {
@@ -369,6 +389,7 @@ export default function FamilyFinanceFlow() {
   const handleViewportClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).id === 'world') {
       setSelected(null)
+      setSelectedConnection(null)
     }
   }
 
@@ -492,6 +513,9 @@ export default function FamilyFinanceFlow() {
               <marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8.5" refY="4.5" orient="auto">
                 <path d="M0,0 L9,4.5 L0,9 Z" fill="#666"></path>
               </marker>
+              <marker id="arrow-highlight" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" refX="9.5" refY="5.5" orient="auto">
+                <path d="M0,0 L11,5.5 L0,11 Z" fill="#fff"></path>
+              </marker>
             </defs>
             {connections.map(conn => {
               const fromCell = cells.find(c => c.id === conn.from)
@@ -503,15 +527,38 @@ export default function FamilyFinanceFlow() {
               const x2 = toCell.x
               const y2 = toCell.y + toCell.height / 2
 
+              // Determinar si esta conexión debe resaltarse
+              const isHighlighted = selected && highlightConnections && (conn.from === selected || conn.to === selected)
+              const strokeColor = isHighlighted ? '#fff' : (conn.color || '#555')
+              const strokeWidth = isHighlighted ? 3 : 2
+              const opacity = selected && highlightConnections && !isHighlighted ? 0.2 : 1
+
               return (
-                <path
-                  key={conn.id}
-                  d={`M${x1},${y1} C${x1 + 50},${y1} ${x2 - 50},${y2} ${x2},${y2}`}
-                  stroke="#555"
-                  strokeWidth="2"
-                  fill="none"
-                  markerEnd="url(#arrow)"
-                />
+                <g key={conn.id}>
+                  {/* Invisible path for easier clicking */}
+                  <path
+                    d={`M${x1},${y1} C${x1 + 50},${y1} ${x2 - 50},${y2} ${x2},${y2}`}
+                    stroke="transparent"
+                    strokeWidth="20"
+                    fill="none"
+                    style={{ cursor: 'pointer', pointerEvents: 'stroke' }}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedConnection(conn.id)
+                      setSelected(null)
+                    }}
+                  />
+                  {/* Visible path */}
+                  <path
+                    d={`M${x1},${y1} C${x1 + 50},${y1} ${x2 - 50},${y2} ${x2},${y2}`}
+                    stroke={strokeColor}
+                    strokeWidth={strokeWidth}
+                    fill="none"
+                    opacity={opacity}
+                    markerEnd={isHighlighted ? "url(#arrow-highlight)" : "url(#arrow)"}
+                    style={{ transition: 'all 0.3s ease', pointerEvents: 'none' }}
+                  />
+                </g>
               )
             })}
             {connecting && (
@@ -529,7 +576,25 @@ export default function FamilyFinanceFlow() {
           {cells.map(cell => {
             const isSelected = selected === cell.id
             const cellTypeInfo = CELL_TYPES.find(t => t.name === cell.category)
-            const borderColor = isSelected ? '#fff' : '#404040'
+            
+            // Determinar si esta celda está conectada al nodo seleccionado
+            const isConnected = selected && highlightConnections && connections.some(
+              conn => (conn.from === selected && conn.to === cell.id) || (conn.to === selected && conn.from === cell.id)
+            )
+            
+            // Determinar el color del borde
+            let borderColor = '#404040'
+            if (isSelected) {
+              borderColor = '#fff'
+            } else if (cell.color) {
+              borderColor = cell.color
+            }
+            
+            // Determinar la opacidad de la celda
+            let opacity = 1
+            if (selected && highlightConnections && !isSelected && !isConnected) {
+              opacity = 0.3
+            }
 
             return (
               <div
@@ -549,9 +614,10 @@ export default function FamilyFinanceFlow() {
                   cursor: 'grab',
                   userSelect: 'none',
                   boxShadow: isSelected ? '0 0 25px rgba(255,255,255,0.25)' : '0 6px 16px rgba(0,0,0,0.6)',
-                  transition: dragging === cell.id ? 'none' : 'box-shadow 0.2s',
+                  transition: dragging === cell.id ? 'none' : 'all 0.3s ease',
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  opacity
                 }}
               >
                 {/* Header */}
@@ -668,6 +734,23 @@ export default function FamilyFinanceFlow() {
           borderRadius: 6,
           padding: '6px 10px'
         }}>
+          <button 
+            onClick={() => setHighlightConnections(!highlightConnections)}
+            style={{
+              background: highlightConnections ? '#404040' : '#1a1a1a',
+              border: '1px solid #333', 
+              color: highlightConnections ? '#fff' : '#ccc',
+              padding: '6px 12px', 
+              borderRadius: 4, 
+              cursor: 'pointer', 
+              fontSize: 11, 
+              fontWeight: 600,
+              marginRight: 8
+            }}
+            title="Resaltar conexiones del nodo seleccionado"
+          >
+            🔗 {highlightConnections ? 'ON' : 'OFF'}
+          </button>
           <button onClick={() => setZoom(z => Math.max(20, z - 10))} style={{
             background: '#1a1a1a', border: '1px solid #333', color: '#ccc',
             width: 28, height: 28, borderRadius: 4, cursor: 'pointer',
@@ -686,7 +769,114 @@ export default function FamilyFinanceFlow() {
         </div>
       </div>
 
-      {/* RIGHT PANEL - Properties */}
+      {/* RIGHT PANEL - Connection Properties */}
+      {selectedConnection && !selectedCell && (() => {
+        const conn = connections.find(c => c.id === selectedConnection)
+        if (!conn) return null
+        const fromCell = cells.find(c => c.id === conn.from)
+        const toCell = cells.find(c => c.id === conn.to)
+        
+        return (
+          <aside style={{
+            width: 300,
+            background: '#131416',
+            borderLeft: '1px solid #2e3134',
+            padding: 20,
+            overflowY: 'auto',
+            flexShrink: 0
+          }}>
+            <h3 style={{ color: '#a3a3a3', fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 20 }}>
+              Propiedades de Conexión
+            </h3>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>ID</label>
+              <div style={{ background: '#1a1a1a', padding: '8px 12px', borderRadius: 4, fontSize: 11, fontFamily: 'monospace' }}>{conn.id}</div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Desde</label>
+              <div style={{ background: '#1a1a1a', padding: '8px 12px', borderRadius: 4, fontSize: 11 }}>{fromCell?.label || conn.from}</div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Hacia</label>
+              <div style={{ background: '#1a1a1a', padding: '8px 12px', borderRadius: 4, fontSize: 11 }}>{toCell?.label || conn.to}</div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Color de Conexión</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+                {NODE_COLORS.map((color, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setConnections(prev => prev.map(c => 
+                        c.id === conn.id ? { ...c, color } : c
+                      ))
+                    }}
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      background: color,
+                      border: conn.color === color ? '2px solid #fff' : '1px solid #333',
+                      borderRadius: 4,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    title={color}
+                  />
+                ))}
+              </div>
+              {conn.color && (
+                <button
+                  onClick={() => {
+                    setConnections(prev => prev.map(c => 
+                      c.id === conn.id ? { ...c, color: undefined } : c
+                    ))
+                  }}
+                  style={{
+                    width: '100%',
+                    marginTop: 8,
+                    padding: '6px',
+                    background: '#2a2a2a',
+                    border: '1px solid #333',
+                    borderRadius: 4,
+                    color: '#888',
+                    cursor: 'pointer',
+                    fontSize: 10
+                  }}
+                >
+                  Quitar Color
+                </button>
+              )}
+            </div>
+
+            <button 
+              onClick={() => {
+                setConnections(prev => prev.filter(c => c.id !== conn.id))
+                setSelectedConnection(null)
+              }}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: '#333',
+                border: 'none',
+                borderRadius: 6,
+                color: '#ccc',
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 12,
+                fontWeight: 600
+              }}
+            >
+              Eliminar Conexión
+            </button>
+          </aside>
+        )
+      })()}
+
+      {/* RIGHT PANEL - Cell Properties */}
       {selectedCell && (
         <aside style={{
           width: 300,
@@ -712,6 +902,46 @@ export default function FamilyFinanceFlow() {
               onChange={e => updateCell(selectedCell.id, { label: e.target.value })}
               style={{ width: '100%', background: '#0b0c0d', border: '1px solid #333', color: '#ccc', padding: '8px 12px', borderRadius: 4, fontFamily: 'inherit', fontSize: 12 }}
             />
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 6, textTransform: 'uppercase' }}>Color del Nodo</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 6 }}>
+              {NODE_COLORS.map((color, index) => (
+                <button
+                  key={index}
+                  onClick={() => updateCell(selectedCell.id, { color })}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '1',
+                    background: color,
+                    border: selectedCell.color === color ? '2px solid #fff' : '1px solid #333',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                  title={color}
+                />
+              ))}
+            </div>
+            {selectedCell.color && (
+              <button
+                onClick={() => updateCell(selectedCell.id, { color: undefined })}
+                style={{
+                  width: '100%',
+                  marginTop: 8,
+                  padding: '6px',
+                  background: '#2a2a2a',
+                  border: '1px solid #333',
+                  borderRadius: 4,
+                  color: '#888',
+                  cursor: 'pointer',
+                  fontSize: 10
+                }}
+              >
+                Quitar Color
+              </button>
+            )}
           </div>
 
           <div style={{ marginBottom: 16 }}>
