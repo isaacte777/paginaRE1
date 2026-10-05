@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import FinanceFlow from './components/FinanceFlow'
+import FamilyFinanceFlow from './components/FamilyFinanceFlow'
 
 interface Node {
   id: string
@@ -76,6 +77,7 @@ export default function App() {
   const [searchText, setSearchText] = useState('')
   const [rightTab, setRightTab] = useState<'props' | 'stats'>('props')
   const [currentView, setCurrentView] = useState<'flow' | 'finance_flow'>('flow')
+  const [financeTemplate, setFinanceTemplate] = useState<'computo' | 'family'>('computo')
   const viewportRef = useRef<HTMLDivElement>(null)
   const [viewSize, setViewSize] = useState({ w: 800, h: 600 })
 
@@ -358,8 +360,42 @@ export default function App() {
           >
             💰 Finanzas
           </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setFinanceTemplate('computo')}
+              style={{
+                background: financeTemplate === 'computo' ? '#404040' : '#1a1c1e',
+                border: '1px solid #2e3134',
+                color: financeTemplate === 'computo' ? '#fff' : '#c9ccd0',
+                padding: '6px 16px',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 11,
+                fontWeight: financeTemplate === 'computo' ? 600 : 400
+              }}
+            >
+              🏗️ Cómputo Gere
+            </button>
+            <button
+              onClick={() => setFinanceTemplate('family')}
+              style={{
+                background: financeTemplate === 'family' ? '#404040' : '#1a1c1e',
+                border: '1px solid #2e3134',
+                color: financeTemplate === 'family' ? '#fff' : '#c9ccd0',
+                padding: '6px 16px',
+                borderRadius: 4,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                fontSize: 11,
+                fontWeight: financeTemplate === 'family' ? 600 : 400
+              }}
+            >
+              👨‍👩‍👧 Sistema Familiar
+            </button>
+          </div>
         </div>
-        <FinanceFlow />
+        {financeTemplate === 'computo' ? <FinanceFlow /> : <FamilyFinanceFlow />}
       </div>
     )
   }
