@@ -47,6 +47,10 @@ const CELL_TYPES = [
 let idCounter = 0
 const genId = () => `c${++idCounter}`
 
+interface FinanceFlowProps {
+  template?: 'computo' | 'family'
+}
+
 const createCell = (
   x: number, y: number, width: number, height: number,
   label: string, value: number | string, operation: 'none' | 'sum' | 'subtract' | 'multiply' | 'divide' | 'percentage',
@@ -58,7 +62,7 @@ const createCell = (
   operation, format, category, shape, inputs, calculatedValue, color
 })
 
-export default function FinanceFlow() {
+export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) {
   const [cells, setCells] = useState<CellNode[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
   const [selected, setSelected] = useState<string | null>(null)
