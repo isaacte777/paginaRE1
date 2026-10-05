@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import FinanceManager from './components/FinanceManager'
+import FinanceDashboard from './components/FinanceDashboard'
 
 interface Node {
   id: string
@@ -75,7 +75,7 @@ export default function App() {
   const [projectTitle, setProjectTitle] = useState('orquestador_paginaRE')
   const [searchText, setSearchText] = useState('')
   const [rightTab, setRightTab] = useState<'props' | 'stats'>('props')
-  const [showFinance, setShowFinance] = useState(false)
+  const [currentView, setCurrentView] = useState<'flow' | 'finance'>('flow')
   const viewportRef = useRef<HTMLDivElement>(null)
   const [viewSize, setViewSize] = useState({ w: 800, h: 600 })
 
@@ -305,6 +305,65 @@ export default function App() {
     return '#5c6166'
   }
 
+  // Si la vista actual es finanzas, renderizar FinanceDashboard completo
+  if (currentView === 'finance') {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#0b0c0d',
+        color: '#c9ccd0',
+        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        fontSize: '12px',
+        overflow: 'hidden'
+      }}>
+        {/* Navigation Bar */}
+        <div style={{
+          background: '#131416',
+          borderBottom: '1px solid #2e3134',
+          padding: '8px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <button
+            onClick={() => setCurrentView('flow')}
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              color: '#c9ccd0',
+              padding: '8px 20px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            ⚡ Flujo
+          </button>
+          <button
+            style={{
+              background: '#10b981',
+              border: 'none',
+              color: '#fff',
+              padding: '8px 20px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            💰 Finanzas
+          </button>
+        </div>
+        <FinanceDashboard />
+      </div>
+    )
+  }
+
   return (
     <div style={{
       height: '100vh',
@@ -316,6 +375,48 @@ export default function App() {
       fontSize: '12px',
       overflow: 'hidden'
     }}>
+      {/* Navigation Bar */}
+      <div style={{
+        background: '#131416',
+        borderBottom: '1px solid #2e3134',
+        padding: '8px 20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px'
+      }}>
+        <button
+          style={{
+            background: '#ec4899',
+            border: 'none',
+            color: '#fff',
+            padding: '8px 20px',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 12,
+            fontWeight: 600
+          }}
+        >
+          ⚡ Flujo
+        </button>
+        <button
+          onClick={() => setCurrentView('finance')}
+          style={{
+            background: '#1a1c1e',
+            border: '1px solid #2e3134',
+            color: '#c9ccd0',
+            padding: '8px 20px',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 12,
+            fontWeight: 600
+          }}
+        >
+          💰 Finanzas
+        </button>
+      </div>
+
       {/* HEADER */}
       <header style={{
         background: '#131416',
@@ -380,7 +481,6 @@ export default function App() {
         <button onClick={() => setShowChat(true)} style={btnStyle} title="panel de chat">💬</button>
         <button style={btnStyle} title="inspector">🔍</button>
         <button onClick={() => setShowExport(!showExport)} style={btnStyle} title="exportar">📦</button>
-        <button onClick={() => setShowFinance(true)} style={{ ...btnStyle, background: '#10b981', color: '#fff', border: 'none' }} title="control de gastos">💰 Gastos</button>
         <button onClick={newNode} style={{ ...btnStyle, background: '#ec4899', color: '#fff', border: 'none' }} title="nuevo diagrama">nuevo</button>
       </header>
 
@@ -939,10 +1039,7 @@ export default function App() {
         </div>
       )}
 
-      {/* FINANCE MANAGER */}
-      {showFinance && (
-        <FinanceManager onClose={() => setShowFinance(false)} />
-      )}
+
     </div>
   )
 }
