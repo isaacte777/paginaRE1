@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { PieChart, LineChart, MetricCard, Sparkline } from './Charts'
 
 interface Transaction {
   id: string
@@ -140,7 +141,23 @@ export default function FinanceDashboard() {
 
   const maxCategoryAmount = Math.max(...Object.values(categoryTotals), 1)
 
-  // Datos para gráfico de barras mensual
+  // Colores para categorías
+  const categoryColors = [
+    '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
+    '#ec4899', '#14b8a6', '#f97316', '#6366f1', '#84cc16'
+  ]
+
+  // Datos para gráfico circular de distribución de gastos
+  const pieChartData = Object.entries(categoryTotals)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8)
+    .map(([category, amount], index) => ({
+      label: category,
+      value: amount,
+      color: categoryColors[index % categoryColors.length]
+    }))
+
+  // Datos para gráfico de líneas mensual (últimos 6 meses)
   const monthlyData = transactions.reduce((acc, t) => {
     const month = t.date.substring(0, 7)
     if (!acc[month]) {
@@ -150,15 +167,45 @@ export default function FinanceDashboard() {
     return acc
   }, {} as Record<string, { income: number; expense: number; payment: number }>)
 
-  const last6Months = Object.entries(monthlyData)
+  const last6MonthsData = Object.entries(monthlyData)
     .sort(([a], [b]) => b.localeCompare(a))
     .slice(0, 6)
     .reverse()
+    .map(([month, data]) => ({
+      label: month.substring(5),
+      ...data
+    }))
 
   const maxMonthlyAmount = Math.max(
     ...Object.values(monthlyData).flatMap(m => [m.income, m.expense, m.payment]),
     1
   )
+
+  // Datos para sparklines (últimos 7 días)
+  const last7DaysData = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date()
+    date.setDate(date.getDate() - (6 - i))
+    const dateStr = date.toISOString().split('T')[0]
+    const dayTransactions = transactions.filter(t => t.date === dateStr)
+    return {
+      income: dayTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
+      expense: dayTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
+      payment: dayTransactions.filter(t => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0)
+    }
+  })
+
+  // Métricas con comparación mes anterior
+  const currentMonth = filterMonth
+  const previousMonth = (() => {
+    const [year, month] = currentMonth.split('-').map(Number)
+    const prevDate = new Date(year, month - 2, 1)
+    return `${prevDate.getFullYear()}-${String(prevDate.getMonth() + 1).padStart(2, '0')}`
+  })()
+
+  const previousMonthTransactions = transactions.filter(t => t.date.startsWith(previousMonth))
+  const previousIncome = previousMonthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0)
+  const previousExpense = previousMonthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0)
+  const previousPayment = previousMonthTransactions.filter(t => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0)
 
   return (
     <div style={{
@@ -272,120 +319,122 @@ export default function FinanceDashboard() {
 
         {/* MAIN AREA */}
         <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
-          {/* Summary Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 24 }}>
-            <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134' }}>
-              <div style={{ fontSize: 10, color: '#5c6166', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Ingresos</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#10b981' }}>${totalIncome.toFixed(2)}</div>
-              <div style={{ fontSize: 10, color: '#5c6166', marginTop: 4 }}>
-                {filteredTransactions.filter(t => t.type === 'income').length} transacciones
+          {/* Métricas con comparación mes anterior */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginBottom: 24 }}>
+            <MetricCard
+              title="Ingresos"
+              value={totalIncome}
+              previousValue={previousIncome}
+              color="#10b981"
+              icon="💵"
+            />
+            <MetricCard
+              title="Gastos"
+              value={totalExpense}
+              previousValue={previousExpense}
+              color="#ef4444"
+              icon="💸"
+            />
+            <MetricCard
+              title="Pagos"
+              value={totalPayment}
+              previousValue={previousPayment}
+              color="#f59e0b"
+              icon="💳"
+            />
+            <MetricCard
+              title="Balance"
+              value={balance}
+              previousValue={previousIncome - previousExpense - previousPayment}
+              color={balance >= 0 ? '#10b981' : '#ef4444'}
+              icon="📊"
+            />
+          </div>
+
+          {/* Sparklines - Tendencia últimos 7 días */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+            <div style={{ background: '#1a1c1e', padding: 16, borderRadius: 6, border: '1px solid #2e3134' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: '#5c6166' }}>Tendencia Ingresos (7 días)</div>
+                <Sparkline data={last7DaysData.map(d => d.income)} color="#10b981" width={80} height={25} />
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>
+                ${last7DaysData.reduce((sum, d) => sum + d.income, 0).toFixed(2)}
               </div>
             </div>
-            <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134' }}>
-              <div style={{ fontSize: 10, color: '#5c6166', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Gastos</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#ef4444' }}>${totalExpense.toFixed(2)}</div>
-              <div style={{ fontSize: 10, color: '#5c6166', marginTop: 4 }}>
-                {filteredTransactions.filter(t => t.type === 'expense').length} transacciones
+            <div style={{ background: '#1a1c1e', padding: 16, borderRadius: 6, border: '1px solid #2e3134' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: '#5c6166' }}>Tendencia Gastos (7 días)</div>
+                <Sparkline data={last7DaysData.map(d => d.expense)} color="#ef4444" width={80} height={25} />
+              </div>
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#ef4444' }}>
+                ${last7DaysData.reduce((sum, d) => sum + d.expense, 0).toFixed(2)}
               </div>
             </div>
-            <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134' }}>
-              <div style={{ fontSize: 10, color: '#5c6166', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Pagos</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: '#f59e0b' }}>${totalPayment.toFixed(2)}</div>
-              <div style={{ fontSize: 10, color: '#5c6166', marginTop: 4 }}>
-                {filteredTransactions.filter(t => t.type === 'payment').length} transacciones
+            <div style={{ background: '#1a1c1e', padding: 16, borderRadius: 6, border: '1px solid #2e3134' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: '#5c6166' }}>Tendencia Pagos (7 días)</div>
+                <Sparkline data={last7DaysData.map(d => d.payment)} color="#f59e0b" width={80} height={25} />
               </div>
-            </div>
-            <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134' }}>
-              <div style={{ fontSize: 10, color: '#5c6166', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Balance</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: balance >= 0 ? '#10b981' : '#ef4444' }}>
-                ${balance.toFixed(2)}
-              </div>
-              <div style={{ fontSize: 10, color: '#5c6166', marginTop: 4 }}>
-                {balance >= 0 ? 'Positivo' : 'Negativo'}
+              <div style={{ fontSize: 20, fontWeight: 700, color: '#f59e0b' }}>
+                ${last7DaysData.reduce((sum, d) => sum + d.payment, 0).toFixed(2)}
               </div>
             </div>
           </div>
 
-          {/* Charts Section */}
+          {/* Gráficos principales */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
-            {/* Monthly Bar Chart */}
+            {/* Gráfico de líneas tipo trading */}
             <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: 13, color: '#10b981' }}>Últimos 6 Meses</h3>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 180 }}>
-                {last6Months.map(([month, data]) => (
-                  <div key={month} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ display: 'flex', gap: 2, alignItems: 'flex-end', height: 150 }}>
-                      <div style={{
-                        flex: 1,
-                        height: `${(data.income / maxMonthlyAmount) * 100}%`,
-                        background: '#10b981',
-                        borderRadius: '3px 3px 0 0',
-                        minHeight: data.income > 0 ? 4 : 0
-                      }} />
-                      <div style={{
-                        flex: 1,
-                        height: `${(data.expense / maxMonthlyAmount) * 100}%`,
-                        background: '#ef4444',
-                        borderRadius: '3px 3px 0 0',
-                        minHeight: data.expense > 0 ? 4 : 0
-                      }} />
-                      <div style={{
-                        flex: 1,
-                        height: `${(data.payment / maxMonthlyAmount) * 100}%`,
-                        background: '#f59e0b',
-                        borderRadius: '3px 3px 0 0',
-                        minHeight: data.payment > 0 ? 4 : 0
-                      }} />
-                    </div>
-                    <div style={{ fontSize: 9, color: '#5c6166', textAlign: 'center' }}>
-                      {month.substring(5)}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 12, height: 12, background: '#10b981', borderRadius: 2 }}></div>
-                  <span style={{ color: '#8b9095' }}>Ingresos</span>
+              <h3 style={{ margin: '0 0 20px', fontSize: 13, color: '#10b981' }}>📈 Tendencia Mensual (Trading View)</h3>
+              {last6MonthsData.length > 0 ? (
+                <LineChart data={last6MonthsData} height={280} />
+              ) : (
+                <div style={{ color: '#5c6166', fontSize: 11, textAlign: 'center', padding: 40 }}>
+                  Sin datos históricos
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 12, height: 12, background: '#ef4444', borderRadius: 2 }}></div>
-                  <span style={{ color: '#8b9095' }}>Gastos</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <div style={{ width: 12, height: 12, background: '#f59e0b', borderRadius: 2 }}></div>
-                  <span style={{ color: '#8b9095' }}>Pagos</span>
-                </div>
-              </div>
+              )}
             </div>
 
-            {/* Top Categories */}
+            {/* Gráfico circular de distribución */}
             <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: 13, color: '#10b981' }}>Top Categorías de Gasto</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {topCategories.map(([category, amount]) => (
-                  <div key={category}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 11 }}>
-                      <span style={{ color: '#c9ccd0' }}>{category}</span>
-                      <span style={{ color: '#ef4444', fontWeight: 600 }}>${amount.toFixed(2)}</span>
-                    </div>
-                    <div style={{ height: 8, background: '#0b0c0d', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%',
-                        width: `${(amount / maxCategoryAmount) * 100}%`,
-                        background: 'linear-gradient(90deg, #ef4444, #f59e0b)',
-                        borderRadius: 4,
-                        transition: 'width 0.3s'
-                      }} />
-                    </div>
+              <h3 style={{ margin: '0 0 20px', fontSize: 13, color: '#10b981' }}>🥧 Distribución de Gastos</h3>
+              {pieChartData.length > 0 ? (
+                <PieChart data={pieChartData} size={220} />
+              ) : (
+                <div style={{ color: '#5c6166', fontSize: 11, textAlign: 'center', padding: 40 }}>
+                  Sin datos de gastos
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Top Categorías con barras de progreso */}
+          <div style={{ background: '#1a1c1e', padding: 20, borderRadius: 6, border: '1px solid #2e3134', marginBottom: 24 }}>
+            <h3 style={{ margin: '0 0 20px', fontSize: 13, color: '#10b981' }}>📊 Top Categorías de Gasto</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+              {topCategories.map(([category, amount], index) => (
+                <div key={category}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 11 }}>
+                    <span style={{ color: '#c9ccd0', fontWeight: 600 }}>{category}</span>
+                    <span style={{ color: '#ef4444', fontWeight: 700 }}>${amount.toFixed(2)}</span>
                   </div>
-                ))}
-                {topCategories.length === 0 && (
-                  <div style={{ color: '#5c6166', fontSize: 11, textAlign: 'center', padding: 20 }}>
-                    Sin datos
+                  <div style={{ height: 10, background: '#0b0c0d', borderRadius: 5, overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${(amount / maxCategoryAmount) * 100}%`,
+                      background: `linear-gradient(90deg, ${categoryColors[index % categoryColors.length]}, ${categoryColors[(index + 1) % categoryColors.length]})`,
+                      borderRadius: 5,
+                      transition: 'width 0.3s'
+                    }} />
                   </div>
-                )}
-              </div>
+                </div>
+              ))}
+              {topCategories.length === 0 && (
+                <div style={{ color: '#5c6166', fontSize: 11, textAlign: 'center', padding: 20, gridColumn: '1 / -1' }}>
+                  Sin datos de categorías
+                </div>
+              )}
             </div>
           </div>
 
