@@ -1102,7 +1102,17 @@ export default function FinanceFlow() {
         onClick={handleViewportClick}
         onWheel={e => {
           e.preventDefault()
-          setZoom(z => Math.max(20, Math.min(300, z - e.deltaY * 0.1)))
+          const rect = viewportRef.current?.getBoundingClientRect()
+          if (!rect) return
+          const mouseX = e.clientX - rect.left
+          const mouseY = e.clientY - rect.top
+          const oldZoom = zoom
+          const newZoom = Math.max(20, Math.min(300, oldZoom - e.deltaY * 0.1))
+          const scale = newZoom / oldZoom
+          const newPanX = mouseX - (mouseX - pan.x) * scale
+          const newPanY = mouseY - (mouseY - pan.y) * scale
+          setZoom(newZoom)
+          setPan({ x: newPanX, y: newPanY })
         }}
         onKeyDown={e => {
           if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected()

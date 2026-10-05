@@ -391,7 +391,7 @@ export default function App() {
                 fontWeight: financeTemplate === 'family' ? 600 : 400
               }}
             >
-              👨‍👩‍👧 Sistema Familiar
+              Gestión de Gere y Milka
             </button>
           </div>
         </div>

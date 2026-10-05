@@ -447,6 +447,148 @@ export default function FamilyFinanceFlow() {
 
   const selectedCell = cells.find(c => c.id === selected)
 
+  // Funciones de renderizado de gráficos
+  const renderPieChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
+    const total = values.reduce((sum, val) => sum + val, 0)
+    if (total === 0) return null
+
+    const centerX = (cell.width - 20) / 2
+    const centerY = (cell.height - 120) / 2
+    const radius = Math.min(centerX, centerY) - 30
+    let currentAngle = -90
+    const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626']
+
+    return (
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={cell.height - 100} viewBox={`0 0 ${cell.width - 20} ${cell.height - 100}`} preserveAspectRatio="xMidYMid meet">
+          {values.map((val, i) => {
+            const percentage = val / total
+            const angle = percentage * 360
+            const startAngle = currentAngle
+            const endAngle = currentAngle + angle
+            const midAngle = startAngle + angle / 2
+            currentAngle = endAngle
+
+            const startRad = (startAngle * Math.PI) / 180
+            const endRad = (endAngle * Math.PI) / 180
+            const midRad = (midAngle * Math.PI) / 180
+
+            const x1 = centerX + radius * Math.cos(startRad)
+            const y1 = centerY + radius * Math.sin(startRad)
+            const x2 = centerX + radius * Math.cos(endRad)
+            const y2 = centerY + radius * Math.sin(endRad)
+
+            const largeArcFlag = angle > 180 ? 1 : 0
+            const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
+
+            return (
+              <g key={i}>
+                <path d={path} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="2" />
+                {percentage > 0.05 && (
+                  <text x={centerX + (radius * 0.6) * Math.cos(midRad)} y={centerY + (radius * 0.6) * Math.sin(midRad)} textAnchor="middle" fill="#fff" fontSize="11" fontWeight="bold">
+                    {(percentage * 100).toFixed(1)}%
+                  </text>
+                )}
+                {percentage > 0.03 && (
+                  <text x={centerX + (radius + 25) * Math.cos(midRad)} y={centerY + (radius + 25) * Math.sin(midRad)} textAnchor="middle" fill="#ccc" fontSize="9" fontWeight="600">
+                    {labels[i].substring(0, 18)}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    )
+  }
+
+  const renderBarChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
+    if (values.length === 0) return null
+
+    const padding = 30
+    const width = Math.max(150, cell.width - padding * 2)
+    const height = Math.max(100, cell.height - 120)
+    const maxValue = Math.max(...values)
+    const barWidth = Math.max(25, (width - 30) / values.length - 15)
+    const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252']
+
+    return (
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={height + 60} viewBox={`0 0 ${cell.width} ${height + 60}`} preserveAspectRatio="xMidYMid meet">
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line key={i} x1={padding} y1={20 + ratio * (height - 40)} x2={width + padding} y2={20 + ratio * (height - 40)} stroke="#333" strokeWidth="1" strokeDasharray="2,2" />
+          ))}
+          {values.map((val, i) => {
+            const barHeight = (val / maxValue) * (height - 30)
+            const x = 30 + i * (barWidth + 15)
+            const y = height - barHeight + 15
+            return (
+              <g key={i}>
+                <rect x={x} y={y} width={barWidth} height={barHeight} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="1" rx="2" />
+                <text x={x + barWidth / 2} y={y - 10} textAnchor="middle" fill="#ccc" fontSize="10" fontWeight="600">
+                  {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 12)}
+                </text>
+                <text x={x + barWidth / 2} y={height + 25} textAnchor="middle" fill="#888" fontSize="9" fontWeight="500">
+                  {labels[i].substring(0, 12)}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    )
+  }
+
+  const renderLineChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
+    if (values.length === 0) return null
+
+    const padding = 30
+    const width = Math.max(150, cell.width - padding * 2)
+    const height = Math.max(100, cell.height - 120)
+    const maxValue = Math.max(...values)
+    const minValue = Math.min(...values)
+    const range = maxValue - minValue || 1
+
+    const points = values.map((val, i) => {
+      const x = (i / (values.length - 1)) * width + padding
+      const y = height - ((val - minValue) / range) * (height - 40) + 20
+      return `${x},${y}`
+    }).join(' ')
+
+    return (
+      <div style={{ marginTop: 10, width: '100%', height: '100%', overflow: 'hidden' }}>
+        <svg width="100%" height={height + 60} viewBox={`0 0 ${cell.width} ${height + 60}`} preserveAspectRatio="xMidYMid meet">
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line key={i} x1={padding} y1={20 + ratio * (height - 40)} x2={width + padding} y2={20 + ratio * (height - 40)} stroke="#333" strokeWidth="1" strokeDasharray="2,2" />
+          ))}
+          <polyline points={points} fill="none" stroke="#a3a3a3" strokeWidth="2" />
+          {values.map((val, i) => {
+            const x = (i / (values.length - 1)) * width + padding
+            const y = height - ((val - minValue) / range) * (height - 40) + 20
+            const labelOffset = i % 2 === 0 ? -25 : -40
+            return (
+              <g key={i}>
+                <circle cx={x} cy={y} r="5" fill="#d4d4d4" />
+                <text x={x} y={y + labelOffset} textAnchor="middle" fill="#ccc" fontSize="9" fontWeight="600">
+                  {formatValue(val, 'currency').replace('Gs. ', '')}
+                </text>
+                <text x={x} y={height + 25} textAnchor="middle" fill="#888" fontSize="9">
+                  {labels[i].substring(0, 15)}
+                </text>
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+    )
+  }
+
   return (
     <div style={{ flex: 1, display: 'flex', overflow: 'hidden', background: '#0b0c0d', color: '#c9ccd0', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>
       {/* LEFT TOOLBOX */}
@@ -474,7 +616,20 @@ export default function FamilyFinanceFlow() {
       </aside>
 
       {/* VIEWPORT */}
-      <div ref={viewportRef} onMouseDown={e => handleMouseDown(e)} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onClick={handleViewportClick} onWheel={e => { e.preventDefault(); setZoom(z => Math.max(20, Math.min(300, z - e.deltaY * 0.1))) }} onKeyDown={e => { if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected() }} tabIndex={0} style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#0b0c0d', cursor: isPanning ? 'grabbing' : 'default' }}>
+      <div ref={viewportRef} onMouseDown={e => handleMouseDown(e)} onMouseMove={handleMouseMove} onMouseUp={handleMouseUp} onClick={handleViewportClick} onWheel={e => {
+        e.preventDefault()
+        const rect = viewportRef.current?.getBoundingClientRect()
+        if (!rect) return
+        const mouseX = e.clientX - rect.left
+        const mouseY = e.clientY - rect.top
+        const oldZoom = zoom
+        const newZoom = Math.max(20, Math.min(300, oldZoom - e.deltaY * 0.1))
+        const scale = newZoom / oldZoom
+        const newPanX = mouseX - (mouseX - pan.x) * scale
+        const newPanY = mouseY - (mouseY - pan.y) * scale
+        setZoom(newZoom)
+        setPan({ x: newPanX, y: newPanY })
+      }} onKeyDown={e => { if (e.key === 'Delete' || e.key === 'Backspace') deleteSelected() }} tabIndex={0} style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#0b0c0d', cursor: isPanning ? 'grabbing' : 'default' }}>
         <div id="world" style={{ position: 'absolute', width: 8000, height: 5000, transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom / 100})`, transformOrigin: '0 0', backgroundImage: 'radial-gradient(circle, #2e3134 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
           {/* SVG */}
           <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
@@ -520,9 +675,19 @@ export default function FamilyFinanceFlow() {
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#fff', fontFamily: 'monospace', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#333', borderRadius: 3 }}>{ct?.icon || '?'}</span>
                   <div style={{ flex: 1, fontSize: 10, fontWeight: 600, color: '#e5e5e5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cell.label}</div>
                 </div>
-                <div style={{ padding: '6px 10px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  {cell.formula && <div style={{ fontSize: 8, color: '#666', marginBottom: 2, fontFamily: 'monospace' }}>= {cell.formula.substring(0, 30)}</div>}
-                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{formatValue(cell.calculatedValue, cell.format)}</div>
+                <div style={{ padding: '6px 10px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
+                  {cell.category === 'Gráfico Circular' ? (
+                    renderPieChart(cell)
+                  ) : cell.category === 'Gráfico Barras' ? (
+                    renderBarChart(cell)
+                  ) : cell.category === 'Gráfico Línea' ? (
+                    renderLineChart(cell)
+                  ) : (
+                    <>
+                      {cell.formula && <div style={{ fontSize: 8, color: '#666', marginBottom: 2, fontFamily: 'monospace' }}>= {cell.formula.substring(0, 30)}</div>}
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{formatValue(cell.calculatedValue, cell.format)}</div>
+                    </>
+                  )}
                 </div>
                 <div data-cell-id={cell.id} data-port="input1" onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input1') }} style={{ position: 'absolute', left: -7, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: '50%', background: '#444', border: '2px solid #0b0c0d', cursor: 'crosshair' }} />
                 <div data-cell-id={cell.id} data-port="output" onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'output') }} style={{ position: 'absolute', right: -7, top: '50%', transform: 'translateY(-50%)', width: 14, height: 14, borderRadius: '50%', background: '#666', border: '2px solid #0b0c0d', cursor: 'crosshair' }} />
