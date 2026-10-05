@@ -38,6 +38,10 @@ const CELL_TYPES = [
   { id: 'total', name: 'Total', icon: 'G', desc: 'Total general', color: '#171717' },
   { id: 'currency', name: 'Moneda', icon: '$', desc: 'Formato Gs.', color: '#d4d4d4' },
   { id: 'reference', name: 'Referencia', icon: 'R', desc: 'Referencia a celda', color: '#a3a3a3' },
+  { id: 'line_chart', name: 'Gráfico Línea', icon: 'L', desc: 'Tendencia escalera', color: '#e5e5e5' },
+  { id: 'pie_chart', name: 'Gráfico Circular', icon: 'O', desc: 'Distribución %', color: '#d4d4d4' },
+  { id: 'bar_chart', name: 'Gráfico Barras', icon: 'B', desc: 'Comparación', color: '#a3a3a3' },
+  { id: 'percentage_chart', name: 'Porcentaje', icon: '%', desc: 'Visualización %', color: '#737373' },
 ]
 
 let idCounter = 0
@@ -71,6 +75,12 @@ export default function FinanceFlow() {
     
     // TOTAL FINAL
     { id: 'cell_13', x: 600, y: 780, width: 220, height: 140, label: 'TOTAL + IVA', value: 0, formula: 'cell_11 + cell_12', format: 'currency', category: 'Total', inputs: ['cell_11', 'cell_12'], calculatedValue: 17622000 },
+
+    // GRÁFICOS
+    { id: 'cell_14', x: 900, y: 100, width: 300, height: 200, label: 'Tendencia de Costos', value: 0, formula: '', format: 'number', category: 'Gráfico Línea', inputs: ['cell_4', 'cell_7', 'cell_10', 'cell_11', 'cell_12', 'cell_13'], calculatedValue: 0 },
+    { id: 'cell_15', x: 900, y: 350, width: 300, height: 250, label: 'Distribución de Costos', value: 0, formula: '', format: 'percentage', category: 'Gráfico Circular', inputs: ['cell_4', 'cell_7', 'cell_10', 'cell_12'], calculatedValue: 0 },
+    { id: 'cell_16', x: 900, y: 650, width: 300, height: 200, label: 'Comparación de Ítems', value: 0, formula: '', format: 'number', category: 'Gráfico Barras', inputs: ['cell_4', 'cell_7', 'cell_10'], calculatedValue: 0 },
+    { id: 'cell_17', x: 1250, y: 200, width: 280, height: 180, label: 'Porcentaje del Total', value: 0, formula: '', format: 'percentage', category: 'Porcentaje', inputs: ['cell_4', 'cell_7', 'cell_10', 'cell_12'], calculatedValue: 0 },
   ])
 
   const [connections, setConnections] = useState<Connection[]>([
@@ -86,6 +96,24 @@ export default function FinanceFlow() {
     { id: 'conn_10', from: 'cell_11', to: 'cell_12', fromPort: 'output', toPort: 'input1' },
     { id: 'conn_11', from: 'cell_11', to: 'cell_13', fromPort: 'output', toPort: 'input1' },
     { id: 'conn_12', from: 'cell_12', to: 'cell_13', fromPort: 'output', toPort: 'input2' },
+    // Conexiones de gráficos
+    { id: 'conn_13', from: 'cell_4', to: 'cell_14', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_14', from: 'cell_7', to: 'cell_14', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_15', from: 'cell_10', to: 'cell_14', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_16', from: 'cell_11', to: 'cell_14', fromPort: 'output', toPort: 'input4' },
+    { id: 'conn_17', from: 'cell_12', to: 'cell_14', fromPort: 'output', toPort: 'input5' },
+    { id: 'conn_18', from: 'cell_13', to: 'cell_14', fromPort: 'output', toPort: 'input6' },
+    { id: 'conn_19', from: 'cell_4', to: 'cell_15', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_20', from: 'cell_7', to: 'cell_15', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_21', from: 'cell_10', to: 'cell_15', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_22', from: 'cell_12', to: 'cell_15', fromPort: 'output', toPort: 'input4' },
+    { id: 'conn_23', from: 'cell_4', to: 'cell_16', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_24', from: 'cell_7', to: 'cell_16', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_25', from: 'cell_10', to: 'cell_16', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_26', from: 'cell_4', to: 'cell_17', fromPort: 'output', toPort: 'input1' },
+    { id: 'conn_27', from: 'cell_7', to: 'cell_17', fromPort: 'output', toPort: 'input2' },
+    { id: 'conn_28', from: 'cell_10', to: 'cell_17', fromPort: 'output', toPort: 'input3' },
+    { id: 'conn_29', from: 'cell_12', to: 'cell_17', fromPort: 'output', toPort: 'input4' },
   ])
 
   const [selected, setSelected] = useState<string | null>(null)
@@ -181,6 +209,252 @@ export default function FinanceFlow() {
       default:
         return value.toString()
     }
+  }
+
+  // Funciones de renderizado de gráficos
+  const renderLineChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    if (values.length === 0) return null
+
+    const width = cell.width - 40
+    const height = cell.height - 80
+    const maxValue = Math.max(...values)
+    const minValue = Math.min(...values)
+    const range = maxValue - minValue || 1
+
+    const points = values.map((val, i) => {
+      const x = (i / (values.length - 1)) * width + 20
+      const y = height - ((val - minValue) / range) * (height - 20) + 20
+      return `${x},${y}`
+    }).join(' ')
+
+    // Calcular cambios (subidas/bajadas)
+    const changes = values.map((val, i) => {
+      if (i === 0) return 0
+      return val - values[i - 1]
+    })
+
+    return (
+      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+          <line
+            key={i}
+            x1={20}
+            y1={20 + ratio * (height - 20)}
+            x2={width + 20}
+            y2={20 + ratio * (height - 20)}
+            stroke="#333"
+            strokeWidth="1"
+            strokeDasharray="2,2"
+          />
+        ))}
+        
+        {/* Line */}
+        <polyline
+          points={points}
+          fill="none"
+          stroke="#a3a3a3"
+          strokeWidth="2"
+        />
+        
+        {/* Points with colors based on change */}
+        {values.map((val, i) => {
+          const x = (i / (values.length - 1)) * width + 20
+          const y = height - ((val - minValue) / range) * (height - 20) + 20
+          const change = changes[i]
+          const color = change > 0 ? '#ef4444' : change < 0 ? '#10b981' : '#a3a3a3'
+          
+          return (
+            <g key={i}>
+              <circle cx={x} cy={y} r="4" fill={color} />
+              <text x={x} y={y - 10} textAnchor="middle" fill="#666" fontSize="9">
+                {formatValue(val, 'currency').replace('Gs. ', '')}
+              </text>
+            </g>
+          )
+        })}
+        
+        {/* Legend */}
+        <text x={width / 2 + 20} y={height + 15} textAnchor="middle" fill="#888" fontSize="10">
+          Tendencia de valores
+        </text>
+      </svg>
+    )
+  }
+
+  const renderPieChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
+    const total = values.reduce((sum, val) => sum + val, 0)
+    
+    if (total === 0) return null
+
+    const centerX = (cell.width - 20) / 2
+    const centerY = (cell.height - 80) / 2
+    const radius = Math.min(centerX, centerY) - 10
+
+    let currentAngle = -90
+    const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626']
+
+    return (
+      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
+        {values.map((val, i) => {
+          const percentage = val / total
+          const angle = percentage * 360
+          const startAngle = currentAngle
+          const endAngle = currentAngle + angle
+          currentAngle = endAngle
+
+          const startRad = (startAngle * Math.PI) / 180
+          const endRad = (endAngle * Math.PI) / 180
+
+          const x1 = centerX + radius * Math.cos(startRad)
+          const y1 = centerY + radius * Math.sin(startRad)
+          const x2 = centerX + radius * Math.cos(endRad)
+          const y2 = centerY + radius * Math.sin(endRad)
+
+          const largeArcFlag = angle > 180 ? 1 : 0
+
+          const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
+
+          return (
+            <g key={i}>
+              <path d={path} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="2" />
+              {percentage > 0.05 && (
+                <text
+                  x={centerX + (radius * 0.6) * Math.cos((startAngle + angle / 2) * Math.PI / 180)}
+                  y={centerY + (radius * 0.6) * Math.sin((startAngle + angle / 2) * Math.PI / 180)}
+                  textAnchor="middle"
+                  fill="#fff"
+                  fontSize="10"
+                  fontWeight="bold"
+                >
+                  {(percentage * 100).toFixed(1)}%
+                </text>
+              )}
+            </g>
+          )
+        })}
+        
+        {/* Legend */}
+        {labels.slice(0, 4).map((label, i) => (
+          <g key={i}>
+            <rect x={10} y={cell.height - 70 + i * 14} width={8} height={8} fill={colors[i % colors.length]} />
+            <text x={22} y={cell.height - 63 + i * 14} fill="#888" fontSize="9">
+              {label.substring(0, 15)}
+            </text>
+          </g>
+        ))}
+      </svg>
+    )
+  }
+
+  const renderBarChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
+    
+    if (values.length === 0) return null
+
+    const width = cell.width - 40
+    const height = cell.height - 80
+    const maxValue = Math.max(...values)
+    const barWidth = (width - 20) / values.length - 10
+    const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252']
+
+    return (
+      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
+        {/* Grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+          <line
+            key={i}
+            x1={20}
+            y1={height - ratio * height + 10}
+            x2={width + 20}
+            y2={height - ratio * height + 10}
+            stroke="#333"
+            strokeWidth="1"
+            strokeDasharray="2,2"
+          />
+        ))}
+        
+        {/* Bars */}
+        {values.map((val, i) => {
+          const barHeight = (val / maxValue) * (height - 20)
+          const x = 25 + i * (barWidth + 10)
+          const y = height - barHeight + 10
+
+          return (
+            <g key={i}>
+              <rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={barHeight}
+                fill={colors[i % colors.length]}
+                stroke="#0b0c0d"
+                strokeWidth="1"
+              />
+              <text
+                x={x + barWidth / 2}
+                y={y - 5}
+                textAnchor="middle"
+                fill="#888"
+                fontSize="9"
+              >
+                {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 8)}
+              </text>
+              <text
+                x={x + barWidth / 2}
+                y={height + 15}
+                textAnchor="middle"
+                fill="#666"
+                fontSize="8"
+              >
+                {labels[i].substring(0, 8)}
+              </text>
+            </g>
+          )
+        })}
+      </svg>
+    )
+  }
+
+  const renderPercentageChart = (cell: CellNode) => {
+    const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
+    const total = values.reduce((sum, val) => sum + val, 0)
+    
+    if (total === 0) return null
+
+    const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040']
+    const barHeight = 20
+
+    return (
+      <div style={{ padding: 10, marginTop: 10 }}>
+        {values.map((val, i) => {
+          const percentage = (val / total) * 100
+          return (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 10 }}>
+                <span style={{ color: '#ccc' }}>{labels[i].substring(0, 20)}</span>
+                <span style={{ color: '#fff', fontWeight: 600 }}>{percentage.toFixed(1)}%</span>
+              </div>
+              <div style={{ height: barHeight, background: '#1a1a1a', borderRadius: 4, overflow: 'hidden', border: '1px solid #333' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${percentage}%`,
+                    background: colors[i % colors.length],
+                    transition: 'width 0.3s ease'
+                  }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
   const addCell = (type: string) => {
@@ -520,55 +794,95 @@ export default function FinanceFlow() {
                 </div>
 
                 {/* Content */}
-                <div style={{ padding: '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  {cell.formula && (
-                    <div style={{ fontSize: 9, color: '#666', marginBottom: 4, fontFamily: 'monospace' }}>
-                      = {cell.formula}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
-                    {formatValue(cell.calculatedValue, cell.format)}
-                  </div>
-                  {cell.inputs.length > 0 && (
-                    <div style={{ fontSize: 9, color: '#888', marginTop: 4 }}>
-                      {cell.inputs.length} input{cell.inputs.length > 1 ? 's' : ''}
-                    </div>
+                <div style={{ padding: '10px 12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', overflow: 'hidden' }}>
+                  {cell.category === 'Gráfico Línea' ? (
+                    renderLineChart(cell)
+                  ) : cell.category === 'Gráfico Circular' ? (
+                    renderPieChart(cell)
+                  ) : cell.category === 'Gráfico Barras' ? (
+                    renderBarChart(cell)
+                  ) : cell.category === 'Porcentaje' ? (
+                    renderPercentageChart(cell)
+                  ) : (
+                    <>
+                      {cell.formula && (
+                        <div style={{ fontSize: 9, color: '#666', marginBottom: 4, fontFamily: 'monospace' }}>
+                          = {cell.formula}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#fff' }}>
+                        {formatValue(cell.calculatedValue, cell.format)}
+                      </div>
+                      {cell.inputs.length > 0 && (
+                        <div style={{ fontSize: 9, color: '#888', marginTop: 4 }}>
+                          {cell.inputs.length} input{cell.inputs.length > 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
                 {/* Input Ports */}
-                <div
-                  data-cell-id={cell.id}
-                  data-port="input1"
-                  onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input1') }}
-                  style={{
-                    position: 'absolute',
-                    left: -8,
-                    top: '30%',
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    background: '#444',
-                    border: '3px solid #0b0c0d',
-                    cursor: 'crosshair'
-                  }}
-                />
-                <div
-                  data-cell-id={cell.id}
-                  data-port="input2"
-                  onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input2') }}
-                  style={{
-                    position: 'absolute',
-                    left: -8,
-                    top: '70%',
-                    width: 16,
-                    height: 16,
-                    borderRadius: '50%',
-                    background: '#444',
-                    border: '3px solid #0b0c0d',
-                    cursor: 'crosshair'
-                  }}
-                />
+                {cell.category.startsWith('Gráfico') || cell.category === 'Porcentaje' ? (
+                  // Múltiples puertos para gráficos
+                  <>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <div
+                        key={`input${i + 1}`}
+                        data-cell-id={cell.id}
+                        data-port={`input${i + 1}`}
+                        onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, `input${i + 1}`) }}
+                        style={{
+                          position: 'absolute',
+                          left: -8,
+                          top: `${20 + i * 13}%`,
+                          width: 14,
+                          height: 14,
+                          borderRadius: '50%',
+                          background: '#444',
+                          border: '3px solid #0b0c0d',
+                          cursor: 'crosshair'
+                        }}
+                      />
+                    ))}
+                  </>
+                ) : (
+                  // Puertos estándar para celdas normales
+                  <>
+                    <div
+                      data-cell-id={cell.id}
+                      data-port="input1"
+                      onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input1') }}
+                      style={{
+                        position: 'absolute',
+                        left: -8,
+                        top: '30%',
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        background: '#444',
+                        border: '3px solid #0b0c0d',
+                        cursor: 'crosshair'
+                      }}
+                    />
+                    <div
+                      data-cell-id={cell.id}
+                      data-port="input2"
+                      onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id, 'input2') }}
+                      style={{
+                        position: 'absolute',
+                        left: -8,
+                        top: '70%',
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        background: '#444',
+                        border: '3px solid #0b0c0d',
+                        cursor: 'crosshair'
+                      }}
+                    />
+                  </>
+                )}
 
                 {/* Output Port */}
                 <div
