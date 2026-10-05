@@ -15,6 +15,12 @@ interface CellNode {
   calculatedValue: number
 }
 
+// Constantes de tamaño
+const MIN_WIDTH = 150
+const MIN_HEIGHT = 80
+const MAX_WIDTH = 500
+const MAX_HEIGHT = 400
+
 interface Connection {
   id: string
   from: string
@@ -126,6 +132,7 @@ export default function FinanceFlow() {
   const [isPanning, setIsPanning] = useState(false)
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [editingCell, setEditingCell] = useState<CellNode | null>(null)
+  const [resizing, setResizing] = useState<{ cellId: string; corner: string; startX: number; startY: number; startWidth: number; startHeight: number; startCellX: number; startCellY: number } | null>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
 
   // MOTOR DE CÁLCULO - Propaga cambios
@@ -778,6 +785,23 @@ export default function FinanceFlow() {
         }
       }
     }
+  }
+
+  const handleResizeStart = (e: React.MouseEvent, cellId: string, corner: string) => {
+    e.stopPropagation()
+    const cell = cells.find(c => c.id === cellId)
+    if (!cell) return
+
+    setResizing({
+      cellId,
+      corner,
+      startX: e.clientX,
+      startY: e.clientY,
+      startWidth: cell.width,
+      startHeight: cell.height,
+      startCellX: cell.x,
+      startCellY: cell.y
+    })
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
