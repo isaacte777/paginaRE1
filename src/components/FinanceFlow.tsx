@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef } from 'react'
 
 interface FinanceNode {
   id: string
@@ -10,6 +10,7 @@ interface FinanceNode {
   category: string
   date: string
   status: 'pending' | 'completed'
+  notes?: string
 }
 
 interface FinanceEdge {
@@ -18,25 +19,50 @@ interface FinanceEdge {
   to: string
 }
 
-const FINANCE_NODE_TYPES: Record<string, { icon: string; color: string; category: string }> = {
-  income: { icon: '💵', color: '#10b981', category: 'finanzas' },
-  expense: { icon: '💸', color: '#ef4444', category: 'finanzas' },
-  payment: { icon: '💳', color: '#f59e0b', category: 'finanzas' },
-  savings: { icon: '🏦', color: '#3b82f6', category: 'finanzas' },
-  investment: { icon: '📈', color: '#8b5cf6', category: 'finanzas' },
-  debt: { icon: '💰', color: '#ec4899', category: 'finanzas' },
-  budget: { icon: '📊', color: '#14b8a6', category: 'metricas' },
-  chart_line: { icon: '📈', color: '#06b6d4', category: 'graficos' },
-  chart_pie: { icon: '🥧', color: '#f97316', category: 'graficos' },
-  chart_bar: { icon: '📊', color: '#6366f1', category: 'graficos' },
-  metric: { icon: '📉', color: '#84cc16', category: 'metricas' },
-  total: { icon: '💎', color: '#a855f7', category: 'metricas' },
-}
-
-const CATEGORIES = {
-  income: ['Salario', 'Freelance', 'Inversiones', 'Ventas', 'Bonos'],
-  expense: ['Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Entretenimiento'],
-  payment: ['Préstamos', 'Tarjetas', 'Seguros', 'Impuestos'],
+const FINANCE_NODE_TYPES: Record<string, { icon: string; color: string; category: string; description: string }> = {
+  // INGRESOS
+  income: { icon: '💵', color: '#10b981', category: 'ingresos', description: 'Ingreso general' },
+  salary: { icon: '💼', color: '#10b981', category: 'ingresos', description: 'Salario mensual' },
+  freelance: { icon: '💻', color: '#10b981', category: 'ingresos', description: 'Trabajo freelance' },
+  sales: { icon: '🛒', color: '#10b981', category: 'ingresos', description: 'Ventas de productos' },
+  services: { icon: '🔧', color: '#10b981', category: 'ingresos', description: 'Servicios técnicos' },
+  investment: { icon: '📈', color: '#10b981', category: 'ingresos', description: 'Retorno de inversión' },
+  
+  // EGRESOS
+  expense: { icon: '💸', color: '#ef4444', category: 'egresos', description: 'Gasto general' },
+  rent: { icon: '🏢', color: '#ef4444', category: 'egresos', description: 'Alquiler local' },
+  utilities: { icon: '💡', color: '#ef4444', category: 'egresos', description: 'Servicios básicos' },
+  supplies: { icon: '📦', color: '#ef4444', category: 'egresos', description: 'Insumos y materiales' },
+  equipment: { icon: '🖥️', color: '#ef4444', category: 'egresos', description: 'Equipos y hardware' },
+  software: { icon: '💿', color: '#ef4444', category: 'egresos', description: 'Licencias de software' },
+  marketing: { icon: '📢', color: '#ef4444', category: 'egresos', description: 'Publicidad y marketing' },
+  
+  // INVENTARIO
+  inventory: { icon: '📊', color: '#3b82f6', category: 'inventario', description: 'Stock de productos' },
+  purchase: { icon: '🛍️', color: '#3b82f6', category: 'inventario', description: 'Compra de mercadería' },
+  stock_in: { icon: '📥', color: '#3b82f6', category: 'inventario', description: 'Entrada de stock' },
+  stock_out: { icon: '📤', color: '#3b82f6', category: 'inventario', description: 'Salida de stock' },
+  
+  // PAGOS
+  payment: { icon: '💳', color: '#f59e0b', category: 'pagos', description: 'Pago a proveedores' },
+  loan: { icon: '🏦', color: '#f59e0b', category: 'pagos', description: 'Préstamos' },
+  taxes: { icon: '📋', color: '#f59e0b', category: 'pagos', description: 'Impuestos' },
+  insurance: { icon: '🛡️', color: '#f59e0b', category: 'pagos', description: 'Seguros' },
+  
+  // AHORRO E INVERSIÓN
+  savings: { icon: '🏦', color: '#8b5cf6', category: 'ahorro', description: 'Ahorro mensual' },
+  emergency: { icon: '🚨', color: '#8b5cf6', category: 'ahorro', description: 'Fondo de emergencia' },
+  
+  // MÉTRICAS
+  total_income: { icon: '💎', color: '#a855f7', category: 'metricas', description: 'Total de ingresos' },
+  total_expense: { icon: '💔', color: '#a855f7', category: 'metricas', description: 'Total de egresos' },
+  balance: { icon: '⚖️', color: '#a855f7', category: 'metricas', description: 'Balance final' },
+  profit: { icon: '📊', color: '#a855f7', category: 'metricas', description: 'Ganancia neta' },
+  
+  // GRÁFICOS
+  chart_pie: { icon: '🥧', color: '#06b6d4', category: 'graficos', description: 'Gráfico circular' },
+  chart_line: { icon: '📈', color: '#06b6d4', category: 'graficos', description: 'Gráfico de líneas' },
+  chart_bar: { icon: '📊', color: '#06b6d4', category: 'graficos', description: 'Gráfico de barras' },
 }
 
 let idCounter = 0
@@ -44,75 +70,84 @@ const genId = () => `fn${++idCounter}`
 
 export default function FinanceFlow() {
   const [nodes, setNodes] = useState<FinanceNode[]>([
-    // Ingresos
-    { id: 'fn1', type: 'income', x: 100, y: 100, label: 'Salario', amount: 2500, category: 'Salario', date: '2026-02-01', status: 'completed' },
-    { id: 'fn2', type: 'income', x: 100, y: 280, label: 'Freelance', amount: 800, category: 'Freelance', date: '2026-02-05', status: 'completed' },
-    { id: 'fn3', type: 'investment', x: 100, y: 460, label: 'Inversiones', amount: 350, category: 'Inversiones', date: '2026-02-10', status: 'completed' },
+    // INGRESOS DEL MES
+    { id: 'fn1', type: 'salary', x: 80, y: 80, label: 'Salario Febrero', amount: 2500, category: 'Salario', date: '2026-02-01', status: 'completed' },
+    { id: 'fn2', type: 'freelance', x: 80, y: 220, label: 'Proyecto Web Cliente', amount: 1200, category: 'Freelance', date: '2026-02-05', status: 'completed' },
+    { id: 'fn3', type: 'sales', x: 80, y: 360, label: 'Ventas Tienda', amount: 3500, category: 'Ventas', date: '2026-02-28', status: 'completed' },
+    { id: 'fn4', type: 'services', x: 80, y: 500, label: 'Servicios Técnicos', amount: 800, category: 'Servicios', date: '2026-02-20', status: 'completed' },
     
-    // Total Ingresos
-    { id: 'fn4', type: 'total', x: 400, y: 200, label: 'Total Ingresos', amount: 3650, category: 'Total', date: '2026-02-28', status: 'completed' },
+    // TOTAL INGRESOS
+    { id: 'fn5', type: 'total_income', x: 400, y: 280, label: 'Total Ingresos', amount: 8000, category: 'Total', date: '2026-02-28', status: 'completed' },
     
-    // Gastos principales
-    { id: 'fn5', type: 'expense', x: 700, y: 80, label: 'Alquiler', amount: 800, category: 'Vivienda', date: '2026-02-01', status: 'completed' },
-    { id: 'fn6', type: 'expense', x: 700, y: 220, label: 'Supermercado', amount: 450, category: 'Alimentación', date: '2026-02-15', status: 'completed' },
-    { id: 'fn7', type: 'expense', x: 700, y: 360, label: 'Transporte', amount: 150, category: 'Transporte', date: '2026-02-20', status: 'completed' },
-    { id: 'fn8', type: 'expense', x: 700, y: 500, label: 'Netflix + Spotify', amount: 25, category: 'Entretenimiento', date: '2026-02-01', status: 'completed' },
+    // EGRESOS OPERATIVOS
+    { id: 'fn6', type: 'rent', x: 700, y: 80, label: 'Alquiler Local', amount: 1200, category: 'Vivienda', date: '2026-02-01', status: 'completed' },
+    { id: 'fn7', type: 'utilities', x: 700, y: 200, label: 'Luz + Internet', amount: 180, category: 'Servicios', date: '2026-02-15', status: 'completed' },
+    { id: 'fn8', type: 'supplies', x: 700, y: 320, label: 'Insumos Oficina', amount: 250, category: 'Materiales', date: '2026-02-10', status: 'completed' },
+    { id: 'fn9', type: 'software', x: 700, y: 440, label: 'Licencias Software', amount: 150, category: 'Software', date: '2026-02-01', status: 'completed' },
+    { id: 'fn10', type: 'marketing', x: 700, y: 560, label: 'Publicidad Facebook', amount: 300, category: 'Marketing', date: '2026-02-12', status: 'completed' },
     
-    // Pagos
-    { id: 'fn9', type: 'payment', x: 1000, y: 150, label: 'Tarjeta Crédito', amount: 300, category: 'Tarjetas', date: '2026-02-25', status: 'completed' },
-    { id: 'fn10', type: 'payment', x: 1000, y: 350, label: 'Préstamo Auto', amount: 250, category: 'Préstamos', date: '2026-02-15', status: 'completed' },
+    // INVENTARIO
+    { id: 'fn11', type: 'purchase', x: 1000, y: 150, label: 'Compra Mercadería', amount: 2000, category: 'Inventario', date: '2026-02-08', status: 'completed' },
+    { id: 'fn12', type: 'equipment', x: 1000, y: 350, label: 'Nuevo Monitor', amount: 450, category: 'Equipos', date: '2026-02-18', status: 'completed' },
     
-    // Total Gastos
-    { id: 'fn11', type: 'total', x: 1300, y: 250, label: 'Total Gastos', amount: 1975, category: 'Total', date: '2026-02-28', status: 'completed' },
+    // PAGOS
+    { id: 'fn13', type: 'loan', x: 1300, y: 200, label: 'Cuota Préstamo', amount: 350, category: 'Préstamos', date: '2026-02-15', status: 'completed' },
+    { id: 'fn14', type: 'taxes', x: 1300, y: 400, label: 'Impuestos Mensuales', amount: 280, category: 'Impuestos', date: '2026-02-25', status: 'completed' },
     
-    // Ahorro
-    { id: 'fn12', type: 'savings', x: 1600, y: 200, label: 'Ahorro Mensual', amount: 1675, category: 'Ahorro', date: '2026-02-28', status: 'completed' },
+    // TOTAL EGRESOS
+    { id: 'fn15', type: 'total_expense', x: 1600, y: 300, label: 'Total Egresos', amount: 5310, category: 'Total', date: '2026-02-28', status: 'completed' },
     
-    // Gráficos
-    { id: 'fn13', type: 'chart_pie', x: 1600, y: 400, label: 'Distribución', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
-    { id: 'fn14', type: 'chart_line', x: 1900, y: 200, label: 'Tendencia', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
+    // BALANCE Y AHORRO
+    { id: 'fn16', type: 'balance', x: 1900, y: 200, label: 'Balance Final', amount: 2690, category: 'Balance', date: '2026-02-28', status: 'completed' },
+    { id: 'fn17', type: 'profit', x: 1900, y: 400, label: 'Ganancia Neta', amount: 2690, category: 'Ganancia', date: '2026-02-28', status: 'completed' },
+    { id: 'fn18', type: 'savings', x: 2200, y: 300, label: 'Ahorro Mensual', amount: 2000, category: 'Ahorro', date: '2026-02-28', status: 'completed' },
     
-    // Métricas
-    { id: 'fn15', type: 'budget', x: 1900, y: 400, label: 'Presupuesto', amount: 2000, category: 'Presupuesto', date: '2026-02-28', status: 'completed' },
-    { id: 'fn16', type: 'metric', x: 2200, y: 300, label: 'Balance Final', amount: 1675, category: 'Balance', date: '2026-02-28', status: 'completed' },
+    // GRÁFICOS
+    { id: 'fn19', type: 'chart_pie', x: 2500, y: 150, label: 'Distribución Gastos', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
+    { id: 'fn20', type: 'chart_line', x: 2500, y: 350, label: 'Tendencia Mensual', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
+    { id: 'fn21', type: 'chart_bar', x: 2500, y: 550, label: 'Ingresos vs Egresos', amount: 0, category: 'Gráfico', date: '2026-02-28', status: 'completed' },
   ])
   
   const [edges, setEdges] = useState<FinanceEdge[]>([
     // Ingresos -> Total Ingresos
-    { id: 'fe1', from: 'fn1', to: 'fn4' },
-    { id: 'fe2', from: 'fn2', to: 'fn4' },
-    { id: 'fe3', from: 'fn3', to: 'fn4' },
-    
-    // Total Ingresos -> Gastos
+    { id: 'fe1', from: 'fn1', to: 'fn5' },
+    { id: 'fe2', from: 'fn2', to: 'fn5' },
+    { id: 'fe3', from: 'fn3', to: 'fn5' },
     { id: 'fe4', from: 'fn4', to: 'fn5' },
-    { id: 'fe5', from: 'fn4', to: 'fn6' },
-    { id: 'fe6', from: 'fn4', to: 'fn7' },
-    { id: 'fe7', from: 'fn4', to: 'fn8' },
     
-    // Gastos -> Pagos
+    // Total Ingresos -> Egresos
+    { id: 'fe5', from: 'fn5', to: 'fn6' },
+    { id: 'fe6', from: 'fn5', to: 'fn7' },
+    { id: 'fe7', from: 'fn5', to: 'fn8' },
     { id: 'fe8', from: 'fn5', to: 'fn9' },
-    { id: 'fe9', from: 'fn6', to: 'fn9' },
-    { id: 'fe10', from: 'fn7', to: 'fn10' },
+    { id: 'fe9', from: 'fn5', to: 'fn10' },
     
-    // Pagos -> Total Gastos
-    { id: 'fe11', from: 'fn9', to: 'fn11' },
-    { id: 'fe12', from: 'fn10', to: 'fn11' },
+    // Egresos -> Inventario
+    { id: 'fe10', from: 'fn6', to: 'fn11' },
+    { id: 'fe11', from: 'fn7', to: 'fn12' },
     
-    // Total Ingresos - Total Gastos -> Ahorro
-    { id: 'fe13', from: 'fn4', to: 'fn12' },
-    { id: 'fe14', from: 'fn11', to: 'fn12' },
+    // Inventario -> Pagos
+    { id: 'fe12', from: 'fn11', to: 'fn13' },
+    { id: 'fe13', from: 'fn12', to: 'fn14' },
+    
+    // Pagos -> Total Egresos
+    { id: 'fe14', from: 'fn13', to: 'fn15' },
+    { id: 'fe15', from: 'fn14', to: 'fn15' },
+    
+    // Total Ingresos y Egresos -> Balance
+    { id: 'fe16', from: 'fn5', to: 'fn16' },
+    { id: 'fe17', from: 'fn15', to: 'fn16' },
+    { id: 'fe18', from: 'fn16', to: 'fn17' },
+    
+    // Balance -> Ahorro
+    { id: 'fe19', from: 'fn17', to: 'fn18' },
     
     // Ahorro -> Gráficos
-    { id: 'fe15', from: 'fn12', to: 'fn13' },
-    { id: 'fe16', from: 'fn12', to: 'fn14' },
-    
-    // Total Gastos -> Presupuesto
-    { id: 'fe17', from: 'fn11', to: 'fn15' },
-    
-    // Ahorro + Presupuesto -> Balance Final
-    { id: 'fe18', from: 'fn12', to: 'fn16' },
-    { id: 'fe19', from: 'fn15', to: 'fn16' },
+    { id: 'fe20', from: 'fn18', to: 'fn19' },
+    { id: 'fe21', from: 'fn18', to: 'fn20' },
+    { id: 'fe22', from: 'fn15', to: 'fn21' },
   ])
+
   const [selected, setSelected] = useState<string | null>(null)
   const [zoom, setZoom] = useState(100)
   const [pan, setPan] = useState({ x: 0, y: 0 })
@@ -124,6 +159,7 @@ export default function FinanceFlow() {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 })
   const [showEditModal, setShowEditModal] = useState(false)
   const [editData, setEditData] = useState<Partial<FinanceNode>>({})
+  const [activeCategory, setActiveCategory] = useState<string>('all')
   const viewportRef = useRef<HTMLDivElement>(null)
 
   const addNode = (type: string) => {
@@ -133,9 +169,9 @@ export default function FinanceFlow() {
       type,
       x: 200 + Math.random() * 300,
       y: 150 + Math.random() * 200,
-      label: `${type}`,
+      label: info.description,
       amount: 0,
-      category: type === 'income' ? 'Salario' : type === 'expense' ? 'Alimentación' : '',
+      category: '',
       date: new Date().toISOString().split('T')[0],
       status: 'completed'
     }
@@ -240,8 +276,15 @@ export default function FinanceFlow() {
 
   const getNodeColor = (type: string) => FINANCE_NODE_TYPES[type]?.color || '#666'
   const getNodeIcon = (type: string) => FINANCE_NODE_TYPES[type]?.icon || '?'
+  const getNodeCategory = (type: string) => FINANCE_NODE_TYPES[type]?.category || ''
 
   const selectedNode = nodes.find(n => n.id === selected)
+
+  const categories = ['all', ...Array.from(new Set(Object.values(FINANCE_NODE_TYPES).map(t => t.category)))]
+
+  const filteredNodeTypes = activeCategory === 'all' 
+    ? FINANCE_NODE_TYPES 
+    : Object.fromEntries(Object.entries(FINANCE_NODE_TYPES).filter(([, v]) => v.category === activeCategory))
 
   return (
     <div style={{
@@ -255,91 +298,75 @@ export default function FinanceFlow() {
     }}>
       {/* LEFT TOOLBOX */}
       <aside style={{
-        width: 200,
+        width: 220,
         background: '#131416',
         borderRight: '1px solid #2e3134',
         overflowY: 'auto',
         padding: '12px',
         flexShrink: 0
       }}>
-        <h4 style={{ color: '#10b981', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-          Finanzas
+        <h4 style={{ color: '#8b5cf6', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+          Categorías
         </h4>
-        {Object.entries(FINANCE_NODE_TYPES).filter(([, v]) => v.category === 'finanzas').map(([type, info]) => (
-          <button key={type} onClick={() => addNode(type)} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            width: '100%',
-            padding: '8px 10px',
-            background: '#1a1c1e',
-            border: '1px solid #2e3134',
-            borderRadius: 4,
-            color: '#c9ccd0',
-            cursor: 'pointer',
-            fontSize: 11,
-            marginBottom: 4,
-            textAlign: 'left'
-          }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 16 }}>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              style={{
+                padding: '4px 8px',
+                background: activeCategory === cat ? '#8b5cf6' : '#1a1c1e',
+                border: '1px solid #2e3134',
+                borderRadius: 3,
+                color: activeCategory === cat ? '#fff' : '#c9ccd0',
+                cursor: 'pointer',
+                fontSize: 9,
+                textTransform: 'capitalize'
+              }}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {Object.entries(filteredNodeTypes).map(([type, info]) => (
+          <button 
+            key={type} 
+            onClick={() => addNode(type)} 
+            title={info.description}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              width: '100%',
+              padding: '8px 10px',
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              borderRadius: 4,
+              color: '#c9ccd0',
+              cursor: 'pointer',
+              fontSize: 11,
+              marginBottom: 4,
+              textAlign: 'left'
+            }}
+          >
             <span style={{ fontSize: 16 }}>{info.icon}</span>
-            {type}
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 600 }}>{type.replace('_', ' ')}</div>
+              <div style={{ fontSize: 9, color: '#5c6166' }}>{info.description}</div>
+            </div>
           </button>
         ))}
 
-        <h4 style={{ color: '#10b981', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 8px' }}>
-          Gráficos
-        </h4>
-        {Object.entries(FINANCE_NODE_TYPES).filter(([, v]) => v.category === 'graficos').map(([type, info]) => (
-          <button key={type} onClick={() => addNode(type)} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            width: '100%',
-            padding: '8px 10px',
-            background: '#1a1c1e',
-            border: '1px solid #2e3134',
-            borderRadius: 4,
-            color: '#c9ccd0',
-            cursor: 'pointer',
-            fontSize: 11,
-            marginBottom: 4,
-            textAlign: 'left'
-          }}>
-            <span style={{ fontSize: 16 }}>{info.icon}</span>
-            {type.replace('chart_', '')}
-          </button>
-        ))}
-
-        <h4 style={{ color: '#10b981', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '16px 0 8px' }}>
-          Métricas
-        </h4>
-        {Object.entries(FINANCE_NODE_TYPES).filter(([, v]) => v.category === 'metricas').map(([type, info]) => (
-          <button key={type} onClick={() => addNode(type)} style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            width: '100%',
-            padding: '8px 10px',
-            background: '#1a1c1e',
-            border: '1px solid #2e3134',
-            borderRadius: 4,
-            color: '#c9ccd0',
-            cursor: 'pointer',
-            fontSize: 11,
-            marginBottom: 4,
-            textAlign: 'left'
-          }}>
-            <span style={{ fontSize: 16 }}>{info.icon}</span>
-            {type}
-          </button>
-        ))}
-
-        <div style={{ marginTop: 16, padding: 8, background: '#1a1c1e', borderRadius: 4, fontSize: 10, color: '#5c6166', lineHeight: 1.6 }}>
-          <b style={{ color: '#8b9095' }}>clic</b> agregar nodo<br />
-          <b style={{ color: '#8b9095' }}>drag</b> mover nodo<br />
-          <b style={{ color: '#8b9095' }}>shift+drag</b> conectar<br />
-          <b style={{ color: '#8b9095' }}>2x clic</b> editar<br />
-          <b style={{ color: '#8b9095' }}>del</b> eliminar
+        <div style={{ marginTop: 16, padding: 10, background: '#1a1c1e', borderRadius: 4, fontSize: 10, color: '#5c6166', lineHeight: 1.8 }}>
+          <b style={{ color: '#8b9095' }}>Controles:</b><br />
+          • <b>clic</b> en nodo = agregar<br />
+          • <b>drag</b> = mover nodo<br />
+          • <b>shift+drag</b> = conectar<br />
+          • <b>2x clic</b> = editar<br />
+          • <b>del</b> = eliminar seleccionado<br />
+          • <b>rueda</b> = zoom<br />
+          • <b>alt+drag</b> = pan
         </div>
       </aside>
 
@@ -408,7 +435,7 @@ export default function FinanceFlow() {
             {connecting && (
               <path
                 d={`M${(nodes.find(n => n.id === connecting)?.x || 0) + 180},${(nodes.find(n => n.id === connecting)?.y || 0) + 40} L${mousePos.x},${mousePos.y}`}
-                stroke="#10b981"
+                stroke="#8b5cf6"
                 strokeWidth="2"
                 strokeDasharray="5,5"
                 fill="none"
@@ -453,7 +480,7 @@ export default function FinanceFlow() {
                   <span style={{ fontSize: 20 }}>{getNodeIcon(node.type)}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#f2f2f2' }}>{node.label}</div>
-                    <div style={{ fontSize: 10, color: '#5c6166' }}>{node.category || node.type}</div>
+                    <div style={{ fontSize: 10, color: '#5c6166' }}>{node.category || getNodeCategory(node.type)}</div>
                   </div>
                 </div>
                 <div style={{ padding: '8px 12px', fontSize: 11 }}>
@@ -559,7 +586,7 @@ export default function FinanceFlow() {
           overflowY: 'auto',
           flexShrink: 0
         }}>
-          <h3 style={{ color: '#10b981', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
+          <h3 style={{ color: '#8b5cf6', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
             Propiedades
           </h3>
           <div style={{ marginBottom: 12 }}>
@@ -569,7 +596,7 @@ export default function FinanceFlow() {
           <div style={{ marginBottom: 12 }}>
             <label style={{ display: 'block', fontSize: 10, color: '#5c6166', marginBottom: 4 }}>Tipo</label>
             <div style={{ background: '#1a1c1e', padding: '6px 10px', borderRadius: 4, fontSize: 11, color: getNodeColor(selectedNode.type) }}>
-              {getNodeIcon(selectedNode.type)} {selectedNode.type}
+              {getNodeIcon(selectedNode.type)} {selectedNode.type.replace('_', ' ')}
             </div>
           </div>
           <div style={{ marginBottom: 12 }}>
@@ -589,7 +616,7 @@ export default function FinanceFlow() {
           <button onClick={() => openEditModal(selectedNode)} style={{
             width: '100%',
             padding: '8px',
-            background: '#10b981',
+            background: '#8b5cf6',
             border: 'none',
             borderRadius: 4,
             color: '#fff',
@@ -639,7 +666,7 @@ export default function FinanceFlow() {
             padding: 24,
             width: 400
           }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 20px', color: '#10b981', fontSize: 14 }}>Editar Nodo</h3>
+            <h3 style={{ margin: '0 0 20px', color: '#8b5cf6', fontSize: 14 }}>Editar Nodo</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 10, color: '#5c6166', marginBottom: 4 }}>Label</label>
@@ -712,11 +739,30 @@ export default function FinanceFlow() {
                   }}
                 />
               </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 10, color: '#5c6166', marginBottom: 4 }}>Notas</label>
+                <textarea
+                  value={editData.notes || ''}
+                  onChange={e => setEditData({ ...editData, notes: e.target.value })}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    background: '#0b0c0d',
+                    border: '1px solid #2e3134',
+                    color: '#c9ccd0',
+                    padding: '8px 10px',
+                    borderRadius: 4,
+                    fontFamily: 'inherit',
+                    fontSize: 11,
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button onClick={saveEdit} style={{
                   flex: 1,
                   padding: '10px',
-                  background: '#10b981',
+                  background: '#8b5cf6',
                   border: 'none',
                   borderRadius: 4,
                   color: '#fff',
