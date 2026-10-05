@@ -21,48 +21,48 @@ interface FinanceEdge {
 
 const FINANCE_NODE_TYPES: Record<string, { icon: string; color: string; category: string; description: string }> = {
   // INGRESOS
-  income: { icon: '💰', color: '#e5e5e5', category: 'ingresos', description: 'Ingreso general' },
-  salary: { icon: '💼', color: '#e5e5e5', category: 'ingresos', description: 'Salario mensual' },
-  freelance: { icon: '💻', color: '#e5e5e5', category: 'ingresos', description: 'Trabajo freelance' },
-  sales: { icon: '🛒', color: '#e5e5e5', category: 'ingresos', description: 'Ventas de productos' },
-  services: { icon: '🔧', color: '#e5e5e5', category: 'ingresos', description: 'Servicios técnicos' },
-  investment: { icon: '📈', color: '#e5e5e5', category: 'ingresos', description: 'Retorno de inversión' },
+  income: { icon: '+', color: '#d4d4d4', category: 'ingresos', description: 'Ingreso general' },
+  salary: { icon: '$', color: '#d4d4d4', category: 'ingresos', description: 'Salario mensual' },
+  freelance: { icon: '>', color: '#d4d4d4', category: 'ingresos', description: 'Trabajo freelance' },
+  sales: { icon: '#', color: '#d4d4d4', category: 'ingresos', description: 'Ventas de productos' },
+  services: { icon: '*', color: '#d4d4d4', category: 'ingresos', description: 'Servicios técnicos' },
+  investment: { icon: '^', color: '#d4d4d4', category: 'ingresos', description: 'Retorno de inversión' },
   
   // EGRESOS
-  expense: { icon: '💸', color: '#a3a3a3', category: 'egresos', description: 'Gasto general' },
-  rent: { icon: '🏢', color: '#a3a3a3', category: 'egresos', description: 'Alquiler local' },
-  utilities: { icon: '💡', color: '#a3a3a3', category: 'egresos', description: 'Servicios básicos' },
-  supplies: { icon: '📦', color: '#a3a3a3', category: 'egresos', description: 'Insumos y materiales' },
-  equipment: { icon: '🖥️', color: '#a3a3a3', category: 'egresos', description: 'Equipos y hardware' },
-  software: { icon: '💿', color: '#a3a3a3', category: 'egresos', description: 'Licencias de software' },
-  marketing: { icon: '📢', color: '#a3a3a3', category: 'egresos', description: 'Publicidad y marketing' },
+  expense: { icon: '-', color: '#a3a3a3', category: 'egresos', description: 'Gasto general' },
+  rent: { icon: '=', color: '#a3a3a3', category: 'egresos', description: 'Alquiler local' },
+  utilities: { icon: '~', color: '#a3a3a3', category: 'egresos', description: 'Servicios básicos' },
+  supplies: { icon: '[', color: '#a3a3a3', category: 'egresos', description: 'Insumos y materiales' },
+  equipment: { icon: ']', color: '#a3a3a3', category: 'egresos', description: 'Equipos y hardware' },
+  software: { icon: '{', color: '#a3a3a3', category: 'egresos', description: 'Licencias de software' },
+  marketing: { icon: '!', color: '#a3a3a3', category: 'egresos', description: 'Publicidad y marketing' },
   
   // INVENTARIO
-  inventory: { icon: '📊', color: '#737373', category: 'inventario', description: 'Stock de productos' },
-  purchase: { icon: '🛍️', color: '#737373', category: 'inventario', description: 'Compra de mercadería' },
-  stock_in: { icon: '📥', color: '#737373', category: 'inventario', description: 'Entrada de stock' },
-  stock_out: { icon: '📤', color: '#737373', category: 'inventario', description: 'Salida de stock' },
+  inventory: { icon: 'I', color: '#737373', category: 'inventario', description: 'Stock de productos' },
+  purchase: { icon: 'P', color: '#737373', category: 'inventario', description: 'Compra de mercadería' },
+  stock_in: { icon: '<', color: '#737373', category: 'inventario', description: 'Entrada de stock' },
+  stock_out: { icon: '>', color: '#737373', category: 'inventario', description: 'Salida de stock' },
   
   // PAGOS
-  payment: { icon: '💳', color: '#525252', category: 'pagos', description: 'Pago a proveedores' },
-  loan: { icon: '🏦', color: '#525252', category: 'pagos', description: 'Préstamos' },
-  taxes: { icon: '📋', color: '#525252', category: 'pagos', description: 'Impuestos' },
-  insurance: { icon: '🛡️', color: '#525252', category: 'pagos', description: 'Seguros' },
+  payment: { icon: 'K', color: '#525252', category: 'pagos', description: 'Pago a proveedores' },
+  loan: { icon: 'L', color: '#525252', category: 'pagos', description: 'Préstamos' },
+  taxes: { icon: 'T', color: '#525252', category: 'pagos', description: 'Impuestos' },
+  insurance: { icon: 'S', color: '#525252', category: 'pagos', description: 'Seguros' },
   
   // AHORRO E INVERSIÓN
-  savings: { icon: '🏦', color: '#404040', category: 'ahorro', description: 'Ahorro mensual' },
-  emergency: { icon: '🚨', color: '#404040', category: 'ahorro', description: 'Fondo de emergencia' },
+  savings: { icon: 'A', color: '#404040', category: 'ahorro', description: 'Ahorro mensual' },
+  emergency: { icon: 'E', color: '#404040', category: 'ahorro', description: 'Fondo de emergencia' },
   
   // MÉTRICAS
-  total_income: { icon: '💎', color: '#262626', category: 'metricas', description: 'Total de ingresos' },
-  total_expense: { icon: '💔', color: '#262626', category: 'metricas', description: 'Total de egresos' },
-  balance: { icon: '⚖️', color: '#262626', category: 'metricas', description: 'Balance final' },
-  profit: { icon: '📊', color: '#262626', category: 'metricas', description: 'Ganancia neta' },
+  total_income: { icon: '+', color: '#262626', category: 'metricas', description: 'Total de ingresos' },
+  total_expense: { icon: '-', color: '#262626', category: 'metricas', description: 'Total de egresos' },
+  balance: { icon: 'B', color: '#262626', category: 'metricas', description: 'Balance final' },
+  profit: { icon: '%', color: '#262626', category: 'metricas', description: 'Ganancia neta' },
   
   // GRÁFICOS
-  chart_pie: { icon: '🥧', color: '#171717', category: 'graficos', description: 'Gráfico circular' },
-  chart_line: { icon: '📈', color: '#171717', category: 'graficos', description: 'Gráfico de líneas' },
-  chart_bar: { icon: '📊', color: '#171717', category: 'graficos', description: 'Gráfico de barras' },
+  chart_pie: { icon: 'O', color: '#171717', category: 'graficos', description: 'Gráfico circular' },
+  chart_line: { icon: '/', color: '#171717', category: 'graficos', description: 'Gráfico de líneas' },
+  chart_bar: { icon: '|', color: '#171717', category: 'graficos', description: 'Gráfico de barras' },
 }
 
 let idCounter = 0
@@ -340,20 +340,32 @@ export default function FinanceFlow() {
               gap: 8,
               width: '100%',
               padding: '8px 10px',
-              background: '#1a1c1e',
-              border: '1px solid #2e3134',
+              background: '#1a1a1a',
+              border: '1px solid #333',
               borderRadius: 4,
-              color: '#c9ccd0',
+              color: '#ccc',
               cursor: 'pointer',
               fontSize: 11,
               marginBottom: 4,
               textAlign: 'left'
             }}
           >
-            <span style={{ fontSize: 16 }}>{info.icon}</span>
+            <span style={{ 
+              fontSize: 14, 
+              fontWeight: 700,
+              color: '#fff',
+              fontFamily: 'monospace',
+              width: 20,
+              height: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: '#2a2a2a',
+              borderRadius: 3
+            }}>{info.icon}</span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 600 }}>{type.replace('_', ' ')}</div>
-              <div style={{ fontSize: 9, color: '#5c6166' }}>{info.description}</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#e5e5e5' }}>{type.replace('_', ' ')}</div>
+              <div style={{ fontSize: 9, color: '#666' }}>{info.description}</div>
             </div>
           </button>
         ))}
@@ -459,25 +471,37 @@ export default function FinanceFlow() {
                   left: node.x,
                   top: node.y,
                   width: 180,
-                  background: '#1a1c1e',
-                  border: `2px solid ${isSelected ? '#ffffff' : nodeColor}`,
+                  background: '#1a1a1a',
+                  border: `2px solid ${isSelected ? '#fff' : '#404040'}`,
                   borderRadius: 8,
                   cursor: 'grab',
                   userSelect: 'none',
-                  boxShadow: isSelected ? '0 0 15px rgba(255,255,255,0.3)' : '0 4px 12px rgba(0,0,0,0.5)',
+                  boxShadow: isSelected ? '0 0 20px rgba(255,255,255,0.2)' : '0 4px 12px rgba(0,0,0,0.5)',
                   transition: dragging === node.id ? 'none' : 'box-shadow 0.2s'
                 }}
               >
                 <div style={{
                   padding: '10px 12px',
-                  background: nodeColor + '22',
-                  borderBottom: `1px solid ${nodeColor}44`,
+                  background: '#1a1a1a',
+                  borderBottom: `1px solid #333`,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,
                   borderRadius: '6px 6px 0 0'
                 }}>
-                  <span style={{ fontSize: 20 }}>{getNodeIcon(node.type)}</span>
+                  <span style={{ 
+                    fontSize: 18, 
+                    fontWeight: 700,
+                    color: '#fff',
+                    fontFamily: 'monospace',
+                    width: 24,
+                    height: 24,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#2a2a2a',
+                    borderRadius: 4
+                  }}>{getNodeIcon(node.type)}</span>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 12, fontWeight: 600, color: '#f2f2f2' }}>{node.label}</div>
                     <div style={{ fontSize: 10, color: '#5c6166' }}>{node.category || getNodeCategory(node.type)}</div>
@@ -485,11 +509,11 @@ export default function FinanceFlow() {
                 </div>
                 <div style={{ padding: '8px 12px', fontSize: 11 }}>
                   {node.amount > 0 && (
-                    <div style={{ color: nodeColor, fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
+                    <div style={{ color: '#e5e5e5', fontWeight: 700, fontSize: 14, marginBottom: 4 }}>
                       ${node.amount.toFixed(2)}
                     </div>
                   )}
-                  <div style={{ color: '#5c6166', fontSize: 10 }}>{node.date}</div>
+                  <div style={{ color: '#666', fontSize: 10 }}>{node.date}</div>
                 </div>
                 {/* Output port */}
                 <div
@@ -502,7 +526,7 @@ export default function FinanceFlow() {
                     width: 16,
                     height: 16,
                     borderRadius: '50%',
-                    background: nodeColor,
+                    background: '#666',
                     border: '3px solid #0b0c0d',
                     cursor: 'crosshair'
                   }}
@@ -594,14 +618,19 @@ export default function FinanceFlow() {
             <div style={{ background: '#1a1c1e', padding: '6px 10px', borderRadius: 4, fontSize: 11 }}>{selectedNode.id}</div>
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 10, color: '#5c6166', marginBottom: 4 }}>Tipo</label>
-            <div style={{ background: '#1a1c1e', padding: '6px 10px', borderRadius: 4, fontSize: 11, color: getNodeColor(selectedNode.type) }}>
-              {getNodeIcon(selectedNode.type)} {selectedNode.type.replace('_', ' ')}
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 4 }}>Tipo</label>
+            <div style={{ background: '#1a1a1a', padding: '6px 10px', borderRadius: 4, fontSize: 11, color: '#e5e5e5' }}>
+              <span style={{ 
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                marginRight: 6
+              }}>{getNodeIcon(selectedNode.type)}</span>
+              {selectedNode.type.replace('_', ' ')}
             </div>
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: 10, color: '#5c6166', marginBottom: 4 }}>Monto</label>
-            <div style={{ background: '#1a1c1e', padding: '6px 10px', borderRadius: 4, fontSize: 14, fontWeight: 700, color: getNodeColor(selectedNode.type) }}>
+            <label style={{ display: 'block', fontSize: 10, color: '#666', marginBottom: 4 }}>Monto</label>
+            <div style={{ background: '#1a1a1a', padding: '6px 10px', borderRadius: 4, fontSize: 14, fontWeight: 700, color: '#fff' }}>
               ${selectedNode.amount.toFixed(2)}
             </div>
           </div>

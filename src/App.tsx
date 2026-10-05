@@ -18,22 +18,22 @@ interface Edge {
 }
 
 const NODE_TYPES: Record<string, { icon: string; color: string; category: string }> = {
-  start: { icon: '▶', color: '#10b981', category: 'flujo' },
-  end: { icon: '■', color: '#ef4444', category: 'flujo' },
-  process: { icon: '⚙', color: '#3b82f6', category: 'flujo' },
-  decision: { icon: '◇', color: '#f59e0b', category: 'flujo' },
-  loop: { icon: '↻', color: '#8b5cf6', category: 'flujo' },
-  parallel: { icon: '≡', color: '#06b6d4', category: 'flujo' },
-  io: { icon: '⇄', color: '#6366f1', category: 'datos' },
-  db: { icon: '⛁', color: '#14b8a6', category: 'datos' },
-  varset: { icon: '≔', color: '#3b82f6', category: 'datos' },
-  api: { icon: '⚡', color: '#f97316', category: 'sistema' },
-  hook: { icon: '⥈', color: '#ec4899', category: 'sistema' },
-  tryc: { icon: '⛨', color: '#eab308', category: 'sistema' },
-  err: { icon: '✕', color: '#ef4444', category: 'sistema' },
-  delay: { icon: '⏱', color: '#64748b', category: 'sistema' },
-  ai: { icon: '🧠', color: '#a855f7', category: 'inteligencia' },
-  human: { icon: '👤', color: '#22d3ee', category: 'inteligencia' },
+  start: { icon: '▶', color: '#d4d4d4', category: 'flujo' },
+  end: { icon: '■', color: '#a3a3a3', category: 'flujo' },
+  process: { icon: '⚙', color: '#737373', category: 'flujo' },
+  decision: { icon: '◇', color: '#525252', category: 'flujo' },
+  loop: { icon: '↻', color: '#404040', category: 'flujo' },
+  parallel: { icon: '≡', color: '#262626', category: 'flujo' },
+  io: { icon: '⇄', color: '#d4d4d4', category: 'datos' },
+  db: { icon: '⛁', color: '#a3a3a3', category: 'datos' },
+  varset: { icon: '≔', color: '#737373', category: 'datos' },
+  api: { icon: '⚡', color: '#525252', category: 'sistema' },
+  hook: { icon: '⥈', color: '#404040', category: 'sistema' },
+  tryc: { icon: '⛨', color: '#262626', category: 'sistema' },
+  err: { icon: '✕', color: '#171717', category: 'sistema' },
+  delay: { icon: '⏱', color: '#d4d4d4', category: 'sistema' },
+  ai: { icon: '◉', color: '#a3a3a3', category: 'inteligencia' },
+  human: { icon: '◈', color: '#737373', category: 'inteligencia' },
 }
 
 const TEMPLATES = [
@@ -433,8 +433,8 @@ export default function App() {
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }}></span>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }}></span>
         </div>
-        <div style={{ fontWeight: 700, color: '#ec4899' }}>
-          flowlab <span style={{ color: '#5c6166' }}>--paginaRE</span>
+        <div style={{ fontWeight: 700, color: '#e5e5e5' }}>
+          flowlab <span style={{ color: '#666' }}>--paginaRE</span>
         </div>
         <input
           value={projectTitle}
@@ -466,8 +466,8 @@ export default function App() {
           }}
           placeholder="/buscar"
         />
-        <span style={{ fontSize: 10, color: '#5c6166' }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'inline-block', marginRight: 4 }}></span>
+        <span style={{ fontSize: 10, color: '#666' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#666', display: 'inline-block', marginRight: 4 }}></span>
           Cloud+Qwen activo
         </span>
         <div style={{ flex: 1 }}></div>
@@ -481,7 +481,7 @@ export default function App() {
         <button onClick={() => setShowChat(true)} style={btnStyle} title="panel de chat">💬</button>
         <button style={btnStyle} title="inspector">🔍</button>
         <button onClick={() => setShowExport(!showExport)} style={btnStyle} title="exportar">📦</button>
-        <button onClick={newNode} style={{ ...btnStyle, background: '#ec4899', color: '#fff', border: 'none' }} title="nuevo diagrama">nuevo</button>
+        <button onClick={newNode} style={{ ...btnStyle, background: '#404040', color: '#fff', border: 'none' }} title="nuevo diagrama">nuevo</button>
       </header>
 
       {/* MAIN */}
@@ -495,35 +495,35 @@ export default function App() {
           padding: '8px',
           flexShrink: 0
         }}>
-          <h4 style={{ color: '#ec4899', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>flujo</h4>
+          <h4 style={{ color: '#a3a3a3', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>flujo</h4>
           {Object.entries(NODE_TYPES).filter(([, v]) => v.category === 'flujo').map(([type, info]) => (
             <button key={type} onClick={() => addNode(type)} style={toolStyle(info.color)}>
               <span style={{ width: 18, textAlign: 'center' }}>{info.icon}</span>
               {type}()
             </button>
           ))}
-          <h4 style={{ color: '#ec4899', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>datos</h4>
+          <h4 style={{ color: '#a3a3a3', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>datos</h4>
           {Object.entries(NODE_TYPES).filter(([, v]) => v.category === 'datos').map(([type, info]) => (
             <button key={type} onClick={() => addNode(type)} style={toolStyle(info.color)}>
               <span style={{ width: 18, textAlign: 'center' }}>{info.icon}</span>
               {type}()
             </button>
           ))}
-          <h4 style={{ color: '#ec4899', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>sistema</h4>
+          <h4 style={{ color: '#a3a3a3', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>sistema</h4>
           {Object.entries(NODE_TYPES).filter(([, v]) => v.category === 'sistema').map(([type, info]) => (
             <button key={type} onClick={() => addNode(type)} style={toolStyle(info.color)}>
               <span style={{ width: 18, textAlign: 'center' }}>{info.icon}</span>
               {type}()
             </button>
           ))}
-          <h4 style={{ color: '#ec4899', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>inteligencia</h4>
+          <h4 style={{ color: '#a3a3a3', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>inteligencia</h4>
           {Object.entries(NODE_TYPES).filter(([, v]) => v.category === 'inteligencia').map(([type, info]) => (
             <button key={type} onClick={() => addNode(type)} style={toolStyle(info.color)}>
               <span style={{ width: 18, textAlign: 'center' }}>{info.icon}</span>
               {type}()
             </button>
           ))}
-          <h4 style={{ color: '#ec4899', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>edición</h4>
+          <h4 style={{ color: '#a3a3a3', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, margin: '12px 0 8px' }}>edición</h4>
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
@@ -730,7 +730,7 @@ export default function App() {
             <button onClick={() => setZoom(z => Math.min(300, z + 10))} style={{ ...miniBtn }}>+</button>
             <button onClick={() => { setZoom(100); setPan({ x: 0, y: 0 }) }} style={{ ...miniBtn }}>1:1</button>
             <button onClick={fitView} style={{ ...miniBtn }}>fit</button>
-            <button onClick={() => setSnap(!snap)} style={{ ...miniBtn, background: snap ? '#10b981' : '#2e3134', color: snap ? '#fff' : '#8b9095' }}>⊡</button>
+            <button onClick={() => setSnap(!snap)} style={{ ...miniBtn, background: snap ? '#404040' : '#2e3134', color: snap ? '#fff' : '#666' }}>⊡</button>
             <select value="1" style={{ fontSize: 11, background: '#1a1c1e', border: '1px solid #2e3134', color: '#c9ccd0', padding: '2px 4px', borderRadius: 3 }}>
               <option value="0.5">0.5x</option>
               <option value="1">1x</option>
@@ -750,8 +750,8 @@ export default function App() {
           flexShrink: 0
         }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #2e3134' }}>
-            <button onClick={() => setRightTab('props')} style={{ ...tabBtn, background: rightTab === 'props' ? '#1a1c1e' : 'transparent', color: rightTab === 'props' ? '#ec4899' : '#5c6166' }}>props</button>
-            <button onClick={() => setRightTab('stats')} style={{ ...tabBtn, background: rightTab === 'stats' ? '#1a1c1e' : 'transparent', color: rightTab === 'stats' ? '#ec4899' : '#5c6166' }}>stats</button>
+            <button onClick={() => setRightTab('props')} style={{ ...tabBtn, background: rightTab === 'props' ? '#1a1a1a' : 'transparent', color: rightTab === 'props' ? '#e5e5e5' : '#666' }}>props</button>
+            <button onClick={() => setRightTab('stats')} style={{ ...tabBtn, background: rightTab === 'stats' ? '#1a1a1a' : 'transparent', color: rightTab === 'stats' ? '#e5e5e5' : '#666' }}>stats</button>
           </div>
           <div style={{ flex: 1, overflow: 'auto', padding: 12 }}>
             {rightTab === 'props' && selectedNode ? (
@@ -813,21 +813,21 @@ export default function App() {
                 <div style={{ marginBottom: 16 }}>
                   <div style={{ fontSize: 10, color: '#5c6166', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>diagrama</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <div style={{ background: '#1a1c1e', padding: 8, borderRadius: 4 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#ec4899' }}>{nodes.length}</div>
-                      <div style={{ fontSize: 10, color: '#5c6166' }}>nodos</div>
+                    <div style={{ background: '#1a1a1a', padding: 8, borderRadius: 4 }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#e5e5e5' }}>{nodes.length}</div>
+                      <div style={{ fontSize: 10, color: '#666' }}>nodos</div>
                     </div>
-                    <div style={{ background: '#1a1c1e', padding: 8, borderRadius: 4 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#ec4899' }}>{edges.length}</div>
-                      <div style={{ fontSize: 10, color: '#5c6166' }}>conexiones</div>
+                    <div style={{ background: '#1a1a1a', padding: 8, borderRadius: 4 }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#e5e5e5' }}>{edges.length}</div>
+                      <div style={{ fontSize: 10, color: '#666' }}>conexiones</div>
                     </div>
-                    <div style={{ background: '#1a1c1e', padding: 8, borderRadius: 4 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#10b981' }}>{nodes.filter(n => n.status === 'done').length}</div>
-                      <div style={{ fontSize: 10, color: '#5c6166' }}>completados</div>
+                    <div style={{ background: '#1a1a1a', padding: 8, borderRadius: 4 }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#ccc' }}>{nodes.filter(n => n.status === 'done').length}</div>
+                      <div style={{ fontSize: 10, color: '#666' }}>completados</div>
                     </div>
-                    <div style={{ background: '#1a1c1e', padding: 8, borderRadius: 4 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, color: '#f59e0b' }}>{nodes.filter(n => n.status === 'progress').length}</div>
-                      <div style={{ fontSize: 10, color: '#5c6166' }}>en curso</div>
+                    <div style={{ background: '#1a1a1a', padding: 8, borderRadius: 4 }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: '#aaa' }}>{nodes.filter(n => n.status === 'progress').length}</div>
+                      <div style={{ fontSize: 10, color: '#666' }}>en curso</div>
                     </div>
                   </div>
                 </div>
@@ -854,14 +854,14 @@ export default function App() {
       {showConsole && (
         <div style={{ height: 150, background: '#0b0c0d', borderTop: '1px solid #2e3134', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 12px', background: '#131416', borderBottom: '1px solid #2e3134' }}>
-            <button onClick={runFlow} style={{ ...btnStyle, background: '#ec4899', color: '#fff', border: 'none', padding: '3px 12px' }}>▶ ejecutar</button>
+            <button onClick={runFlow} style={{ ...btnStyle, background: '#404040', color: '#fff', border: 'none', padding: '3px 12px' }}>▶ ejecutar</button>
             <button onClick={() => setConsoleLogs([])} style={{ ...btnStyle, padding: '3px 12px' }}>limpiar</button>
             <button onClick={() => setShowConsole(false)} style={{ ...btnStyle, padding: '3px 12px' }}>▲</button>
             <span style={{ fontSize: 10, color: '#5c6166' }}>sync: Claude Code + Qwen Coder</span>
           </div>
           <div style={{ flex: 1, overflow: 'auto', padding: '8px 12px', fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>
             {consoleLogs.map((log, i) => (
-              <div key={i} style={{ color: log.includes('[!]') || log.includes('[x]') ? '#ef4444' : log.includes('[✓]') ? '#10b981' : log.includes('[~]') ? '#f59e0b' : '#8b9095', lineHeight: 1.8 }}>
+              <div key={i} style={{ color: log.includes('[!]') || log.includes('[x]') ? '#999' : log.includes('[✓]') ? '#ccc' : log.includes('[~]') ? '#aaa' : '#666', lineHeight: 1.8 }}>
                 {log}
               </div>
             ))}
@@ -883,7 +883,7 @@ export default function App() {
         <span>nodos: {nodes.length}</span>
         <span>conexiones: {edges.length}</span>
         <span>zoom: {Math.round(zoom)}%</span>
-        <span style={{ color: '#10b981' }}>idle</span>
+        <span style={{ color: '#666' }}>idle</span>
         <span style={{ flex: 1 }}></span>
         <span>auto-guardado</span>
         <span>FlowLab v3 · Centro de Control paginaRE</span>
@@ -915,7 +915,7 @@ export default function App() {
           }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', borderBottom: '1px solid #2e3134' }}>
               {(['ia', 'agente', 'sync', 'diag'] as const).map(tab => (
-                <button key={tab} onClick={() => setChatTab(tab)} style={{ ...tabBtn, background: chatTab === tab ? '#1a1c1e' : 'transparent', color: chatTab === tab ? '#ec4899' : '#5c6166', textTransform: 'capitalize' }}>
+                <button key={tab} onClick={() => setChatTab(tab)} style={{ ...tabBtn, background: chatTab === tab ? '#1a1a1a' : 'transparent', color: chatTab === tab ? '#e5e5e5' : '#666', textTransform: 'capitalize' }}>
                   {tab}
                 </button>
               ))}
@@ -930,9 +930,9 @@ export default function App() {
                     </div>
                   )}
                   {chatMessages.map((msg, i) => (
-                    <div key={i} style={{ marginBottom: 12, padding: 8, background: msg.role === 'user' ? '#1a1c1e' : '#0b0c0d', borderRadius: 4, borderLeft: `2px solid ${msg.role === 'user' ? '#ec4899' : '#10b981'}` }}>
-                      <div style={{ fontSize: 10, color: '#5c6166', marginBottom: 4 }}>{msg.role === 'user' ? 'tú' : 'Qwen IA'}</div>
-                      <div style={{ fontSize: 12 }}>{msg.text}</div>
+                    <div key={i} style={{ marginBottom: 12, padding: 8, background: msg.role === 'user' ? '#1a1a1a' : '#0b0c0d', borderRadius: 4, borderLeft: `2px solid ${msg.role === 'user' ? '#666' : '#999'}` }}>
+                      <div style={{ fontSize: 10, color: '#666', marginBottom: 4 }}>{msg.role === 'user' ? 'tú' : 'Qwen IA'}</div>
+                      <div style={{ fontSize: 12, color: '#ccc' }}>{msg.text}</div>
                     </div>
                   ))}
                 </div>
@@ -944,7 +944,7 @@ export default function App() {
                     placeholder="Pregunta a la IA..."
                     style={{ flex: 1, background: '#1a1c1e', border: '1px solid #2e3134', color: '#c9ccd0', padding: '6px 10px', borderRadius: 4, fontFamily: 'inherit', fontSize: 12 }}
                   />
-                  <button onClick={sendChatMessage} style={{ ...btnStyle, background: '#ec4899', color: '#fff', border: 'none' }}>enviar</button>
+                  <button onClick={sendChatMessage} style={{ ...btnStyle, background: '#404040', color: '#fff', border: 'none' }}>enviar</button>
                 </div>
               </>
             )}
@@ -1010,9 +1010,9 @@ export default function App() {
           zIndex: 500,
           boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
         }}>
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid #2e3134', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#ec4899', fontWeight: 600, fontSize: 11 }}>exportar_diagrama</span>
-            <button onClick={() => setShowExport(false)} style={{ background: 'none', border: 'none', color: '#5c6166', cursor: 'pointer' }}>✕</button>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#e5e5e5', fontWeight: 600, fontSize: 11 }}>exportar_diagrama</span>
+            <button onClick={() => setShowExport(false)} style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer' }}>✕</button>
           </div>
           <div style={{ padding: 12, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button onClick={() => { exportMermaid(); setShowExport(false) }} style={exportCardStyle}>
