@@ -162,14 +162,14 @@ export default function FinanceDashboard() {
 
   return (
     <div style={{
-      height: '100vh',
+      flex: 1,
       display: 'flex',
       flexDirection: 'column',
       background: '#0b0c0d',
       color: '#c9ccd0',
       fontFamily: "'JetBrains Mono', ui-monospace, monospace",
       fontSize: '12px',
-      overflow: 'hidden'
+      minHeight: 0
     }}>
       {/* HEADER */}
       <header style={{
@@ -179,7 +179,8 @@ export default function FinanceDashboard() {
         display: 'flex',
         alignItems: 'center',
         gap: '16px',
-        zIndex: 100
+        zIndex: 100,
+        flexShrink: 0
       }}>
         <div style={{ display: 'flex', gap: '3px' }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }}></span>
@@ -205,7 +206,7 @@ export default function FinanceDashboard() {
       </header>
 
       {/* MAIN CONTENT */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
         {/* LEFT SIDEBAR - Categories */}
         <aside style={{
           width: 220,
@@ -213,7 +214,8 @@ export default function FinanceDashboard() {
           borderRight: '1px solid #2e3134',
           overflowY: 'auto',
           padding: '16px',
-          flexShrink: 0
+          flexShrink: 0,
+          minHeight: 0
         }}>
           <h3 style={{ color: '#10b981', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
             Categorías
