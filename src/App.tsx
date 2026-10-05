@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import FinanceDashboard from './components/FinanceDashboard'
+import FinanceFlow from './components/FinanceFlow'
 
 interface Node {
   id: string
@@ -75,7 +76,7 @@ export default function App() {
   const [projectTitle, setProjectTitle] = useState('orquestador_paginaRE')
   const [searchText, setSearchText] = useState('')
   const [rightTab, setRightTab] = useState<'props' | 'stats'>('props')
-  const [currentView, setCurrentView] = useState<'flow' | 'finance'>('flow')
+  const [currentView, setCurrentView] = useState<'flow' | 'finance' | 'finance_flow'>('flow')
   const viewportRef = useRef<HTMLDivElement>(null)
   const [viewSize, setViewSize] = useState({ w: 800, h: 600 })
 
@@ -358,8 +359,99 @@ export default function App() {
           >
             💰 Finanzas
           </button>
+          <button
+            onClick={() => setCurrentView('finance_flow')}
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              color: '#c9ccd0',
+              padding: '8px 20px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            🎨 Finanzas Flow
+          </button>
         </div>
         <FinanceDashboard />
+      </div>
+    )
+  }
+
+  // Si la vista actual es finance_flow, renderizar FinanceFlow
+  if (currentView === 'finance_flow') {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#0b0c0d',
+        color: '#c9ccd0',
+        fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+        fontSize: '12px',
+        overflow: 'hidden'
+      }}>
+        {/* Navigation Bar */}
+        <div style={{
+          background: '#131416',
+          borderBottom: '1px solid #2e3134',
+          padding: '8px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <button
+            onClick={() => setCurrentView('flow')}
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              color: '#c9ccd0',
+              padding: '8px 20px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            ⚡ Flujo
+          </button>
+          <button
+            onClick={() => setCurrentView('finance')}
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              color: '#c9ccd0',
+              padding: '8px 20px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            💰 Finanzas
+          </button>
+          <button
+            style={{
+              background: '#8b5cf6',
+              border: 'none',
+              color: '#fff',
+              padding: '8px 20px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600
+            }}
+          >
+            🎨 Finanzas Flow
+          </button>
+        </div>
+        <FinanceFlow />
       </div>
     )
   }
@@ -414,6 +506,22 @@ export default function App() {
           }}
         >
           💰 Finanzas
+        </button>
+        <button
+          onClick={() => setCurrentView('finance_flow')}
+          style={{
+            background: '#1a1c1e',
+            border: '1px solid #2e3134',
+            color: '#c9ccd0',
+            padding: '8px 20px',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 12,
+            fontWeight: 600
+          }}
+        >
+          🎨 Finanzas Flow
         </button>
       </div>
 
