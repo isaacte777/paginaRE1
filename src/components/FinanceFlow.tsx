@@ -211,13 +211,43 @@ export default function FinanceFlow() {
     }
   }
 
+  // Funciones de detección de anomalías
+  const detectAnomalies = (values: number[], labels: string[]) => {
+    const total = values.reduce((sum, val) => sum + val, 0)
+    const avg = total / values.length
+    const anomalies: { index: number; type: string; severity: 'low' | 'medium' | 'high' }[] = []
+    
+    values.forEach((val, i) => {
+      const percentage = (val / total) * 100
+      
+      // Detectar valores muy bajos (< 5% del total)
+      if (percentage < 5 && val > 0) {
+        anomalies.push({ index: i, type: 'Valor muy bajo', severity: 'medium' })
+      }
+      
+      // Detectar valores cero
+      if (val === 0) {
+        anomalies.push({ index: i, type: 'Sin valor', severity: 'high' })
+      }
+      
+      // Detectar desviación significativa de la media
+      if (val < avg * 0.3 && val > 0) {
+        anomalies.push({ index: i, type: 'Muy por debajo del promedio', severity: 'low' })
+      }
+    })
+    
+    return anomalies
+  }
+
   // Funciones de renderizado de gráficos
   const renderLineChart = (cell: CellNode) => {
     const values = cell.inputs.map(id => cells.find(c => c.id === id)?.calculatedValue || 0)
+    const labels = cell.inputs.map(id => cells.find(c => c.id === id)?.label || '')
     if (values.length === 0) return null
 
+    const anomalies = detectAnomalies(values, labels)
     const width = cell.width - 40
-    const height = cell.height - 80
+    const height = cell.height - 100
     const maxValue = Math.max(...values)
     const minValue = Math.min(...values)
     const range = maxValue - minValue || 1
@@ -235,51 +265,85 @@ export default function FinanceFlow() {
     })
 
     return (
-      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-          <line
-            key={i}
-            x1={20}
-            y1={20 + ratio * (height - 20)}
-            x2={width + 20}
-            y2={20 + ratio * (height - 20)}
-            stroke="#333"
-            strokeWidth="1"
-            strokeDasharray="2,2"
-          />
-        ))}
-        
-        {/* Line */}
-        <polyline
-          points={points}
-          fill="none"
-          stroke="#a3a3a3"
-          strokeWidth="2"
-        />
-        
-        {/* Points with colors based on change */}
-        {values.map((val, i) => {
-          const x = (i / (values.length - 1)) * width + 20
-          const y = height - ((val - minValue) / range) * (height - 20) + 20
-          const change = changes[i]
-          const color = change > 0 ? '#ef4444' : change < 0 ? '#10b981' : '#a3a3a3'
+      <div style={{ marginTop: 10 }}>
+        <svg width={cell.width - 20} height={height + 40}>
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line
+              key={i}
+              x1={20}
+              y1={20 + ratio * (height - 20)}
+              x2={width + 20}
+              y2={20 + ratio * (height - 20)}
+              stroke="#333"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+            />
+          ))}
           
-          return (
-            <g key={i}>
-              <circle cx={x} cy={y} r="4" fill={color} />
-              <text x={x} y={y - 10} textAnchor="middle" fill="#666" fontSize="9">
-                {formatValue(val, 'currency').replace('Gs. ', '')}
-              </text>
-            </g>
-          )
-        })}
+          {/* Line */}
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#a3a3a3"
+            strokeWidth="2"
+          />
+          
+          {/* Points with labels and warnings */}
+          {values.map((val, i) => {
+            const x = (i / (values.length - 1)) * width + 20
+            const y = height - ((val - minValue) / range) * (height - 20) + 20
+            const change = changes[i]
+            const anomaly = anomalies.find(a => a.index === i)
+            const color = anomaly ? (anomaly.severity === 'high' ? '#ef4444' : anomaly.severity === 'medium' ? '#f59e0b' : '#a3a3a3') : (change > 0 ? '#d4d4d4' : change < 0 ? '#737373' : '#a3a3a3')
+            
+            return (
+              <g key={i}>
+                {/* Warning indicator */}
+                {anomaly && (
+                  <circle cx={x} cy={y} r="12" fill="none" stroke={color} strokeWidth="2" strokeDasharray="3,3">
+                    <animate attributeName="stroke-dashoffset" from="0" to="6" dur="1s" repeatCount="indefinite" />
+                  </circle>
+                )}
+                
+                {/* Point */}
+                <circle cx={x} cy={y} r="5" fill={color} />
+                
+                {/* Value label */}
+                <text x={x} y={y - 12} textAnchor="middle" fill="#ccc" fontSize="9" fontWeight="600">
+                  {formatValue(val, 'currency').replace('Gs. ', '')}
+                </text>
+                
+                {/* Item name */}
+                <text x={x} y={height + 15} textAnchor="middle" fill="#888" fontSize="8">
+                  {labels[i].substring(0, 12)}
+                </text>
+                
+                {/* Warning icon */}
+                {anomaly && (
+                  <text x={x + 8} y={y - 8} fill={color} fontSize="12" fontWeight="bold">
+                    ⚠
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
         
-        {/* Legend */}
-        <text x={width / 2 + 20} y={height + 15} textAnchor="middle" fill="#888" fontSize="10">
-          Tendencia de valores
-        </text>
-      </svg>
+        {/* Legend with warnings */}
+        {anomalies.length > 0 && (
+          <div style={{ padding: '8px 10px', marginTop: 4, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
+            <div style={{ fontSize: 9, color: '#f59e0b', marginBottom: 4, fontWeight: 600 }}>
+              ⚠ Advertencias ({anomalies.length})
+            </div>
+            {anomalies.slice(0, 3).map((a, i) => (
+              <div key={i} style={{ fontSize: 8, color: '#888', marginBottom: 2 }}>
+                • {labels[a.index].substring(0, 20)}: {a.type}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -290,63 +354,122 @@ export default function FinanceFlow() {
     
     if (total === 0) return null
 
+    const anomalies = detectAnomalies(values, labels)
     const centerX = (cell.width - 20) / 2
-    const centerY = (cell.height - 80) / 2
+    const centerY = (cell.height - 120) / 2
     const radius = Math.min(centerX, centerY) - 10
 
     let currentAngle = -90
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040', '#262626']
 
     return (
-      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
-        {values.map((val, i) => {
-          const percentage = val / total
-          const angle = percentage * 360
-          const startAngle = currentAngle
-          const endAngle = currentAngle + angle
-          currentAngle = endAngle
+      <div style={{ marginTop: 10 }}>
+        <svg width={cell.width - 20} height={cell.height - 100}>
+          {values.map((val, i) => {
+            const percentage = val / total
+            const angle = percentage * 360
+            const startAngle = currentAngle
+            const endAngle = currentAngle + angle
+            const midAngle = startAngle + angle / 2
+            currentAngle = endAngle
 
-          const startRad = (startAngle * Math.PI) / 180
-          const endRad = (endAngle * Math.PI) / 180
+            const startRad = (startAngle * Math.PI) / 180
+            const endRad = (endAngle * Math.PI) / 180
+            const midRad = (midAngle * Math.PI) / 180
 
-          const x1 = centerX + radius * Math.cos(startRad)
-          const y1 = centerY + radius * Math.sin(startRad)
-          const x2 = centerX + radius * Math.cos(endRad)
-          const y2 = centerY + radius * Math.sin(endRad)
+            const x1 = centerX + radius * Math.cos(startRad)
+            const y1 = centerY + radius * Math.sin(startRad)
+            const x2 = centerX + radius * Math.cos(endRad)
+            const y2 = centerY + radius * Math.sin(endRad)
 
-          const largeArcFlag = angle > 180 ? 1 : 0
+            const largeArcFlag = angle > 180 ? 1 : 0
 
-          const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
+            const path = `M ${centerX} ${centerY} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`
 
-          return (
-            <g key={i}>
-              <path d={path} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="2" />
-              {percentage > 0.05 && (
-                <text
-                  x={centerX + (radius * 0.6) * Math.cos((startAngle + angle / 2) * Math.PI / 180)}
-                  y={centerY + (radius * 0.6) * Math.sin((startAngle + angle / 2) * Math.PI / 180)}
-                  textAnchor="middle"
-                  fill="#fff"
-                  fontSize="10"
-                  fontWeight="bold"
-                >
-                  {(percentage * 100).toFixed(1)}%
-                </text>
-              )}
-            </g>
-          )
-        })}
+            const anomaly = anomalies.find(a => a.index === i)
+            const isAnomaly = !!anomaly
+
+            return (
+              <g key={i}>
+                {/* Warning ring for anomalies */}
+                {isAnomaly && (
+                  <path
+                    d={path}
+                    fill="none"
+                    stroke={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                    strokeWidth="4"
+                    strokeDasharray="5,5"
+                    opacity="0.6"
+                  >
+                    <animate attributeName="stroke-dashoffset" from="0" to="10" dur="1s" repeatCount="indefinite" />
+                  </path>
+                )}
+                
+                {/* Main slice */}
+                <path d={path} fill={colors[i % colors.length]} stroke="#0b0c0d" strokeWidth="2" />
+                
+                {/* Percentage inside */}
+                {percentage > 0.05 && (
+                  <text
+                    x={centerX + (radius * 0.6) * Math.cos(midRad)}
+                    y={centerY + (radius * 0.6) * Math.sin(midRad)}
+                    textAnchor="middle"
+                    fill="#fff"
+                    fontSize="11"
+                    fontWeight="bold"
+                  >
+                    {(percentage * 100).toFixed(1)}%
+                  </text>
+                )}
+                
+                {/* Label outside */}
+                {percentage > 0.03 && (
+                  <text
+                    x={centerX + (radius + 15) * Math.cos(midRad)}
+                    y={centerY + (radius + 15) * Math.sin(midRad)}
+                    textAnchor="middle"
+                    fill="#ccc"
+                    fontSize="8"
+                    fontWeight="600"
+                  >
+                    {labels[i].substring(0, 15)}
+                  </text>
+                )}
+                
+                {/* Warning icon */}
+                {isAnomaly && percentage > 0.05 && (
+                  <text
+                    x={centerX + (radius * 0.85) * Math.cos(midRad)}
+                    y={centerY + (radius * 0.85) * Math.sin(midRad)}
+                    textAnchor="middle"
+                    fill={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                    fontSize="14"
+                    fontWeight="bold"
+                  >
+                    ⚠
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
         
-        {/* Legend */}
-        {labels.slice(0, 4).map((label, i) => (
-          <g key={i}>
-            <rect x={10} y={cell.height - 70 + i * 14} width={8} height={8} fill={colors[i % colors.length]} />
-            <text x={22} y={cell.height - 63 + i * 14} fill="#888" fontSize="9">
-              {label.substring(0, 15)}
-            </text>
-          </g>
-        ))}
-      </svg>
+        {/* Legend with warnings */}
+        <div style={{ padding: '8px 10px', marginTop: 4, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
+          {labels.slice(0, 5).map((label, i) => {
+            const percentage = (values[i] / total) * 100
+            const anomaly = anomalies.find(a => a.index === i)
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, fontSize: 9 }}>
+                <div style={{ width: 8, height: 8, background: colors[i % colors.length], borderRadius: 2 }} />
+                <span style={{ color: '#ccc', flex: 1 }}>{label.substring(0, 18)}</span>
+                <span style={{ color: '#888' }}>{percentage.toFixed(1)}%</span>
+                {anomaly && <span style={{ color: anomaly.severity === 'high' ? '#ef4444' : '#f59e0b' }}>⚠</span>}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     )
   }
 
@@ -356,67 +479,125 @@ export default function FinanceFlow() {
     
     if (values.length === 0) return null
 
+    const anomalies = detectAnomalies(values, labels)
     const width = cell.width - 40
-    const height = cell.height - 80
+    const height = cell.height - 100
     const maxValue = Math.max(...values)
     const barWidth = (width - 20) / values.length - 10
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252']
 
     return (
-      <svg width={cell.width - 20} height={cell.height - 60} style={{ marginTop: 10 }}>
-        {/* Grid lines */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
-          <line
-            key={i}
-            x1={20}
-            y1={height - ratio * height + 10}
-            x2={width + 20}
-            y2={height - ratio * height + 10}
-            stroke="#333"
-            strokeWidth="1"
-            strokeDasharray="2,2"
-          />
-        ))}
-        
-        {/* Bars */}
-        {values.map((val, i) => {
-          const barHeight = (val / maxValue) * (height - 20)
-          const x = 25 + i * (barWidth + 10)
-          const y = height - barHeight + 10
+      <div style={{ marginTop: 10 }}>
+        <svg width={cell.width - 20} height={height + 40}>
+          {/* Grid lines */}
+          {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => (
+            <line
+              key={i}
+              x1={20}
+              y1={height - ratio * height + 10}
+              x2={width + 20}
+              y2={height - ratio * height + 10}
+              stroke="#333"
+              strokeWidth="1"
+              strokeDasharray="2,2"
+            />
+          ))}
+          
+          {/* Bars */}
+          {values.map((val, i) => {
+            const barHeight = (val / maxValue) * (height - 20)
+            const x = 25 + i * (barWidth + 10)
+            const y = height - barHeight + 10
+            const anomaly = anomalies.find(a => a.index === i)
+            const isAnomaly = !!anomaly
 
-          return (
-            <g key={i}>
-              <rect
-                x={x}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                fill={colors[i % colors.length]}
-                stroke="#0b0c0d"
-                strokeWidth="1"
-              />
-              <text
-                x={x + barWidth / 2}
-                y={y - 5}
-                textAnchor="middle"
-                fill="#888"
-                fontSize="9"
-              >
-                {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 8)}
-              </text>
-              <text
-                x={x + barWidth / 2}
-                y={height + 15}
-                textAnchor="middle"
-                fill="#666"
-                fontSize="8"
-              >
-                {labels[i].substring(0, 8)}
-              </text>
-            </g>
-          )
-        })}
-      </svg>
+            return (
+              <g key={i}>
+                {/* Warning border for anomalies */}
+                {isAnomaly && (
+                  <rect
+                    x={x - 2}
+                    y={y - 2}
+                    width={barWidth + 4}
+                    height={barHeight + 4}
+                    fill="none"
+                    stroke={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                    strokeWidth="2"
+                    strokeDasharray="4,4"
+                    rx="2"
+                  >
+                    <animate attributeName="stroke-dashoffset" from="0" to="8" dur="1s" repeatCount="indefinite" />
+                  </rect>
+                )}
+                
+                {/* Main bar */}
+                <rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  fill={colors[i % colors.length]}
+                  stroke="#0b0c0d"
+                  strokeWidth="1"
+                  rx="2"
+                />
+                
+                {/* Value label */}
+                <text
+                  x={x + barWidth / 2}
+                  y={y - 8}
+                  textAnchor="middle"
+                  fill="#ccc"
+                  fontSize="9"
+                  fontWeight="600"
+                >
+                  {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 10)}
+                </text>
+                
+                {/* Item name */}
+                <text
+                  x={x + barWidth / 2}
+                  y={height + 15}
+                  textAnchor="middle"
+                  fill="#888"
+                  fontSize="8"
+                  fontWeight="500"
+                >
+                  {labels[i].substring(0, 10)}
+                </text>
+                
+                {/* Warning icon */}
+                {isAnomaly && (
+                  <text
+                    x={x + barWidth / 2}
+                    y={y + barHeight / 2}
+                    textAnchor="middle"
+                    fill={anomaly?.severity === 'high' ? '#ef4444' : '#f59e0b'}
+                    fontSize="16"
+                    fontWeight="bold"
+                  >
+                    ⚠
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+        
+        {/* Warnings panel */}
+        {anomalies.length > 0 && (
+          <div style={{ padding: '8px 10px', marginTop: 4, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
+            <div style={{ fontSize: 9, color: '#f59e0b', marginBottom: 4, fontWeight: 600 }}>
+              ⚠ Atención requerida ({anomalies.length})
+            </div>
+            {anomalies.slice(0, 3).map((a, i) => (
+              <div key={i} style={{ fontSize: 8, color: '#888', marginBottom: 2 }}>
+                • {labels[a.index].substring(0, 20)}: {a.type}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -427,32 +608,116 @@ export default function FinanceFlow() {
     
     if (total === 0) return null
 
+    const anomalies = detectAnomalies(values, labels)
     const colors = ['#d4d4d4', '#a3a3a3', '#737373', '#525252', '#404040']
-    const barHeight = 20
+    const barHeight = 24
 
     return (
       <div style={{ padding: 10, marginTop: 10 }}>
         {values.map((val, i) => {
           const percentage = (val / total) * 100
+          const anomaly = anomalies.find(a => a.index === i)
+          const isAnomaly = !!anomaly
+          const warningColor = anomaly?.severity === 'high' ? '#ef4444' : anomaly?.severity === 'medium' ? '#f59e0b' : '#a3a3a3'
+
           return (
-            <div key={i} style={{ marginBottom: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 10 }}>
-                <span style={{ color: '#ccc' }}>{labels[i].substring(0, 20)}</span>
-                <span style={{ color: '#fff', fontWeight: 600 }}>{percentage.toFixed(1)}%</span>
+            <div key={i} style={{ marginBottom: 14 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+                  {isAnomaly && (
+                    <span style={{ color: warningColor, fontSize: 12, fontWeight: 'bold' }}>⚠</span>
+                  )}
+                  <span style={{ color: '#ccc', fontSize: 10, fontWeight: isAnomaly ? '600' : '400' }}>
+                    {labels[i].substring(0, 25)}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#888', fontSize: 9 }}>
+                    {formatValue(val, 'currency').replace('Gs. ', '').substring(0, 12)}
+                  </span>
+                  <span style={{ color: '#fff', fontWeight: 700, fontSize: 11, minWidth: 45, textAlign: 'right' }}>
+                    {percentage.toFixed(1)}%
+                  </span>
+                </div>
               </div>
-              <div style={{ height: barHeight, background: '#1a1a1a', borderRadius: 4, overflow: 'hidden', border: '1px solid #333' }}>
+              
+              {/* Progress bar */}
+              <div style={{ 
+                height: barHeight, 
+                background: '#1a1a1a', 
+                borderRadius: 4, 
+                overflow: 'hidden', 
+                border: isAnomaly ? `2px solid ${warningColor}` : '1px solid #333',
+                position: 'relative'
+              }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${percentage}%`,
-                    background: colors[i % colors.length],
-                    transition: 'width 0.3s ease'
+                    background: isAnomaly ? warningColor : colors[i % colors.length],
+                    transition: 'width 0.3s ease',
+                    position: 'relative'
                   }}
                 />
+                
+                {/* Warning overlay for low percentages */}
+                {isAnomaly && percentage < 10 && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: `repeating-linear-gradient(
+                      45deg,
+                      transparent,
+                      transparent 5px,
+                      ${warningColor}22 5px,
+                      ${warningColor}22 10px
+                    )`,
+                    animation: 'moveStripes 1s linear infinite'
+                  }} />
+                )}
               </div>
+              
+              {/* Warning message */}
+              {isAnomaly && (
+                <div style={{ 
+                  marginTop: 4, 
+                  padding: '4px 8px', 
+                  background: `${warningColor}11`, 
+                  borderRadius: 3,
+                  border: `1px solid ${warningColor}33`,
+                  fontSize: 8,
+                  color: warningColor,
+                  fontWeight: '500'
+                }}>
+                  ⚠ {anomaly?.type} - Revisar con detalle
+                </div>
+              )}
             </div>
           )
         })}
+        
+        {/* Summary warnings */}
+        {anomalies.length > 0 && (
+          <div style={{ 
+            marginTop: 12, 
+            padding: '10px', 
+            background: '#1a1a1a', 
+            borderRadius: 4, 
+            border: '1px solid #333' 
+          }}>
+            <div style={{ fontSize: 10, color: '#f59e0b', marginBottom: 6, fontWeight: 700 }}>
+              ⚠ Resumen de Advertencias ({anomalies.length})
+            </div>
+            {anomalies.map((a, i) => (
+              <div key={i} style={{ fontSize: 9, color: '#888', marginBottom: 3, paddingLeft: 12 }}>
+                • <span style={{ color: '#ccc' }}>{labels[a.index].substring(0, 20)}</span>: {a.type}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     )
   }
