@@ -50,14 +50,26 @@ const CELL_TYPES = [
 let idCounter = 0
 const genId = () => `c${++idCounter}`
 
+// Helper function to create cells
+const createCell = (
+  x: number, y: number, width: number, height: number,
+  label: string, value: number | string, formula: string,
+  format: 'number' | 'currency' | 'percentage' | 'text',
+  category: string, inputs: string[] = [], calculatedValue: number = 0,
+  color?: string
+): CellNode => ({
+  id: genId(), x, y, width, height, label, value, formula,
+  format, category, inputs, calculatedValue, color
+})
+
 export default function FamilyFinanceFlow() {
   const [cells, setCells] = useState<CellNode[]>([])
   const [connections, setConnections] = useState<Connection[]>([])
   const [selected, setSelected] = useState<string | null>(null)
   const [selectedConnection, setSelectedConnection] = useState<string | null>(null)
   const [highlightConnections, setHighlightConnections] = useState(false)
-  const [zoom, setZoom] = useState(70)
-  const [pan, setPan] = useState({ x: 0, y: 0 })
+  const [zoom, setZoom] = useState(100)
+  const [pan, setPan] = useState({ x: 50, y: 50 })
   const [dragging, setDragging] = useState<string | null>(null)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [connecting, setConnecting] = useState<{ cellId: string; port: string } | null>(null)
@@ -70,6 +82,8 @@ export default function FamilyFinanceFlow() {
 
   // Generar nodos y conexiones automáticamente
   useEffect(() => {
+    console.log('🚀 FamilyFinanceFlow: Iniciando generación de nodos...')
+    try {
     const newCells: CellNode[] = []
     const newConnections: Connection[] = []
     let y = 0
@@ -86,21 +100,20 @@ export default function FamilyFinanceFlow() {
     const gastosOctIds: string[] = []
     
     // Título
-    const tituloGastos = { id: genId(), x: x, y: y, width: 200, height: 60, label: 'GASTOS OCTUBRE 2026', value: '', formula: '', format: 'text', category: 'Entrada', inputs: [], calculatedValue: 0 }
+    const tituloGastos = createCell(x, y, 200, 60, 'GASTOS OCTUBRE 2026', '', '', 'text', 'Entrada')
     newCells.push(tituloGastos)
     y += 80
 
     OCTUBRE_2026.gastos.items.forEach((gasto, i) => {
       if (gasto.real > 0) {
-        const id = genId()
-        const cell = { id, x: x + (i % 3) * 220, y: y + Math.floor(i / 3) * 110, width: 200, height: 90, label: gasto.categoria, value: gasto.real, formula: '', format: 'currency', category: 'Gasto', inputs: [], calculatedValue: gasto.real }
+        const cell = createCell(x + (i % 3) * 220, y + Math.floor(i / 3) * 110, 200, 90, gasto.categoria, gasto.real, '', 'currency', 'Gasto')
         newCells.push(cell)
-        gastosOctIds.push(id)
+        gastosOctIds.push(cell.id)
       }
     })
 
     // Total Gastos Octubre
-    const totalGastosOct = { id: genId(), x: x + 700, y: y + 200, width: 220, height: 120, label: 'TOTAL GASTOS OCT', value: OCTUBRE_2026.gastos.real, formula: `SUM(${gastosOctIds.join(',')})`, format: 'currency', category: 'Total', inputs: gastosOctIds, calculatedValue: OCTUBRE_2026.gastos.real }
+    const totalGastosOct = createCell(x + 700, y + 200, 220, 120, 'TOTAL GASTOS OCT', OCTUBRE_2026.gastos.real, `SUM(${gastosOctIds.join(',')})`, 'currency', 'Total', gastosOctIds, OCTUBRE_2026.gastos.real)
     newCells.push(totalGastosOct)
 
     // Conexiones a total
@@ -113,21 +126,20 @@ export default function FamilyFinanceFlow() {
     x = 350
     const ingresosOctIds: string[] = []
     
-    const tituloIngresos = { id: genId(), x: x, y: y, width: 200, height: 60, label: 'INGRESOS OCTUBRE 2026', value: '', formula: '', format: 'text', category: 'Entrada', inputs: [], calculatedValue: 0 }
+    const tituloIngresos = createCell(x, y, 200, 60, 'INGRESOS OCTUBRE 2026', '', '', 'text', 'Entrada')
     newCells.push(tituloIngresos)
     y += 80
 
     OCTUBRE_2026.ingresos.items.forEach((ingreso, i) => {
       if (ingreso.real > 0) {
-        const id = genId()
-        const cell = { id, x: x + (i % 3) * 220, y: y + Math.floor(i / 3) * 110, width: 200, height: 90, label: ingreso.fuente, value: ingreso.real, formula: '', format: 'currency', category: 'Ingreso', inputs: [], calculatedValue: ingreso.real }
+        const cell = createCell(x + (i % 3) * 220, y + Math.floor(i / 3) * 110, 200, 90, ingreso.fuente, ingreso.real, '', 'currency', 'Ingreso')
         newCells.push(cell)
-        ingresosOctIds.push(id)
+        ingresosOctIds.push(cell.id)
       }
     })
 
     // Total Ingresos Octubre
-    const totalIngresosOct = { id: genId(), x: x + 700, y: y + 200, width: 220, height: 120, label: 'TOTAL INGRESOS OCT', value: OCTUBRE_2026.ingresos.real, formula: `SUM(${ingresosOctIds.join(',')})`, format: 'currency', category: 'Total', inputs: ingresosOctIds, calculatedValue: OCTUBRE_2026.ingresos.real }
+    const totalIngresosOct = createCell(x + 700, y + 200, 220, 120, 'TOTAL INGRESOS OCT', OCTUBRE_2026.ingresos.real, `SUM(${ingresosOctIds.join(',')})`, 'currency', 'Total', ingresosOctIds, OCTUBRE_2026.ingresos.real)
     newCells.push(totalIngresosOct)
 
     // Conexiones a total
@@ -140,19 +152,18 @@ export default function FamilyFinanceFlow() {
     x = 50
     const deudasIds: string[] = []
     
-    const tituloDeudas = { id: genId(), x: x, y: y, width: 200, height: 60, label: 'DEUDAS', value: '', formula: '', format: 'text', category: 'Entrada', inputs: [], calculatedValue: 0 }
+    const tituloDeudas = createCell(x, y, 200, 60, 'DEUDAS', '', '', 'text', 'Entrada')
     newCells.push(tituloDeudas)
     y += 80
 
     DEUDAS.forEach((deuda, i) => {
-      const id = genId()
-      const cell = { id, x: x + (i % 4) * 220, y: y + Math.floor(i / 4) * 110, width: 200, height: 90, label: `${deuda.nombre} (${deuda.estado})`, value: deuda.restante, formula: '', format: 'currency', category: 'Deuda', inputs: [], calculatedValue: deuda.restante, color: deuda.estado === 'CANCELADA' ? '#10b981' : deuda.estado === 'PENDIENTE' ? '#f59e0b' : '#ef4444' }
+      const cell = createCell(x + (i % 4) * 220, y + Math.floor(i / 4) * 110, 200, 90, `${deuda.nombre} (${deuda.estado})`, deuda.restante, '', 'currency', 'Deuda', [], deuda.restante, deuda.estado === 'CANCELADA' ? '#10b981' : deuda.estado === 'PENDIENTE' ? '#f59e0b' : '#ef4444')
       newCells.push(cell)
-      deudasIds.push(id)
+      deudasIds.push(cell.id)
     })
 
     // Total Deudas
-    const totalDeudas = { id: genId(), x: x + 900, y: y + 100, width: 220, height: 120, label: 'TOTAL DEUDAS', value: DEUDAS.reduce((sum, d) => sum + Math.max(0, d.restante), 0), formula: `SUM(${deudasIds.join(',')})`, format: 'currency', category: 'Total', inputs: deudasIds, calculatedValue: DEUDAS.reduce((sum, d) => sum + Math.max(0, d.restante), 0) }
+    const totalDeudas = createCell(x + 900, y + 100, 220, 120, 'TOTAL DEUDAS', DEUDAS.reduce((sum, d) => sum + Math.max(0, d.restante), 0), `SUM(${deudasIds.join(',')})`, 'currency', 'Total', deudasIds, DEUDAS.reduce((sum, d) => sum + Math.max(0, d.restante), 0))
     newCells.push(totalDeudas)
 
     deudasIds.forEach((id, i) => {
@@ -164,19 +175,18 @@ export default function FamilyFinanceFlow() {
     x = 50
     const tarjetasIds: string[] = []
     
-    const tituloTarjetas = { id: genId(), x: x, y: y, width: 200, height: 60, label: 'TARJETAS DE CRÉDITO', value: '', formula: '', format: 'text', category: 'Entrada', inputs: [], calculatedValue: 0 }
+    const tituloTarjetas = createCell(x, y, 200, 60, 'TARJETAS DE CRÉDITO', '', '', 'text', 'Entrada')
     newCells.push(tituloTarjetas)
     y += 80
 
     TARJETAS_CREDITO.forEach((tarjeta, i) => {
-      const id = genId()
-      const cell = { id, x: x + (i % 4) * 220, y: y, width: 200, height: 90, label: `${tarjeta.banco} - ${tarjeta.titular}`, value: tarjeta.consumido, formula: '', format: 'currency', category: 'Tarjeta', inputs: [], calculatedValue: tarjeta.consumido }
+      const cell = createCell(x + (i % 4) * 220, y, 200, 90, `${tarjeta.banco} - ${tarjeta.titular}`, tarjeta.consumido, '', 'currency', 'Tarjeta')
       newCells.push(cell)
-      tarjetasIds.push(id)
+      tarjetasIds.push(cell.id)
     })
 
     // Total Tarjetas
-    const totalTarjetas = { id: genId(), x: x + 900, y: y, width: 220, height: 120, label: 'TOTAL TARJETAS', value: TARJETAS_CREDITO.reduce((sum, t) => sum + t.consumido, 0), formula: `SUM(${tarjetasIds.join(',')})`, format: 'currency', category: 'Total', inputs: tarjetasIds, calculatedValue: TARJETAS_CREDITO.reduce((sum, t) => sum + t.consumido, 0) }
+    const totalTarjetas = createCell(x + 900, y, 220, 120, 'TOTAL TARJETAS', TARJETAS_CREDITO.reduce((sum, t) => sum + t.consumido, 0), `SUM(${tarjetasIds.join(',')})`, 'currency', 'Total', tarjetasIds, TARJETAS_CREDITO.reduce((sum, t) => sum + t.consumido, 0))
     newCells.push(totalTarjetas)
 
     tarjetasIds.forEach((id, i) => {
@@ -188,19 +198,18 @@ export default function FamilyFinanceFlow() {
     x = 50
     const porCobrarIds: string[] = []
     
-    const tituloPorCobrar = { id: genId(), x: x, y: y, width: 200, height: 60, label: 'POR COBRAR', value: '', formula: '', format: 'text', category: 'Entrada', inputs: [], calculatedValue: 0 }
+    const tituloPorCobrar = createCell(x, y, 200, 60, 'POR COBRAR', '', '', 'text', 'Entrada')
     newCells.push(tituloPorCobrar)
     y += 80
 
     POR_COBRAR.forEach((cobro, i) => {
-      const id = genId()
-      const cell = { id, x: x + (i % 4) * 220, y: y, width: 200, height: 90, label: cobro.cliente, value: cobro.monto, formula: '', format: 'currency', category: 'Ingreso', inputs: [], calculatedValue: cobro.monto }
+      const cell = createCell(x + (i % 4) * 220, y, 200, 90, cobro.cliente, cobro.monto, '', 'currency', 'Ingreso')
       newCells.push(cell)
-      porCobrarIds.push(id)
+      porCobrarIds.push(cell.id)
     })
 
     // Total Por Cobrar
-    const totalPorCobrar = { id: genId(), x: x + 900, y: y, width: 220, height: 120, label: 'TOTAL POR COBRAR', value: POR_COBRAR.reduce((sum, c) => sum + c.monto, 0), formula: `SUM(${porCobrarIds.join(',')})`, format: 'currency', category: 'Total', inputs: porCobrarIds, calculatedValue: POR_COBRAR.reduce((sum, c) => sum + c.monto, 0) }
+    const totalPorCobrar = createCell(x + 900, y, 220, 120, 'TOTAL POR COBRAR', POR_COBRAR.reduce((sum, c) => sum + c.monto, 0), `SUM(${porCobrarIds.join(',')})`, 'currency', 'Total', porCobrarIds, POR_COBRAR.reduce((sum, c) => sum + c.monto, 0))
     newCells.push(totalPorCobrar)
 
     porCobrarIds.forEach((id, i) => {
@@ -212,19 +221,18 @@ export default function FamilyFinanceFlow() {
     x = 50
     const herramientasIds: string[] = []
     
-    const tituloHerramientas = { id: genId(), x: x, y: y, width: 200, height: 60, label: 'HERRAMIENTAS PENDIENTES', value: '', formula: '', format: 'text', category: 'Entrada', inputs: [], calculatedValue: 0 }
+    const tituloHerramientas = createCell(x, y, 200, 60, 'HERRAMIENTAS PENDIENTES', '', '', 'text', 'Entrada')
     newCells.push(tituloHerramientas)
     y += 80
 
     HERRAMIENTAS_PENDIENTES.forEach((herr, i) => {
-      const id = genId()
-      const cell = { id, x: x + (i % 3) * 220, y: y + Math.floor(i / 3) * 110, width: 200, height: 90, label: herr.nombre, value: herr.pendiente, formula: '', format: 'currency', category: 'Deuda', inputs: [], calculatedValue: herr.pendiente }
+      const cell = createCell(x + (i % 3) * 220, y + Math.floor(i / 3) * 110, 200, 90, herr.nombre, herr.pendiente, '', 'currency', 'Deuda')
       newCells.push(cell)
-      herramientasIds.push(id)
+      herramientasIds.push(cell.id)
     })
 
     // Total Herramientas
-    const totalHerramientas = { id: genId(), x: x + 700, y: y + 100, width: 220, height: 120, label: 'TOTAL HERRAMIENTAS', value: HERRAMIENTAS_PENDIENTES.reduce((sum, h) => sum + h.pendiente, 0), formula: `SUM(${herramientasIds.join(',')})`, format: 'currency', category: 'Total', inputs: herramientasIds, calculatedValue: HERRAMIENTAS_PENDIENTES.reduce((sum, h) => sum + h.pendiente, 0) }
+    const totalHerramientas = createCell(x + 700, y + 100, 220, 120, 'TOTAL HERRAMIENTAS', HERRAMIENTAS_PENDIENTES.reduce((sum, h) => sum + h.pendiente, 0), `SUM(${herramientasIds.join(',')})`, 'currency', 'Total', herramientasIds, HERRAMIENTAS_PENDIENTES.reduce((sum, h) => sum + h.pendiente, 0))
     newCells.push(totalHerramientas)
 
     herramientasIds.forEach((id, i) => {
@@ -236,20 +244,20 @@ export default function FamilyFinanceFlow() {
     x = 50
     
     // Balance del mes
-    const balanceMes = { id: genId(), x: x, y: y, width: 240, height: 130, label: 'BALANCE DEL MES', value: 0, formula: `${totalIngresosOct.id} - ${totalGastosOct.id}`, format: 'currency', category: 'Balance', inputs: [totalIngresosOct.id, totalGastosOct.id], calculatedValue: OCTUBRE_2026.ingresos.real - OCTUBRE_2026.gastos.real }
+    const balanceMes = createCell(x, y, 240, 130, 'BALANCE DEL MES', 0, `${totalIngresosOct.id} - ${totalGastosOct.id}`, 'currency', 'Balance', [totalIngresosOct.id, totalGastosOct.id], OCTUBRE_2026.ingresos.real - OCTUBRE_2026.gastos.real)
     newCells.push(balanceMes)
     newConnections.push({ id: genId(), from: totalIngresosOct.id, to: balanceMes.id, fromPort: 'output', toPort: 'input1' })
     newConnections.push({ id: genId(), from: totalGastosOct.id, to: balanceMes.id, fromPort: 'output', toPort: 'input2' })
 
     // Deuda Total
-    const deudaTotal = { id: genId(), x: x + 300, y: y, width: 240, height: 130, label: 'DEUDA TOTAL', value: 0, formula: `${totalDeudas.id} + ${totalTarjetas.id} + ${totalHerramientas.id}`, format: 'currency', category: 'Total', inputs: [totalDeudas.id, totalTarjetas.id, totalHerramientas.id], calculatedValue: totalDeudas.calculatedValue + totalTarjetas.calculatedValue + totalHerramientas.calculatedValue }
+    const deudaTotal = createCell(x + 300, y, 240, 130, 'DEUDA TOTAL', 0, `${totalDeudas.id} + ${totalTarjetas.id} + ${totalHerramientas.id}`, 'currency', 'Total', [totalDeudas.id, totalTarjetas.id, totalHerramientas.id], totalDeudas.calculatedValue + totalTarjetas.calculatedValue + totalHerramientas.calculatedValue)
     newCells.push(deudaTotal)
     newConnections.push({ id: genId(), from: totalDeudas.id, to: deudaTotal.id, fromPort: 'output', toPort: 'input1' })
     newConnections.push({ id: genId(), from: totalTarjetas.id, to: deudaTotal.id, fromPort: 'output', toPort: 'input2' })
     newConnections.push({ id: genId(), from: totalHerramientas.id, to: deudaTotal.id, fromPort: 'output', toPort: 'input3' })
 
     // Porcentaje de Ahorro
-    const porcentajeAhorro = { id: genId(), x: x + 600, y: y, width: 240, height: 130, label: '% AHORRO', value: 0, formula: `(${balanceMes.id} / ${totalIngresosOct.id}) * 100`, format: 'percentage', category: 'Porcentaje', inputs: [balanceMes.id, totalIngresosOct.id], calculatedValue: ((OCTUBRE_2026.ingresos.real - OCTUBRE_2026.gastos.real) / OCTUBRE_2026.ingresos.real) * 100 }
+    const porcentajeAhorro = createCell(x + 600, y, 240, 130, '% AHORRO', 0, `(${balanceMes.id} / ${totalIngresosOct.id}) * 100`, 'percentage', 'Porcentaje', [balanceMes.id, totalIngresosOct.id], ((OCTUBRE_2026.ingresos.real - OCTUBRE_2026.gastos.real) / OCTUBRE_2026.ingresos.real) * 100)
     newCells.push(porcentajeAhorro)
     newConnections.push({ id: genId(), from: balanceMes.id, to: porcentajeAhorro.id, fromPort: 'output', toPort: 'input1' })
     newConnections.push({ id: genId(), from: totalIngresosOct.id, to: porcentajeAhorro.id, fromPort: 'output', toPort: 'input2' })
@@ -259,26 +267,30 @@ export default function FamilyFinanceFlow() {
     x = 50
 
     // Gráfico Circular - Distribución de Gastos
-    const graficoCircular = { id: genId(), x: x, y: y, width: 300, height: 220, label: 'Distribución de Gastos', value: 0, formula: '', format: 'percentage', category: 'Gráfico Circular', inputs: gastosOctIds.slice(0, 6), calculatedValue: 0 }
+    const graficoCircular = createCell(x, y, 300, 220, 'Distribución de Gastos', 0, '', 'percentage', 'Gráfico Circular', gastosOctIds.slice(0, 6))
     newCells.push(graficoCircular)
     gastosOctIds.slice(0, 6).forEach((id, i) => {
       newConnections.push({ id: genId(), from: id, to: graficoCircular.id, fromPort: 'output', toPort: `input${i + 1}` })
     })
 
     // Gráfico de Barras - Ingresos vs Gastos
-    const graficoBarras = { id: genId(), x: x + 350, y: y, width: 300, height: 220, label: 'Ingresos vs Gastos', value: 0, formula: '', format: 'currency', category: 'Gráfico Barras', inputs: [totalIngresosOct.id, totalGastosOct.id], calculatedValue: 0 }
+    const graficoBarras = createCell(x + 350, y, 300, 220, 'Ingresos vs Gastos', 0, '', 'currency', 'Gráfico Barras', [totalIngresosOct.id, totalGastosOct.id])
     newCells.push(graficoBarras)
     newConnections.push({ id: genId(), from: totalIngresosOct.id, to: graficoBarras.id, fromPort: 'output', toPort: 'input1' })
     newConnections.push({ id: genId(), from: totalGastosOct.id, to: graficoBarras.id, fromPort: 'output', toPort: 'input2' })
 
     // Gráfico de Línea - Evolución Mensual
-    const graficoLinea = { id: genId(), x: x + 700, y: y, width: 300, height: 220, label: 'Evolución Capital', value: 0, formula: '', format: 'currency', category: 'Gráfico Línea', inputs: [capitalInicial.id, capitalFinal.id], calculatedValue: 0 }
+    const graficoLinea = createCell(x + 700, y, 300, 220, 'Evolución Capital', 0, '', 'currency', 'Gráfico Línea', [capitalInicial.id, capitalFinal.id])
     newCells.push(graficoLinea)
     newConnections.push({ id: genId(), from: capitalInicial.id, to: graficoLinea.id, fromPort: 'output', toPort: 'input1' })
     newConnections.push({ id: genId(), from: capitalFinal.id, to: graficoLinea.id, fromPort: 'output', toPort: 'input2' })
 
+    console.log('✅ FamilyFinanceFlow: Nodos generados:', newCells.length, 'Conexiones:', newConnections.length)
     setCells(newCells)
     setConnections(newConnections)
+    } catch (error) {
+      console.error('❌ Error en FamilyFinanceFlow useEffect:', error)
+    }
   }, [])
 
   // Calcular path completo
