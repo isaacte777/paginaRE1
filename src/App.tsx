@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import FinanceManager from './components/FinanceManager'
 
 interface Node {
   id: string
@@ -74,6 +75,7 @@ export default function App() {
   const [projectTitle, setProjectTitle] = useState('orquestador_paginaRE')
   const [searchText, setSearchText] = useState('')
   const [rightTab, setRightTab] = useState<'props' | 'stats'>('props')
+  const [showFinance, setShowFinance] = useState(false)
   const viewportRef = useRef<HTMLDivElement>(null)
   const [viewSize, setViewSize] = useState({ w: 800, h: 600 })
 
@@ -378,6 +380,7 @@ export default function App() {
         <button onClick={() => setShowChat(true)} style={btnStyle} title="panel de chat">💬</button>
         <button style={btnStyle} title="inspector">🔍</button>
         <button onClick={() => setShowExport(!showExport)} style={btnStyle} title="exportar">📦</button>
+        <button onClick={() => setShowFinance(true)} style={{ ...btnStyle, background: '#10b981', color: '#fff', border: 'none' }} title="control de gastos">💰 Gastos</button>
         <button onClick={newNode} style={{ ...btnStyle, background: '#ec4899', color: '#fff', border: 'none' }} title="nuevo diagrama">nuevo</button>
       </header>
 
@@ -934,6 +937,11 @@ export default function App() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* FINANCE MANAGER */}
+      {showFinance && (
+        <FinanceManager onClose={() => setShowFinance(false)} />
       )}
     </div>
   )
