@@ -21,48 +21,48 @@ interface FinanceEdge {
 
 const FINANCE_NODE_TYPES: Record<string, { icon: string; color: string; category: string; description: string }> = {
   // INGRESOS
-  income: { icon: '💵', color: '#10b981', category: 'ingresos', description: 'Ingreso general' },
-  salary: { icon: '💼', color: '#10b981', category: 'ingresos', description: 'Salario mensual' },
-  freelance: { icon: '💻', color: '#10b981', category: 'ingresos', description: 'Trabajo freelance' },
-  sales: { icon: '🛒', color: '#10b981', category: 'ingresos', description: 'Ventas de productos' },
-  services: { icon: '🔧', color: '#10b981', category: 'ingresos', description: 'Servicios técnicos' },
-  investment: { icon: '📈', color: '#10b981', category: 'ingresos', description: 'Retorno de inversión' },
+  income: { icon: '💰', color: '#e5e5e5', category: 'ingresos', description: 'Ingreso general' },
+  salary: { icon: '💼', color: '#e5e5e5', category: 'ingresos', description: 'Salario mensual' },
+  freelance: { icon: '💻', color: '#e5e5e5', category: 'ingresos', description: 'Trabajo freelance' },
+  sales: { icon: '🛒', color: '#e5e5e5', category: 'ingresos', description: 'Ventas de productos' },
+  services: { icon: '🔧', color: '#e5e5e5', category: 'ingresos', description: 'Servicios técnicos' },
+  investment: { icon: '📈', color: '#e5e5e5', category: 'ingresos', description: 'Retorno de inversión' },
   
   // EGRESOS
-  expense: { icon: '💸', color: '#ef4444', category: 'egresos', description: 'Gasto general' },
-  rent: { icon: '🏢', color: '#ef4444', category: 'egresos', description: 'Alquiler local' },
-  utilities: { icon: '💡', color: '#ef4444', category: 'egresos', description: 'Servicios básicos' },
-  supplies: { icon: '📦', color: '#ef4444', category: 'egresos', description: 'Insumos y materiales' },
-  equipment: { icon: '🖥️', color: '#ef4444', category: 'egresos', description: 'Equipos y hardware' },
-  software: { icon: '💿', color: '#ef4444', category: 'egresos', description: 'Licencias de software' },
-  marketing: { icon: '📢', color: '#ef4444', category: 'egresos', description: 'Publicidad y marketing' },
+  expense: { icon: '💸', color: '#a3a3a3', category: 'egresos', description: 'Gasto general' },
+  rent: { icon: '🏢', color: '#a3a3a3', category: 'egresos', description: 'Alquiler local' },
+  utilities: { icon: '💡', color: '#a3a3a3', category: 'egresos', description: 'Servicios básicos' },
+  supplies: { icon: '📦', color: '#a3a3a3', category: 'egresos', description: 'Insumos y materiales' },
+  equipment: { icon: '🖥️', color: '#a3a3a3', category: 'egresos', description: 'Equipos y hardware' },
+  software: { icon: '💿', color: '#a3a3a3', category: 'egresos', description: 'Licencias de software' },
+  marketing: { icon: '📢', color: '#a3a3a3', category: 'egresos', description: 'Publicidad y marketing' },
   
   // INVENTARIO
-  inventory: { icon: '📊', color: '#3b82f6', category: 'inventario', description: 'Stock de productos' },
-  purchase: { icon: '🛍️', color: '#3b82f6', category: 'inventario', description: 'Compra de mercadería' },
-  stock_in: { icon: '📥', color: '#3b82f6', category: 'inventario', description: 'Entrada de stock' },
-  stock_out: { icon: '📤', color: '#3b82f6', category: 'inventario', description: 'Salida de stock' },
+  inventory: { icon: '📊', color: '#737373', category: 'inventario', description: 'Stock de productos' },
+  purchase: { icon: '🛍️', color: '#737373', category: 'inventario', description: 'Compra de mercadería' },
+  stock_in: { icon: '📥', color: '#737373', category: 'inventario', description: 'Entrada de stock' },
+  stock_out: { icon: '📤', color: '#737373', category: 'inventario', description: 'Salida de stock' },
   
   // PAGOS
-  payment: { icon: '💳', color: '#f59e0b', category: 'pagos', description: 'Pago a proveedores' },
-  loan: { icon: '🏦', color: '#f59e0b', category: 'pagos', description: 'Préstamos' },
-  taxes: { icon: '📋', color: '#f59e0b', category: 'pagos', description: 'Impuestos' },
-  insurance: { icon: '🛡️', color: '#f59e0b', category: 'pagos', description: 'Seguros' },
+  payment: { icon: '💳', color: '#525252', category: 'pagos', description: 'Pago a proveedores' },
+  loan: { icon: '🏦', color: '#525252', category: 'pagos', description: 'Préstamos' },
+  taxes: { icon: '📋', color: '#525252', category: 'pagos', description: 'Impuestos' },
+  insurance: { icon: '🛡️', color: '#525252', category: 'pagos', description: 'Seguros' },
   
   // AHORRO E INVERSIÓN
-  savings: { icon: '🏦', color: '#8b5cf6', category: 'ahorro', description: 'Ahorro mensual' },
-  emergency: { icon: '🚨', color: '#8b5cf6', category: 'ahorro', description: 'Fondo de emergencia' },
+  savings: { icon: '🏦', color: '#404040', category: 'ahorro', description: 'Ahorro mensual' },
+  emergency: { icon: '🚨', color: '#404040', category: 'ahorro', description: 'Fondo de emergencia' },
   
   // MÉTRICAS
-  total_income: { icon: '💎', color: '#a855f7', category: 'metricas', description: 'Total de ingresos' },
-  total_expense: { icon: '💔', color: '#a855f7', category: 'metricas', description: 'Total de egresos' },
-  balance: { icon: '⚖️', color: '#a855f7', category: 'metricas', description: 'Balance final' },
-  profit: { icon: '📊', color: '#a855f7', category: 'metricas', description: 'Ganancia neta' },
+  total_income: { icon: '💎', color: '#262626', category: 'metricas', description: 'Total de ingresos' },
+  total_expense: { icon: '💔', color: '#262626', category: 'metricas', description: 'Total de egresos' },
+  balance: { icon: '⚖️', color: '#262626', category: 'metricas', description: 'Balance final' },
+  profit: { icon: '📊', color: '#262626', category: 'metricas', description: 'Ganancia neta' },
   
   // GRÁFICOS
-  chart_pie: { icon: '🥧', color: '#06b6d4', category: 'graficos', description: 'Gráfico circular' },
-  chart_line: { icon: '📈', color: '#06b6d4', category: 'graficos', description: 'Gráfico de líneas' },
-  chart_bar: { icon: '📊', color: '#06b6d4', category: 'graficos', description: 'Gráfico de barras' },
+  chart_pie: { icon: '🥧', color: '#171717', category: 'graficos', description: 'Gráfico circular' },
+  chart_line: { icon: '📈', color: '#171717', category: 'graficos', description: 'Gráfico de líneas' },
+  chart_bar: { icon: '📊', color: '#171717', category: 'graficos', description: 'Gráfico de barras' },
 }
 
 let idCounter = 0
@@ -305,7 +305,7 @@ export default function FinanceFlow() {
         padding: '12px',
         flexShrink: 0
       }}>
-        <h4 style={{ color: '#8b5cf6', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+        <h4 style={{ color: '#a3a3a3', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
           Categorías
         </h4>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 16 }}>
@@ -315,7 +315,7 @@ export default function FinanceFlow() {
               onClick={() => setActiveCategory(cat)}
               style={{
                 padding: '4px 8px',
-                background: activeCategory === cat ? '#8b5cf6' : '#1a1c1e',
+                background: activeCategory === cat ? '#404040' : '#1a1c1e',
                 border: '1px solid #2e3134',
                 borderRadius: 3,
                 color: activeCategory === cat ? '#fff' : '#c9ccd0',
@@ -435,7 +435,7 @@ export default function FinanceFlow() {
             {connecting && (
               <path
                 d={`M${(nodes.find(n => n.id === connecting)?.x || 0) + 180},${(nodes.find(n => n.id === connecting)?.y || 0) + 40} L${mousePos.x},${mousePos.y}`}
-                stroke="#8b5cf6"
+                stroke="#a3a3a3"
                 strokeWidth="2"
                 strokeDasharray="5,5"
                 fill="none"
@@ -586,7 +586,7 @@ export default function FinanceFlow() {
           overflowY: 'auto',
           flexShrink: 0
         }}>
-          <h3 style={{ color: '#8b5cf6', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
+          <h3 style={{ color: '#a3a3a3', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 16 }}>
             Propiedades
           </h3>
           <div style={{ marginBottom: 12 }}>
@@ -616,7 +616,7 @@ export default function FinanceFlow() {
           <button onClick={() => openEditModal(selectedNode)} style={{
             width: '100%',
             padding: '8px',
-            background: '#8b5cf6',
+            background: '#404040',
             border: 'none',
             borderRadius: 4,
             color: '#fff',
@@ -666,7 +666,7 @@ export default function FinanceFlow() {
             padding: 24,
             width: 400
           }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 20px', color: '#8b5cf6', fontSize: 14 }}>Editar Nodo</h3>
+            <h3 style={{ margin: '0 0 20px', color: '#a3a3a3', fontSize: 14 }}>Editar Nodo</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 10, color: '#5c6166', marginBottom: 4 }}>Label</label>
@@ -762,7 +762,7 @@ export default function FinanceFlow() {
                 <button onClick={saveEdit} style={{
                   flex: 1,
                   padding: '10px',
-                  background: '#8b5cf6',
+                  background: '#404040',
                   border: 'none',
                   borderRadius: 4,
                   color: '#fff',

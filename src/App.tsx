@@ -345,7 +345,7 @@ export default function App() {
           </button>
           <button
             style={{
-              background: '#8b5cf6',
+              background: '#404040',
               border: 'none',
               color: '#fff',
               padding: '8px 20px',
@@ -356,7 +356,7 @@ export default function App() {
               fontWeight: 600
             }}
           >
-            💰 Finanzas Flow
+            💰 Finanzas
           </button>
         </div>
         <FinanceFlow />
@@ -413,7 +413,7 @@ export default function App() {
             fontWeight: 600
           }}
         >
-          💰 Finanzas Flow
+          💰 Finanzas
         </button>
       </div>
 
