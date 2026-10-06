@@ -12,49 +12,49 @@ export default function ModulesDashboard() {
 
   const modules = [
     {
-      icon: '🎨',
+      icon: '[P]',
       title: 'CSS · Styling',
       count: '4 files',
       files: ['theme.css', 'layout.css', 'nodes.css', 'ui.css']
     },
     {
-      icon: '⚙️',
+      icon: '[S]',
       title: 'Core · Foundation',
       count: '2 files',
       files: ['constants.js', 'state.js']
     },
     {
-      icon: '🔧',
+      icon: '[T]',
       title: 'Utils · Helpers',
       count: '2 files',
       files: ['helpers.js', 'storage.js']
     },
     {
-      icon: '🎯',
+      icon: '[R]',
       title: 'Canvas · Rendering',
       count: '3 files',
       files: ['render.js', 'viewport.js', 'minimap.js']
     },
     {
-      icon: '🖱️',
+      icon: '[I]',
       title: 'Interaction · User',
       count: '3 files',
       files: ['gestures.js', 'selection.js', 'editing.js']
     },
     {
-      icon: '✨',
+      icon: '[A]',
       title: 'Features · Advanced',
       count: '4 files',
       files: ['history.js', 'templates.js', 'export.js', 'execution.js']
     },
     {
-      icon: '🎨',
+      icon: '[U]',
       title: 'UI · Components',
       count: '3 files',
       files: ['panel.js', 'console.js', 'footer.js']
     },
     {
-      icon: '🚀',
+      icon: '[O]',
       title: 'App · Orchestrator',
       count: '1 file',
       files: ['app.js']
@@ -158,7 +158,7 @@ export default function ModulesDashboard() {
           gap: '8px'
         }}>
           <span style={{ color: '#666', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Status</span>
-          <span style={{ fontSize: '24px', fontWeight: 700, color: '#10b981' }}>✓ Ready</span>
+          <span style={{ fontSize: '24px', fontWeight: 700, color: '#d4d4d4' }}>[+] Ready</span>
           <span style={{ fontSize: '11px', color: '#666' }}>All modules active</span>
         </div>
       </div>
@@ -232,7 +232,7 @@ export default function ModulesDashboard() {
                     minWidth: '15px',
                     textAlign: 'center'
                   }}>
-                    📄
+                    [F]
                   </div>
                   <div style={{
                     flex: 1,
@@ -269,60 +269,60 @@ export default function ModulesDashboard() {
         <div style={{ fontFamily: "'JetBrains Mono', monospace" }}>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>paginaRE/</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📄</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[F]</span>
             <span style={{ color: '#a3a3a3' }}>coordination.html</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>css/</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📄</span>
-            <span style={{ color: '#ff7f50' }}>theme.css</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[F]</span>
+            <span style={{ color: '#a3a3a3' }}>theme.css</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📄</span>
-            <span style={{ color: '#ff7f50' }}>layout.css</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[F]</span>
+            <span style={{ color: '#a3a3a3' }}>layout.css</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📄</span>
-            <span style={{ color: '#ff7f50' }}>nodes.css</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[F]</span>
+            <span style={{ color: '#a3a3a3' }}>nodes.css</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>└</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📄</span>
-            <span style={{ color: '#ff7f50' }}>ui.css</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[F]</span>
+            <span style={{ color: '#a3a3a3' }}>ui.css</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>js/</span>
           </div>
           <div style={{ marginBottom: '4px', color: '#c9ccd0' }}>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>core/</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(constants, state)</span>
           </div>
@@ -330,7 +330,7 @@ export default function ModulesDashboard() {
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>utils/</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(helpers, storage)</span>
           </div>
@@ -338,7 +338,7 @@ export default function ModulesDashboard() {
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>canvas/</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(render, viewport, minimap)</span>
           </div>
@@ -346,7 +346,7 @@ export default function ModulesDashboard() {
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>interaction/</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(gestures, selection, editing)</span>
           </div>
@@ -354,7 +354,7 @@ export default function ModulesDashboard() {
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>features/</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(history, templates, export, execution)</span>
           </div>
@@ -362,7 +362,7 @@ export default function ModulesDashboard() {
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>├</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📦</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[D]</span>
             <span style={{ color: '#e5e5e5' }}>ui/</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(panel, console, footer)</span>
           </div>
@@ -370,8 +370,8 @@ export default function ModulesDashboard() {
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>│</span>
             <span style={{ display: 'inline-block', width: '20px', textAlign: 'center', color: '#333' }}>└</span>
-            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>📄</span>
-            <span style={{ color: '#ffdd00' }}>app.js</span>
+            <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#666' }}>[F]</span>
+            <span style={{ color: '#a3a3a3' }}>app.js</span>
             <span style={{ display: 'inline-block', width: '12px', textAlign: 'center', color: '#888' }}>(orchestrator)</span>
           </div>
         </div>
@@ -385,7 +385,7 @@ export default function ModulesDashboard() {
         padding: '20px',
         marginBottom: '40px'
       }}>
-        <h3 style={{ color: '#e5e5e5', marginBottom: '15px', fontSize: '14px' }}>⚙️ Module Loading Order</h3>
+        <h3 style={{ color: '#e5e5e5', marginBottom: '15px', fontSize: '14px' }}>[S] Module Loading Order</h3>
         {dependencies.map((dep, idx) => (
           <div key={idx} style={{
             display: 'flex',
@@ -404,7 +404,7 @@ export default function ModulesDashboard() {
             }}>
               {dep.phase}:
             </div>
-            <div style={{ color: '#666' }}>→</div>
+            <div style={{ color: '#666' }}>{'>'}</div>
             <div style={{
               flex: 1,
               display: 'flex',
@@ -424,7 +424,7 @@ export default function ModulesDashboard() {
                 </span>
               ))}
               {idx === dependencies.length - 1 && (
-                <span style={{ color: '#10b981' }}>⚡ Ready</span>
+                <span style={{ color: '#d4d4d4' }}>{'>'} Ready</span>
               )}
             </div>
           </div>
@@ -439,7 +439,7 @@ export default function ModulesDashboard() {
         padding: '20px',
         marginBottom: '40px'
       }}>
-        <h3 style={{ color: '#e5e5e5', marginBottom: '15px', fontSize: '14px' }}>🔗 Quick Access</h3>
+        <h3 style={{ color: '#e5e5e5', marginBottom: '15px', fontSize: '14px' }}>[L] Quick Access</h3>
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -467,7 +467,7 @@ export default function ModulesDashboard() {
               e.currentTarget.style.background = '#222'
             }}
           >
-            📋 Copy Path
+            [K] Copy Path
           </button>
           <button
             onClick={() => copyText('http://localhost/paginaRE/coordination.html')}
@@ -491,7 +491,7 @@ export default function ModulesDashboard() {
               e.currentTarget.style.background = '#222'
             }}
           >
-            🔗 Copy URL
+            [L] Copy URL
           </button>
         </div>
         {copiedText && (
@@ -504,7 +504,7 @@ export default function ModulesDashboard() {
             fontSize: '11px',
             textAlign: 'center'
           }}>
-            ✓ Copied: {copiedText}
+            [+] Copied: {copiedText}
           </div>
         )}
       </div>

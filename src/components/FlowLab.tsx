@@ -16,22 +16,22 @@ interface Edge {
 }
 
 const NODE_TYPES = {
-  start: { icon: '▶', color: '#d4d4d4', category: 'flujo' },
-  end: { icon: '■', color: '#a3a3a3', category: 'flujo' },
-  process: { icon: '⚙', color: '#737373', category: 'flujo' },
-  decision: { icon: '◇', color: '#525252', category: 'flujo' },
-  loop: { icon: '↻', color: '#404040', category: 'flujo' },
-  parallel: { icon: '≡', color: '#262626', category: 'flujo' },
-  io: { icon: '⇄', color: '#d4d4d4', category: 'datos' },
-  db: { icon: '⛁', color: '#a3a3a3', category: 'datos' },
-  varset: { icon: '≔', color: '#737373', category: 'datos' },
-  api: { icon: '⚡', color: '#525252', category: 'sistema' },
-  hook: { icon: '⥈', color: '#404040', category: 'sistema' },
-  tryc: { icon: '⛨', color: '#262626', category: 'sistema' },
-  err: { icon: '✕', color: '#171717', category: 'sistema' },
-  delay: { icon: '⏱', color: '#d4d4d4', category: 'sistema' },
-  ai: { icon: '◉', color: '#a3a3a3', category: 'inteligencia' },
-  human: { icon: '◈', color: '#737373', category: 'inteligencia' },
+  start: { icon: '[>]', color: '#d4d4d4', category: 'flujo' },
+  end: { icon: '[#]', color: '#a3a3a3', category: 'flujo' },
+  process: { icon: '[P]', color: '#737373', category: 'flujo' },
+  decision: { icon: '[?]', color: '#525252', category: 'flujo' },
+  loop: { icon: '[R]', color: '#404040', category: 'flujo' },
+  parallel: { icon: '[=]', color: '#262626', category: 'flujo' },
+  io: { icon: '[I]', color: '#d4d4d4', category: 'datos' },
+  db: { icon: '[D]', color: '#a3a3a3', category: 'datos' },
+  varset: { icon: '[V]', color: '#737373', category: 'datos' },
+  api: { icon: '[A]', color: '#525252', category: 'sistema' },
+  hook: { icon: '[H]', color: '#404040', category: 'sistema' },
+  tryc: { icon: '[T]', color: '#262626', category: 'sistema' },
+  err: { icon: '[x]', color: '#171717', category: 'sistema' },
+  delay: { icon: '[W]', color: '#d4d4d4', category: 'sistema' },
+  ai: { icon: '[AI]', color: '#a3a3a3', category: 'inteligencia' },
+  human: { icon: '[U]', color: '#737373', category: 'inteligencia' },
 }
 
 let idCounter = 0
@@ -142,7 +142,7 @@ export default function FlowLab() {
         const targetId = target.getAttribute('data-node-id')
         if (targetId && targetId !== connecting) {
           setEdges(prev => [...prev, { id: `e${Date.now()}`, from: connecting!, to: targetId }])
-          addLog(`[→] conexión: ${connecting} → ${targetId}`)
+          addLog(`[>] conexión: ${connecting} > ${targetId}`)
         }
       }
       setConnecting(null)
@@ -280,7 +280,7 @@ export default function FlowLab() {
           marginBottom: 4,
           textAlign: 'left'
         }}>
-          <span style={{ width: 18, textAlign: 'center' }}>✕</span>
+          <span style={{ width: 18, textAlign: 'center' }}>[x]</span>
           eliminar
         </button>
         <button onClick={fitView} style={{

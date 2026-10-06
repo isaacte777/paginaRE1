@@ -39,7 +39,7 @@ export default function App() {
             fontWeight: currentView === 'flowlab' ? 600 : 400
           }}
         >
-          ⚡ FlowLab
+          {'>'} FlowLab
         </button>
         <button
           onClick={() => setCurrentView('modules')}
@@ -55,7 +55,7 @@ export default function App() {
             fontWeight: currentView === 'modules' ? 600 : 400
           }}
         >
-          📊 Módulos
+          [#] Módulos
         </button>
         <button
           onClick={() => setCurrentView('finance')}
@@ -71,7 +71,7 @@ export default function App() {
             fontWeight: currentView === 'finance' ? 600 : 400
           }}
         >
-          💰 Finanzas
+          [$] Finanzas
         </button>
 
         {/* Selector de plantilla financiera (solo visible en vista finanzas) */}
@@ -91,7 +91,7 @@ export default function App() {
                 fontWeight: financeTemplate === 'computo' ? 600 : 400
               }}
             >
-              🏗️ Cómputo Gere
+              [C] Cómputo Gere
             </button>
             <button
               onClick={() => setFinanceTemplate('family')}
@@ -107,7 +107,7 @@ export default function App() {
                 fontWeight: financeTemplate === 'family' ? 600 : 400
               }}
             >
-              👨‍👩‍👧 Sistema Familiar
+              [F] Sistema Familiar
             </button>
           </div>
         )}

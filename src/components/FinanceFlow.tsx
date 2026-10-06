@@ -85,7 +85,7 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
 
   // Generar mapa completo
   useEffect(() => {
-    console.log('🚀 Restaurando mapa completo...')
+    console.log('[>] Restaurando mapa completo...')
     const newCells: CellNode[] = []
     const newConnections: Connection[] = []
     
@@ -548,7 +548,7 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
         <div style={{ padding: '4px 8px', background: '#222', borderBottom: '2px solid #333', display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: 'monospace', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#333', borderRadius: 3 }}>{ct?.icon || '?'}</span>
           <div style={{ flex: 1, fontSize: 9, fontWeight: 600, color: '#e5e5e5', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{cell.label}</div>
-          {anomaly && <span style={{ fontSize: 14, color: anomaly.severity === 'high' ? '#ef4444' : '#f59e0b' }}>⚠</span>}
+          {anomaly && <span style={{ fontSize: 14, color: '#d4d4d4' }}>[!]</span>}
         </div>
         <div style={{ padding: '6px 8px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {cell.operation !== 'none' && cell.inputs.length > 0 && (
@@ -590,16 +590,16 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
             {CELL_TYPES.map(ct => <option key={ct.id} value={ct.name}>{ct.name}</option>)}
           </select>
           <div style={{ padding: 10, background: '#1a1a1a', borderRadius: 4, fontSize: 10, color: '#888', lineHeight: 1.8 }}>
-            <div>📊 Nodos: <b style={{ color: '#ccc' }}>{cells.length}</b></div>
-            <div>🔗 Conexiones: <b style={{ color: '#ccc' }}>{connections.length}</b></div>
-            <div>👁️ Visibles: <b style={{ color: '#ccc' }}>{filteredCells.length}</b></div>
+            <div>[#] Nodos: <b style={{ color: '#ccc' }}>{cells.length}</b></div>
+            <div>[L] Conexiones: <b style={{ color: '#ccc' }}>{connections.length}</b></div>
+            <div>[E] Visibles: <b style={{ color: '#ccc' }}>{filteredCells.length}</b></div>
           </div>
         </div>
 
         {/* Panel de Advertencias */}
         <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid #333' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h4 style={{ color: '#a3a3a3', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>⚠️ Advertencias ({getAllWarnings().length})</h4>
+            <h4 style={{ color: '#a3a3a3', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1, margin: 0 }}>[!] Advertencias ({getAllWarnings().length})</h4>
             <button onClick={() => setShowWarnings(!showWarnings)} style={{ background: showWarnings ? '#404040' : '#1a1a1a', border: '1px solid #333', color: showWarnings ? '#fff' : '#666', padding: '4px 8px', borderRadius: 3, cursor: 'pointer', fontSize: 9, fontWeight: 600 }}>
               {showWarnings ? 'ON' : 'OFF'}
             </button>
@@ -608,7 +608,7 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
             <div style={{ maxHeight: 200, overflowY: 'auto' }}>
               {getAllWarnings().map((warning, idx) => (
                 <div key={idx} onClick={() => { setSelected(warning.cell.id); const viewportWidth = viewportRef.current?.clientWidth || 800; const viewportHeight = viewportRef.current?.clientHeight || 600; setPan({ x: viewportWidth / 2 - warning.cell.x * (zoom / 100) - (warning.cell.width / 2) * (zoom / 100), y: viewportHeight / 2 - warning.cell.y * (zoom / 100) - (warning.cell.height / 2) * (zoom / 100) }) }} style={{ padding: 8, background: '#1a1a1a', border: `1px solid ${warning.anomaly.severity === 'high' ? '#ef4444' : '#f59e0b'}`, borderRadius: 4, marginBottom: 6, cursor: 'pointer' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: warning.anomaly.severity === 'high' ? '#ef4444' : '#f59e0b', marginBottom: 4 }}>⚠ {warning.anomaly.type}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#d4d4d4', marginBottom: 4 }}>[!] {warning.anomaly.type}</div>
                   <div style={{ fontSize: 9, color: '#ccc', marginBottom: 4 }}>{warning.cell.label}</div>
                   <div style={{ fontSize: 8, color: '#888' }}>{warning.anomaly.message}</div>
                 </div>
@@ -674,7 +674,7 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
             if (selected && highlightConnections && !inPath) op = 0.2
 
             return (
-              <div key={cell.id} data-cell-id={cell.id} onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id) }} onDoubleClick={() => setEditingCell(cell)} onMouseEnter={(e) => { if (anomaly) setTooltip({ visible: true, x: e.clientX + 15, y: e.clientY + 15, content: `⚠ ${anomaly.type}\n${anomaly.message}\n\nValor: ${formatValue(cell.calculatedValue, cell.format)}`, type: 'warning' }) }} onMouseLeave={() => setTooltip({ ...tooltip, visible: false })} style={{ position: 'absolute', left: cell.x, top: cell.y, width: cell.width, height: cell.height, cursor: 'grab', userSelect: 'none', opacity: op, transition: dragging === cell.id ? 'none' : 'all 0.3s' }}>
+              <div key={cell.id} data-cell-id={cell.id} onMouseDown={e => { e.stopPropagation(); handleMouseDown(e, cell.id) }} onDoubleClick={() => setEditingCell(cell)} onMouseEnter={(e) => { if (anomaly) setTooltip({ visible: true, x: e.clientX + 15, y: e.clientY + 15, content: `[!] ${anomaly.type}\n${anomaly.message}\n\nValor: ${formatValue(cell.calculatedValue, cell.format)}`, type: 'warning' }) }} onMouseLeave={() => setTooltip({ ...tooltip, visible: false })} style={{ position: 'absolute', left: cell.x, top: cell.y, width: cell.width, height: cell.height, cursor: 'grab', userSelect: 'none', opacity: op, transition: dragging === cell.id ? 'none' : 'all 0.3s' }}>
                 {cell.shape === 'rectangle' && <div style={{ width: '100%', height: '100%', background: '#1a1a1a', border: `3px solid ${bc}`, borderRadius: 8, boxShadow: isSel ? '0 0 25px rgba(255,255,255,0.25)' : anomaly ? `0 0 15px ${bc}44` : '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{renderCellContent(cell, isSel, anomaly)}</div>}
                 {cell.shape === 'rounded' && <div style={{ width: '100%', height: '100%', background: '#1a1a1a', border: `3px solid ${bc}`, borderRadius: 25, boxShadow: isSel ? '0 0 25px rgba(255,255,255,0.25)' : '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{renderCellContent(cell, isSel, anomaly)}</div>}
                 {cell.shape === 'circle' && <div style={{ width: '100%', height: '100%', background: '#1a1a1a', border: `3px solid ${bc}`, borderRadius: '50%', boxShadow: isSel ? '0 0 25px rgba(255,255,255,0.25)' : '0 4px 12px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: 10 }}>{renderCellContent(cell, isSel, anomaly)}</div>}
@@ -690,7 +690,7 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
 
         {/* Controles */}
         <div style={{ position: 'absolute', bottom: 10, right: 10, display: 'flex', gap: 4, alignItems: 'center', background: '#131416', border: '1px solid #333', borderRadius: 6, padding: '6px 10px' }}>
-          <button onClick={() => setHighlightConnections(!highlightConnections)} style={{ background: highlightConnections ? '#404040' : '#1a1a1a', border: '1px solid #333', color: highlightConnections ? '#fff' : '#ccc', padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600, marginRight: 8 }} title="Resaltar recorrido">🔗 {highlightConnections ? 'ON' : 'OFF'}</button>
+          <button onClick={() => setHighlightConnections(!highlightConnections)} style={{ background: highlightConnections ? '#404040' : '#1a1a1a', border: '1px solid #333', color: highlightConnections ? '#fff' : '#ccc', padding: '6px 12px', borderRadius: 4, cursor: 'pointer', fontSize: 11, fontWeight: 600, marginRight: 8 }} title="Resaltar recorrido">[L] {highlightConnections ? 'ON' : 'OFF'}</button>
           <button onClick={() => setZoom(z => Math.max(20, z - 10))} style={{ background: '#1a1a1a', border: '1px solid #333', color: '#ccc', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', fontSize: 14 }}>-</button>
           <span style={{ fontSize: 12, minWidth: 50, textAlign: 'center', fontWeight: 600 }}>{Math.round(zoom)}%</span>
           <button onClick={() => setZoom(z => Math.min(300, z + 10))} style={{ background: '#1a1a1a', border: '1px solid #333', color: '#ccc', width: 28, height: 28, borderRadius: 4, cursor: 'pointer', fontSize: 14 }}>+</button>
@@ -738,12 +738,12 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
           {highlightConnections && connectedPath && (
             <div style={{ marginBottom: 12, padding: 10, background: '#1a1a1a', borderRadius: 4, border: '1px solid #333' }}>
               <div style={{ fontSize: 9, color: '#666', marginBottom: 6 }}>RECORRIDO</div>
-              <div style={{ fontSize: 10, color: '#ccc', marginBottom: 4 }}>🔗 {connectedPath.connections.length} conexiones</div>
-              <div style={{ fontSize: 10, color: '#ccc', marginBottom: 6 }}>📦 {connectedPath.nodes.length} nodos</div>
+              <div style={{ fontSize: 10, color: '#ccc', marginBottom: 4 }}>[L] {connectedPath.connections.length} conexiones</div>
+              <div style={{ fontSize: 10, color: '#ccc', marginBottom: 6 }}>[D] {connectedPath.nodes.length} nodos</div>
               <div style={{ fontSize: 8, color: '#888', lineHeight: 1.6, maxHeight: 150, overflow: 'auto' }}>
                 {connectedPath.nodes.map((nid: string, i: number) => {
                   const n = cells.find(c => c.id === nid)
-                  return <div key={i} style={{ display: 'flex', gap: 4, alignItems: 'center' }}><span style={{ color: nid === selectedCell.id ? '#fff' : '#666' }}>{i === 0 ? '→' : '↳'}</span><span style={{ color: nid === selectedCell.id ? '#fff' : '#aaa' }}>{n?.label || nid}</span></div>
+                  return <div key={i} style={{ display: 'flex', gap: 4, alignItems: 'center' }}><span style={{ color: nid === selectedCell.id ? '#fff' : '#666' }}>{i === 0 ? '>' : '`'}</span><span style={{ color: nid === selectedCell.id ? '#fff' : '#aaa' }}>{n?.label || nid}</span></div>
                 })}
               </div>
             </div>
@@ -790,7 +790,7 @@ export default function FinanceFlow({ template = 'computo' }: FinanceFlowProps) 
       {/* Tooltip */}
       {tooltip.visible && (
         <div style={{ position: 'fixed', left: tooltip.x, top: tooltip.y, background: '#1a1a1a', border: `2px solid ${tooltip.type === 'warning' ? '#f59e0b' : '#666'}`, borderRadius: 6, padding: '10px 14px', maxWidth: 280, zIndex: 10000, pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.8)', fontSize: 11, lineHeight: 1.6 }}>
-          {tooltip.type === 'warning' && <div style={{ color: '#f59e0b', fontWeight: 700, marginBottom: 4 }}>⚠ ADVERTENCIA</div>}
+          {tooltip.type === 'warning' && <div style={{ color: '#d4d4d4', fontWeight: 700, marginBottom: 4 }}>[!] ADVERTENCIA</div>}
           <div style={{ color: '#e5e5e5', whiteSpace: 'pre-line' }}>{tooltip.content}</div>
         </div>
       )}
