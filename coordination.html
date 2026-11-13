@@ -32,14 +32,14 @@
     <option value="complex">pipeline_complejo</option>
     <option value="blank">lienzo_blanco</option>
   </select>
-  <button class="btn" id="btnJson" title="exportar json">.json</button>
-  <button class="btn" id="btnLoad" title="importar json">abrir</button>
-  <button class="btn" id="btnMermaid" title="exportar mermaid">.md</button>
-  <button class="btn" id="btnPng" title="exportar png">.png</button>
-  <button class="btn" id="btnChat" title="panel de chat">💬</button>
-  <button class="btn" id="btnInsp" title="inspector">🔍</button>
-  <button class="btn" id="btnExp" title="exportar">📄</button>
-  <button class="btn primary" id="btnNew" title="nuevo diagrama">nuevo</button>
+  <button class="btn" id="btnJson">.json</button>
+  <button class="btn" id="btnLoad">abrir</button>
+  <button class="btn" id="btnMermaid">.md</button>
+  <button class="btn" id="btnPng">.png</button>
+  <button class="btn" id="btnChat">💬</button>
+  <button class="btn" id="btnInsp">🔍</button>
+  <button class="btn" id="btnExp">📄</button>
+  <button class="btn primary" id="btnNew">nuevo</button>
 </header>
 
 <main>
@@ -116,6 +116,7 @@
 </main>
 
 <div id="consoleWrap">
+  <div id="consoleResizeHandle" title="Arrastrar para redimensionar"></div>
   <div id="consoleBar">
     <button class="btn primary" id="btnRun" style="width:auto;margin:0">▶ ejecutar</button>
     <button class="btn" id="btnClearLog" style="width:auto;margin:0">limpiar</button>
@@ -210,12 +211,16 @@
   </div>
 </div>
 
+<!-- Menú Flotante de Ayuda al Pasar el Mouse -->
+<div id="hoverTooltip" class="hover-tooltip" hidden></div>
+
 <footer>
   <span id="stNodes">nodos: 0</span>
   <span id="stEdges">conexiones: 0</span>
   <span id="stZoom">zoom: 100%</span>
   <span id="stRun">idle</span>
   <span class="sp"></span>
+  <span id="btnShowConsole" style="cursor:pointer;color:var(--tx1);padding:2px 6px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;display:none" title="mostrar consola">⚡ consola</span>
   <span id="stSave">auto-guardado</span>
   <span class="hint">FlowLab v3 · Centro de Control paginaRE</span>
 </footer>

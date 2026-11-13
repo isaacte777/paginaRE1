@@ -82,6 +82,11 @@ input[type="checkbox"] {
   background: var(--tx2);
 }
 
+/* Utility hidden */
+[hidden] {
+  display: none !important;
+}
+
 /* Modales y Paneles */
 .modal-wrap {
   position: fixed;
@@ -352,9 +357,9 @@ input[type="checkbox"] {
 
 /* Popover de Exportación (Compacto, Flotante, No Intrusivo) */
 .export-popover {
-  position: absolute;
-  top: 46px;
-  right: 140px;
+  position: fixed;
+  top: 54px;
+  right: 16px;
   width: 290px;
   background: var(--bg1);
   border: 1px solid var(--line2);
@@ -365,6 +370,10 @@ input[type="checkbox"] {
   flex-direction: column;
   overflow: hidden;
   animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.export-popover[hidden] {
+  display: none !important;
 }
 
 @keyframes popoverFadeIn {
@@ -487,6 +496,31 @@ input[type="checkbox"] {
   color: var(--tx1);
   border-radius: 3px;
   cursor: pointer;
+}
+
+/* Tooltip / Menú flotante al pasar el mouse */
+.hover-tooltip {
+  position: fixed;
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 240px;
+  animation: tooltipFade 0.12s ease;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@keyframes tooltipFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .btn-micro:hover {

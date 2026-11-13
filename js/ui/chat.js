@@ -3,7 +3,6 @@
 function initChat() {
   const chatBtn = document.getElementById('btnChat');
   const inspBtn = document.getElementById('btnInsp');
-  const expBtn = document.getElementById('btnExp');
 
   if (chatBtn) {
     chatBtn.addEventListener('click', () => toggleChatPanel());
@@ -11,13 +10,6 @@ function initChat() {
 
   if (inspBtn) {
     inspBtn.addEventListener('click', () => toggleInspectorPanel());
-  }
-
-  if (expBtn) {
-    expBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleExportPopover();
-    });
   }
 
   // Listeners para tabs del modal de chat/agente

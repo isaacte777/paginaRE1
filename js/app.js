@@ -16,6 +16,8 @@ function initApp() {
   // Inicializar pestañas de panel e inspector v4
   initPanelTabs();
   initChat();
+  initHeaderTooltips();
+  initConsoleResize();
 
   // Simular bridge activo
   STATE.bridgeActive = true;
@@ -112,9 +114,18 @@ function registerEventListeners() {
     DOM.console.innerHTML = '';
     log('ok', 'log limpiado');
   });
-  document.getElementById('btnToggleCon').addEventListener('click', e => {
-    document.getElementById('consoleWrap').classList.toggle('min');
-    e.target.textContent = document.getElementById('consoleWrap').classList.contains('min') ? '⊞' : '—';
+  document.getElementById('btnToggleCon').addEventListener('click', () => {
+    const wrap = document.getElementById('consoleWrap');
+    const showBtn = document.getElementById('btnShowConsole');
+    if (wrap) wrap.style.display = 'none';
+    if (showBtn) showBtn.style.display = 'inline-block';
+  });
+
+  document.getElementById('btnShowConsole')?.addEventListener('click', () => {
+    const wrap = document.getElementById('consoleWrap');
+    const showBtn = document.getElementById('btnShowConsole');
+    if (wrap) wrap.style.display = 'flex';
+    if (showBtn) showBtn.style.display = 'none';
   });
 
   // Nuevos botones v4
@@ -132,13 +143,23 @@ function registerEventListeners() {
     e.stopPropagation();
     toggleExportPopover();
   });
+  document.getElementById('btnHelp')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleHelpPopover();
+  });
 
-  // Cerrar popover de exportación al hacer clic fuera
+  // Cerrar popover de exportación y ayuda al hacer clic fuera
   document.addEventListener('pointerdown', e => {
     const pop = document.getElementById('expPopover');
     if (pop && !pop.hidden) {
       if (!pop.contains(e.target) && e.target.id !== 'btnExp' && !e.target.closest('#btnExp')) {
         toggleExportPopover(false);
+      }
+    }
+    const helpPop = document.getElementById('helpPopover');
+    if (helpPop && !helpPop.hidden) {
+      if (!helpPop.contains(e.target) && e.target.id !== 'btnHelp' && !e.target.closest('#btnHelp')) {
+        toggleHelpPopover(false);
       }
     }
   });

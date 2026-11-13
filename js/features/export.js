@@ -423,3 +423,48 @@ function escapeMermaidLabel(text) {
     .replace(/"/g, "'")
     .replace(/[\[\]\(\)\{\}]/g, '');
 }
+
+/**
+ * Inicializa tooltips flotantes que siguen al cursor al pasar el mouse por las opciones del header
+ */
+function initHeaderTooltips() {
+  const tooltips = {
+    'templateSelect': { title: 'plantillas', desc: 'Carga arquitecturas y flujos prediseñados (pipelines, comparación, web).' },
+    'btnJson': { title: 'exportar json', desc: 'Guarda el proyecto completo y su estado en un archivo JSON local.' },
+    'btnLoad': { title: 'abrir json', desc: 'Carga un diagrama guardado desde un archivo JSON local.' },
+    'btnMermaid': { title: 'copiar mermaid', desc: 'Copia rápidamente el código Mermaid (.md) al portapapeles.' },
+    'btnPng': { title: 'exportar png', desc: 'Genera y descarga una imagen PNG de alta resolución del diagrama.' },
+    'btnChat': { title: 'chat & agentes', desc: 'Abre el panel con chat de IA, monitor de agentes y diagnósticos.' },
+    'btnInsp': { title: 'inspector', desc: 'Muestra el inspector de propiedades detalladas del nodo o conexión.' },
+    'btnExp': { title: 'exportar avanzado', desc: 'Menú flotante para exportar en Mermaid, Markdown, PNG y SVG.' },
+    'btnNew': { title: 'nuevo diagrama', desc: 'Limpia el lienzo actual para crear un diagrama desde cero.' }
+  };
+
+  const tooltipEl = document.getElementById('hoverTooltip');
+  if (!tooltipEl) return;
+
+  Object.keys(tooltips).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    el.addEventListener('mouseenter', e => {
+      const info = tooltips[id];
+      tooltipEl.innerHTML = `
+        <div style="font-weight:700; color:var(--tx0); margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:3px;">:: ${info.title}</div>
+        <div style="color:var(--tx2); font-weight:400; line-height:1.35;">${info.desc}</div>
+      `;
+      tooltipEl.hidden = false;
+      tooltipEl.style.left = (e.clientX + 14) + 'px';
+      tooltipEl.style.top = (e.clientY + 14) + 'px';
+    });
+
+    el.addEventListener('mousemove', e => {
+      tooltipEl.style.left = (e.clientX + 14) + 'px';
+      tooltipEl.style.top = (e.clientY + 14) + 'px';
+    });
+
+    el.addEventListener('mouseleave', () => {
+      tooltipEl.hidden = true;
+    });
+  });
+}
