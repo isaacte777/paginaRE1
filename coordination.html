@@ -36,9 +36,9 @@
   <button class="btn" id="btnLoad">abrir</button>
   <button class="btn" id="btnMermaid">.md</button>
   <button class="btn" id="btnPng">.png</button>
-  <button class="btn" id="btnChat">💬</button>
-  <button class="btn" id="btnInsp">🔍</button>
-  <button class="btn" id="btnExp">📄</button>
+  <button class="btn" id="btnChat" title="panel de chat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+  <button class="btn" id="btnInsp" title="inspector"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+  <button class="btn" id="btnExp" title="exportar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
   <button class="btn primary" id="btnNew">nuevo</button>
 </header>
 
@@ -64,6 +64,8 @@
     <h4>inteligencia</h4>
     <button class="tool" data-add="ai"><span class="prev pv-ai"></span>llm_ia()</button>
     <button class="tool" data-add="human"><span class="prev pv-human"></span>humano()</button>
+    <h4>métricas</h4>
+    <button class="tool" data-add="metrics"><span class="prev pv-metrics"></span>metrica()</button>
     <h4>edición</h4>
     <select id="filterStatus" style="width:100%">
       <option value="">filtro: todos</option>
@@ -118,10 +120,11 @@
 <div id="consoleWrap">
   <div id="consoleResizeHandle" title="Arrastrar para redimensionar"></div>
   <div id="consoleBar">
-    <button class="btn primary" id="btnRun" style="width:auto;margin:0">▶ ejecutar</button>
-    <button class="btn" id="btnClearLog" style="width:auto;margin:0">limpiar</button>
-    <button class="btn" id="btnToggleCon" style="width:auto;margin:0">—</button>
-    <span class="t">sync: Claude Code + Qwen Coder</span>
+    <button class="btn primary" id="btnRun">▶ ejecutar</button>
+    <button class="btn" id="btnClearLog">limpiar</button>
+    <button class="btn" id="btnToggleCon">—</button>
+    <span class="t">PS C:\paginaRE&gt;</span>
+    <input type="text" id="consoleInput" placeholder="Escribe un comando (ej. help, nodes, run)..." autocomplete="off" spellcheck="false">
   </div>
   <div id="console"></div>
 </div>
@@ -174,28 +177,28 @@
   </div>
   <div class="exp-grid">
     <button class="exp-card" onclick="exportMermaid()">
-      <span class="exp-card-icon">📋</span>
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>
       <div class="exp-card-info">
         <div class="exp-card-title">Copiar Mermaid (.md)</div>
         <div class="exp-card-sub">Copia la sintaxis al portapapeles</div>
       </div>
     </button>
     <button class="exp-card" onclick="downloadMermaidFile()">
-      <span class="exp-card-icon">📝</span>
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
       <div class="exp-card-info">
         <div class="exp-card-title">Descargar Markdown</div>
         <div class="exp-card-sub">Archivo .md con diagrama</div>
       </div>
     </button>
     <button class="exp-card" onclick="exportPNG()">
-      <span class="exp-card-icon">🖼️</span>
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
       <div class="exp-card-info">
         <div class="exp-card-title">Descargar Imagen PNG</div>
         <div class="exp-card-sub">Renderizado de alta resolución</div>
       </div>
     </button>
     <button class="exp-card" onclick="exportSVG()">
-      <span class="exp-card-icon">📐</span>
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10h4"/><path d="M12 10h1"/><path d="M8 10h1"/></svg></span>
       <div class="exp-card-info">
         <div class="exp-card-title">Descargar Vector SVG</div>
         <div class="exp-card-sub">Gráfico vectorial escalable</div>
@@ -213,6 +216,29 @@
 
 <!-- Menú Flotante de Ayuda al Pasar el Mouse -->
 <div id="hoverTooltip" class="hover-tooltip" hidden></div>
+
+<!-- Menú Contextual del Nodo (Clic Derecho) -->
+<div id="nodeContextMenu" class="context-menu" hidden>
+  <div class="ctx-header" id="ctxNodeTitle">:: nodo</div>
+  <div class="ctx-item" onclick="ctxAction('delete')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <span>Eliminar nodo</span>
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxAction('inspect')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Ver en inspector</span>
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxAction('done')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span>Marcar como hecho</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('pending')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    <span>Marcar como pendiente</span>
+  </div>
+</div>
 
 <footer>
   <span id="stNodes">nodos: 0</span>

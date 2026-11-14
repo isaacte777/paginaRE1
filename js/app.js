@@ -18,6 +18,7 @@ function initApp() {
   initChat();
   initHeaderTooltips();
   initConsoleResize();
+  initConsoleInput();
 
   // Simular bridge activo
   STATE.bridgeActive = true;
@@ -148,7 +149,7 @@ function registerEventListeners() {
     toggleHelpPopover();
   });
 
-  // Cerrar popover de exportación y ayuda al hacer clic fuera
+  // Cerrar popover de exportación, ayuda y menú contextual al hacer clic fuera
   document.addEventListener('pointerdown', e => {
     const pop = document.getElementById('expPopover');
     if (pop && !pop.hidden) {
@@ -156,11 +157,21 @@ function registerEventListeners() {
         toggleExportPopover(false);
       }
     }
-    const helpPop = document.getElementById('helpPopover');
-    if (helpPop && !helpPop.hidden) {
-      if (!helpPop.contains(e.target) && e.target.id !== 'btnHelp' && !e.target.closest('#btnHelp')) {
-        toggleHelpPopover(false);
+    const ctxMenu = document.getElementById('nodeContextMenu');
+    if (ctxMenu && !ctxMenu.hidden) {
+      if (!ctxMenu.contains(e.target)) {
+        hideNodeContextMenu();
       }
+    }
+  });
+
+  // Menú contextual en nodos (clic derecho)
+  DOM.world.addEventListener('contextmenu', e => {
+    const nEl = e.target.closest('.node');
+    if (nEl) {
+      showNodeContextMenu(e, nEl.dataset.id);
+    } else {
+      e.preventDefault();
     }
   });
 
@@ -236,6 +247,22 @@ function registerEventListeners() {
     }
     if (e.button !== 0) return;
 
+    // Comprobar si se hizo clic en el candado de bloqueo del nodo
+    const lockEl = e.target.closest('.lock-badge');
+    if (lockEl) {
+      e.stopPropagation();
+      e.preventDefault();
+      const nodeId = lockEl.dataset.nodeLock;
+      const n = byId(nodeId);
+      if (n) {
+        n.locked = !n.locked;
+        commitHistory();
+        renderAll();
+        showToast(n.locked ? 'Nodo bloqueado (fijo)' : 'Nodo desbloqueado', 'info', 1500);
+      }
+      return;
+    }
+
     if (e.target.classList.contains('port')) {
       const nEl = e.target.closest('.node');
       STATE.connecting = { id: nEl.dataset.id, side: e.target.dataset.side };
@@ -266,9 +293,17 @@ function registerEventListeners() {
   });
 
   window.addEventListener('pointermove', e => {
+    STATE.mouse.x = e.clientX;
+    STATE.mouse.y = e.clientY;
+
+    if (STATE.connecting) {
+      drawEdges();
+      return;
+    }
+
     if (STATE.dragging) {
       const n = byId(STATE.dragging.id);
-      if (!n) return;
+      if (!n || n.locked) return;
       let nx = STATE.dragging.ox + (e.clientX - STATE.dragging.sx) / STATE.zoom;
       let ny = STATE.dragging.oy + (e.clientY - STATE.dragging.sy) / STATE.zoom;
       if (STATE.snapOn) {
@@ -278,11 +313,7 @@ function registerEventListeners() {
       n.x = Math.round(nx);
       n.y = Math.round(ny);
       STATE.dragging.moved = true;
-      const el = nodeEl(n.id);
-      if (el) {
-        el.style.left = n.x + 'px';
-        el.style.top = n.y + 'px';
-      }
+      renderNodes();
       drawEdges();
       drawMinimap();
     } else if (STATE.panning) {
@@ -307,6 +338,7 @@ function registerEventListeners() {
         }
       }
       STATE.connecting = null;
+      drawEdges();
     }
     if (STATE.dragging) {
       if (STATE.dragging.moved) commitHistory();

@@ -377,6 +377,21 @@ main {
   flex-shrink: 0;
 }
 
+#consoleInput {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 10px;
+  font: 400 10.5px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+  outline: none;
+}
+
+#consoleInput:focus {
+  border-color: var(--tx2);
+}
+
 #consoleBar .t {
   font-size: 10px;
   color: var(--tx3);

@@ -79,6 +79,86 @@ function autoSide(nf, nt) {
   return { o: 'v', dx: dx, dy: dy };
 }
 
+function getEdgeEndpoints(e) {
+  const nf = byId(e.from);
+  const nt = byId(e.to);
+  if (!nf || !nt) return null;
+
+  const dx = (nt.x + nt.w / 2) - (nf.x + nf.w / 2);
+  const dy = (nt.y + nt.h / 2) - (nf.y + nf.h / 2);
+  const isHoriz = Math.abs(dx) >= Math.abs(dy);
+
+  const sourceSide = isHoriz ? (dx >= 0 ? 'right' : 'left') : (dy >= 0 ? 'bottom' : 'top');
+  const targetSide = isHoriz ? (dx >= 0 ? 'left' : 'right') : (dy >= 0 ? 'top' : 'bottom');
+
+  return { nf, nt, sourceSide, targetSide };
+}
+
+function getEdgeAnchor(e, n, isFrom) {
+  const ep = getEdgeEndpoints(e);
+  if (!ep) return { x: n.x + n.w / 2, y: n.y + n.h / 2, side: 'right' };
+
+  const side = isFrom ? ep.sourceSide : ep.targetSide;
+
+  const allEdges = STATE.edges.filter(ex => ex.from === n.id || ex.to === n.id);
+  const sameSideEdges = allEdges.filter(ex => {
+    const xep = getEdgeEndpoints(ex);
+    if (!xep) return false;
+    const s = (ex.from === n.id) ? xep.sourceSide : xep.targetSide;
+    return s === side;
+  });
+
+  sameSideEdges.sort((a, b) => {
+    const aOther = byId(a.from === n.id ? a.to : a.from);
+    const bOther = byId(b.from === n.id ? b.to : b.from);
+    if (!aOther || !bOther) return 0;
+    return (side === 'left' || side === 'right') ? ((aOther.y + aOther.h/2) - (bOther.y + bOther.h/2)) : ((aOther.x + aOther.w/2) - (bOther.x + bOther.w/2));
+  });
+
+  const idx = sameSideEdges.findIndex(ex => ex.id === e.id);
+  const total = sameSideEdges.length;
+  const pct = total <= 1 ? 0.5 : (idx + 1) / (total + 1);
+
+  if (side === 'top') return { x: n.x + n.w * pct, y: n.y, side };
+  if (side === 'bottom') return { x: n.x + n.w * pct, y: n.y + n.h, side };
+  if (side === 'left') return { x: n.x, y: n.y + n.h * pct, side };
+  return { x: n.x + n.w, y: n.y + n.h * pct, side };
+}
+
+function getNodePorts(n) {
+  if (n.type === 'note') return [];
+  const connectedEdges = STATE.edges.filter(e => e.from === n.id || e.to === n.id);
+
+  if (connectedEdges.length === 0) {
+    return [
+      { side: 'top', style: 'top: -7px; left: 50%; margin-left: -6px;' },
+      { side: 'bottom', style: 'bottom: -7px; left: 50%; margin-left: -6px;' },
+      { side: 'left', style: 'left: -7px; top: 50%; margin-top: -6px;' },
+      { side: 'right', style: 'right: -7px; top: 50%; margin-top: -6px;' }
+    ];
+  }
+
+  const ports = [];
+  connectedEdges.forEach(e => {
+    const isFrom = (e.from === n.id);
+    const anchor = getEdgeAnchor(e, n, isFrom);
+    if (!anchor) return;
+
+    let style = '';
+    if (anchor.side === 'top' || anchor.side === 'bottom') {
+      const leftPct = Math.round(((anchor.x - n.x) / n.w) * 100);
+      style = `top: ${anchor.side === 'top' ? '-7px' : 'auto'}; bottom: ${anchor.side === 'bottom' ? '-7px' : 'auto'}; left: ${leftPct}%; margin-left: -6px;`;
+    } else {
+      const topPct = Math.round(((anchor.y - n.y) / n.h) * 100);
+      style = `left: ${anchor.side === 'left' ? '-7px' : 'auto'}; right: ${anchor.side === 'right' ? '-7px' : 'auto'}; top: ${topPct}%; margin-top: -6px;`;
+    }
+
+    ports.push({ side: anchor.side, style, edgeId: e.id });
+  });
+
+  return ports;
+}
+
 function bbox() {
   if (!STATE.nodes.length) return { minX: 0, minY: 0, maxX: 800, maxY: 600 };
   return {

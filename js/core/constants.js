@@ -21,7 +21,8 @@ const CONFIG = {
     io: 'E/S', db: 'BD', varset: 'Variable',
     api: 'API', hook: 'Webhook', tryc: 'Try/Catch',
     err: 'Error', delay: 'Espera', ai: 'IA/LLM',
-    human: 'Humano', note: 'Nota', sub: 'Subproceso'
+    human: 'Humano', note: 'Nota', sub: 'Subproceso',
+    metrics: 'Métrica Trading'
   },
 
   // Esquema de parámetros por tipo de nodo (para inspectores)
@@ -45,6 +46,11 @@ const CONFIG = {
     ],
     delay: [
       { key: 'ms', label: 'Milisegundos', type: 'number', default: 1000 }
+    ],
+    metrics: [
+      { key: 'metric_type', label: 'Tipo', type: 'select', options: ['Eficiencia (%)', 'Rendimiento (ROI)', 'Throughput (op/s)', 'Latencia (ms)'], default: 'Eficiencia (%)' },
+      { key: 'target', label: 'Objetivo', type: 'number', default: 95 },
+      { key: 'current', label: 'Actual', type: 'number', default: 91.5 }
     ]
   },
 

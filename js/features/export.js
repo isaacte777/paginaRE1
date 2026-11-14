@@ -376,6 +376,7 @@ function getMermaidShape(type) {
     db: ['[(', ')]'],
     ai: ['{{', '}}'],
     human: ['[/\\', '/\\]'],
+    metrics: ['(', ')'],
     default: ['[', ']']
   };
   return shapes[type] || shapes.default;
@@ -398,7 +399,8 @@ function getNodeColor(type) {
     err: '#f43f5e',
     delay: '#eab308',
     human: '#fb923c',
-    varset: '#0ea5e9'
+    varset: '#0ea5e9',
+    metrics: '#38bdf8'
   };
   return colors[type] || '#64748b';
 }
@@ -413,7 +415,8 @@ function getNodeBorderColor(type) {
     parallel: '#0891b2',
     ai: '#db2777',
     api: '#059669',
-    db: '#4f46e5'
+    db: '#4f46e5',
+    metrics: '#0284c7'
   };
   return colors[type] || '#334155';
 }
@@ -437,7 +440,12 @@ function initHeaderTooltips() {
     'btnChat': { title: 'chat & agentes', desc: 'Abre el panel con chat de IA, monitor de agentes y diagnósticos.' },
     'btnInsp': { title: 'inspector', desc: 'Muestra el inspector de propiedades detalladas del nodo o conexión.' },
     'btnExp': { title: 'exportar avanzado', desc: 'Menú flotante para exportar en Mermaid, Markdown, PNG y SVG.' },
-    'btnNew': { title: 'nuevo diagrama', desc: 'Limpia el lienzo actual para crear un diagrama desde cero.' }
+    'btnNew': { title: 'nuevo diagrama', desc: 'Limpia el lienzo actual para crear un diagrama desde cero.' },
+    'btnRun': { title: 'ejecutar', desc: 'Inicia la simulación paso a paso del flujo de nodos conectado.' },
+    'btnClearLog': { title: 'limpiar', desc: 'Borra todo el historial de registros de la consola.' },
+    'btnToggleCon': { title: 'minimizar consola', desc: 'Oculta por completo la consola inferior para maximizar el espacio.' },
+    'btnShowConsole': { title: 'mostrar consola', desc: 'Vuelve a mostrar la consola inferior de registros.' },
+    'consoleInput': { title: 'consola powershell', desc: 'Escribe comandos interactivos (help, nodes, run, status, clear, export, reset).' }
   };
 
   const tooltipEl = document.getElementById('hoverTooltip');

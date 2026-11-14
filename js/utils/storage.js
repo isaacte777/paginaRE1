@@ -29,6 +29,22 @@ function loadState() {
   } catch (e) {
     log('warn', 'error al cargar estado');
   }
+
+  // Asegurar que exista un nodo de métricas de ejemplo en el proyecto activo
+  const hasMetrics = STATE.nodes.some(n => n.type === 'metrics');
+  if (!hasMetrics && STATE.nodes.length > 0) {
+    const endNode = STATE.nodes.find(n => n.type === 'end');
+    const targetX = endNode ? endNode.x : 400;
+    const targetY = endNode ? endNode.y + 140 : 1000;
+    const metricsNode = createNode('metrics', 'Métrica Eficiencia:\n• ROI: +34.2%\n• Throughput: 140 op/s\n• Latencia: 42ms\n• Uptime: 99.98%', targetX, targetY);
+    metricsNode.status = 'done';
+    metricsNode.progress = 100;
+    STATE.nodes.push(metricsNode);
+    if (endNode) {
+      STATE.edges.push(createEdge(endNode.id, metricsNode.id, 'Performance', 'normal'));
+    }
+    saveState();
+  }
 }
 
 function exportJSON() {

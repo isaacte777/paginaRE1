@@ -9,6 +9,7 @@ const STATE = {
   dragging: null,
   panning: null,
   connecting: null,
+  mouse: { x: 0, y: 0 },
   editing: false,
   snapOn: true,
   history: [],
@@ -32,6 +33,7 @@ const STATE = {
 const DOM = {
   vp: null,
   world: null,
+  edgeSvg: null,
   edgesG: null,
   panel: null,
   console: null,
@@ -43,12 +45,17 @@ const DOM = {
 function initDOM() {
   DOM.vp = document.getElementById('viewport');
   DOM.world = document.getElementById('world');
+  DOM.edgeSvg = document.getElementById('edgeSvg');
   DOM.edgesG = document.getElementById('edgesG');
   DOM.panel = document.getElementById('panel');
   DOM.console = document.getElementById('console');
   DOM.fileInput = document.getElementById('fileInput');
   DOM.minimap = document.getElementById('minimap');
   DOM.mmx = DOM.minimap ? DOM.minimap.getContext('2d') : null;
+
+  if (DOM.world && DOM.edgeSvg) {
+    DOM.world.appendChild(DOM.edgeSvg);
+  }
 }
 
 function resetState() {

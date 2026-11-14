@@ -602,10 +602,149 @@ input[type="checkbox"] {
   border: 1px solid #ff6b6b;
 }
 
-/* Circuit Highlight */
+/* Circuit Highlight & Traveling Halo Animation - Clean & Less Saturated */
+@keyframes circuitPulse {
+  0% {
+    stroke-dashoffset: 24;
+    stroke: #64748b;
+  }
+  50% {
+    stroke: #94a3b8;
+    filter: drop-shadow(0 0 4px rgba(148, 163, 184, 0.4));
+  }
+  100% {
+    stroke-dashoffset: -24;
+    stroke: #64748b;
+  }
+}
+
+.edge.circuit-edge {
+  stroke: #64748b;
+  stroke-width: 2.2px;
+  stroke-dasharray: 6, 10;
+  animation: circuitPulse 2s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(100, 116, 139, 0.4));
+}
+
+.edge.dimmed-edge {
+  opacity: 0.15;
+}
+
+@keyframes travelPulse {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  20% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+.circuit-particle {
+  fill: #cbd5e1;
+  animation: travelPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(203, 213, 225, 0.6));
+}
+
+@keyframes nodePulseHalo {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.25), inset 0 0 2px rgba(148, 163, 184, 0.15);
+    border-color: #64748b;
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(148, 163, 184, 0.5), inset 0 0 4px rgba(148, 163, 184, 0.3);
+    border-color: #94a3b8;
+  }
+}
+
 .node.circuit {
-  box-shadow: 0 0 12px rgba(100, 200, 255, 0.6);
-  border-color: #64c8ff;
+  animation: nodePulseHalo 2.5s ease-in-out infinite;
+  border-color: #64748b;
+}
+
+/* Menú Contextual de Nodos (Clic Derecho) - Ultra Profesional */
+.context-menu {
+  position: fixed;
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  min-width: 195px;
+  overflow: hidden;
+  animation: popoverFadeIn 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.context-menu[hidden] {
+  display: none !important;
+}
+
+.ctx-header {
+  padding: 8px 12px;
+  background: var(--bg2);
+  font: 600 10.5px 'JetBrains Mono';
+  color: var(--tx0);
+  border-bottom: 1px solid var(--line);
+  letter-spacing: .03em;
+}
+
+.ctx-item {
+  padding: 9px 12px;
+  font: 500 10.5px 'JetBrains Mono';
+  color: var(--tx1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ctx-icon {
+  color: var(--tx2);
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+
+.ctx-item:hover {
+  background: var(--bg3);
+  color: var(--tx0);
+}
+
+.ctx-item:hover .ctx-icon {
+  color: var(--tx0);
+}
+
+.ctx-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 2px 0;
+}
+
+/* Vista previa de conexión activa */
+.edge.connecting-preview {
+  stroke: var(--white);
+  stroke-dasharray: 4, 4;
+  animation: dashAni 0.8s linear infinite;
+  opacity: 0.85;
+}
+
+@keyframes dashAni {
+  to {
+    stroke-dashoffset: -16;
+  }
 }
 
 /* Responsivo */
