@@ -1,0 +1,288 @@
+{
+  "nodes": [
+    {
+      "id": "inicio_comparacion",
+      "type": "start",
+      "text": "Comparación Precios\nINICIO",
+      "x": 300,
+      "y": 50,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "objetivos_tech",
+      "type": "process",
+      "text": "Objetivos Técnicos:\n• Carga < 2s\n• Búsqueda < 500ms\n• Uptime 95%+\n• Tests 80%+\n• Lighthouse 85+",
+      "x": 100,
+      "y": 150,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "objetivos_ux",
+      "type": "process",
+      "text": "Objetivos UX:\n• Comparación < 30s\n• Mobile 95+\n• WCAG AA\n• NPS > 50\n• Rating 4.5/5",
+      "x": 300,
+      "y": 150,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "objetivos_biz",
+      "type": "process",
+      "text": "Objetivos Negocio:\n• 10K usuarios\n• 100K productos\n• 50 vendedores\n• Retención 70%\n• Monetización",
+      "x": 500,
+      "y": 150,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "objetivos_integ",
+      "type": "process",
+      "text": "Objetivos Integración:\n• FlowLab sync\n• Auth compartida\n• Design unificado\n• Estado centralizado\n• Persistencia",
+      "x": 700,
+      "y": 150,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "fase1_mvp",
+      "type": "process",
+      "text": "FASE 1: MVP Foundation\nSemanas 1-2 | 60 horas\n✓ Búsqueda básica\n✓ Comparación simple\n✓ API scaffold",
+      "x": 100,
+      "y": 300,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "fase2_core",
+      "type": "process",
+      "text": "FASE 2: Core Features\nSemanas 3-4 | 80 horas\n✓ Filtros avanzados\n✓ Gráficos históricos\n✓ Persistencia",
+      "x": 300,
+      "y": 300,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "fase3_adv",
+      "type": "process",
+      "text": "FASE 3: Advanced\nSemanas 5-6 | 100 horas\n✓ Alertas de precio\n✓ Real-time WebSocket\n✓ Analytics",
+      "x": 500,
+      "y": 300,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "fase4_opt",
+      "type": "process",
+      "text": "FASE 4: Optimization\nSemanas 7-8 | 60 horas\n✓ Performance\n✓ Mobile polish\n✓ Tests > 80%",
+      "x": 700,
+      "y": 300,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "features",
+      "type": "parallel",
+      "text": "FEATURES:\nBúsqueda | Comparación\nAlerts | Real-time | Vendors\nTracking",
+      "x": 400,
+      "y": 450,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "arquitectura",
+      "type": "process",
+      "text": "ARQUITECTURA:\nFrontend: Vanilla JS + Chart.js\nBackend: Express + PostgreSQL\nCache: Redis\nReal-time: WebSocket",
+      "x": 100,
+      "y": 550,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "integracion_flowlab",
+      "type": "process",
+      "text": "INTEGRACIÓN FlowLab:\njs/features/price-comparison/\nExtender STATE\nCSS: theme.css variables\nUI: Same patterns",
+      "x": 300,
+      "y": 550,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "metricas_exito",
+      "type": "process",
+      "text": "MÉTRICAS DE ÉXITO:\n✓ Load < 2s\n✓ Search < 500ms\n✓ Uptime 95%+\n✓ Coverage 80%+\n✓ Lighthouse 90+",
+      "x": 500,
+      "y": 550,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "deployment",
+      "type": "process",
+      "text": "DEPLOYMENT:\nDocker\nCI/CD: GitHub Actions\nMonitoring: Sentry\nLoad Testing",
+      "x": 700,
+      "y": 550,
+      "status": "pending",
+      "progress": 0
+    },
+    {
+      "id": "fin_comparacion",
+      "type": "end",
+      "text": "Implementación\nCOMPLETA",
+      "x": 400,
+      "y": 650,
+      "status": "pending",
+      "progress": 0
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "from": "inicio_comparacion",
+      "to": "objetivos_tech",
+      "label": "Definir",
+      "kind": "normal"
+    },
+    {
+      "id": "e2",
+      "from": "inicio_comparacion",
+      "to": "objetivos_ux",
+      "label": "Definir",
+      "kind": "normal"
+    },
+    {
+      "id": "e3",
+      "from": "inicio_comparacion",
+      "to": "objetivos_biz",
+      "label": "Definir",
+      "kind": "normal"
+    },
+    {
+      "id": "e4",
+      "from": "inicio_comparacion",
+      "to": "objetivos_integ",
+      "label": "Definir",
+      "kind": "normal"
+    },
+    {
+      "id": "e5",
+      "from": "objetivos_tech",
+      "to": "fase1_mvp",
+      "label": "Implementar",
+      "kind": "normal"
+    },
+    {
+      "id": "e6",
+      "from": "objetivos_ux",
+      "to": "fase1_mvp",
+      "label": "Implementar",
+      "kind": "normal"
+    },
+    {
+      "id": "e7",
+      "from": "objetivos_biz",
+      "to": "fase1_mvp",
+      "label": "Implementar",
+      "kind": "normal"
+    },
+    {
+      "id": "e8",
+      "from": "objetivos_integ",
+      "to": "fase1_mvp",
+      "label": "Implementar",
+      "kind": "normal"
+    },
+    {
+      "id": "e9",
+      "from": "fase1_mvp",
+      "to": "fase2_core",
+      "label": "Semana 3",
+      "kind": "normal"
+    },
+    {
+      "id": "e10",
+      "from": "fase2_core",
+      "to": "fase3_adv",
+      "label": "Semana 5",
+      "kind": "normal"
+    },
+    {
+      "id": "e11",
+      "from": "fase3_adv",
+      "to": "fase4_opt",
+      "label": "Semana 7",
+      "kind": "normal"
+    },
+    {
+      "id": "e12",
+      "from": "fase1_mvp",
+      "to": "features",
+      "label": "Deliver",
+      "kind": "normal"
+    },
+    {
+      "id": "e13",
+      "from": "fase2_core",
+      "to": "features",
+      "label": "Enhance",
+      "kind": "normal"
+    },
+    {
+      "id": "e14",
+      "from": "fase3_adv",
+      "to": "features",
+      "label": "Expand",
+      "kind": "normal"
+    },
+    {
+      "id": "e15",
+      "from": "features",
+      "to": "arquitectura",
+      "label": "Tech Stack",
+      "kind": "normal"
+    },
+    {
+      "id": "e16",
+      "from": "features",
+      "to": "integracion_flowlab",
+      "label": "Integrate",
+      "kind": "normal"
+    },
+    {
+      "id": "e17",
+      "from": "arquitectura",
+      "to": "metricas_exito",
+      "label": "Validate",
+      "kind": "normal"
+    },
+    {
+      "id": "e18",
+      "from": "integracion_flowlab",
+      "to": "metricas_exito",
+      "label": "Verify",
+      "kind": "normal"
+    },
+    {
+      "id": "e19",
+      "from": "metricas_exito",
+      "to": "deployment",
+      "label": "Deploy",
+      "kind": "normal"
+    },
+    {
+      "id": "e20",
+      "from": "fase4_opt",
+      "to": "deployment",
+      "label": "Release",
+      "kind": "normal"
+    },
+    {
+      "id": "e21",
+      "from": "deployment",
+      "to": "fin_comparacion",
+      "label": "Complete",
+      "kind": "normal"
+    }
+  ]
+}

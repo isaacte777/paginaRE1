@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flujo de Sistema Financiero - Gere y Milki</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        header { background-color: #2c3e50; color: white; width: 100%; text-align: center; padding: 1rem 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .container { margin: 2rem; padding: 2rem; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 90%; max-width: 1200px; }
+        .mermaid { display: flex; justify-content: center; }
+        .footer { margin-top: 2rem; color: #7f8c8d; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Sistema Financiero Familiar Gere y Milki</h1>
+        <p>Diagrama de Flujo de Coordinación y Conexiones</p>
+    </header>
+    <div class="container">
+        <div class="mermaid">
+            graph TD
+                A[Inicio: Gestión Financiera] --> B{Tipo de Operación}
+                B -->|Ingreso| C[Registro de Entradas]
+                B -->|Egreso| D[Registro de Gastos]
+                
+                C --> E[Actualización de Saldo]
+                D --> E
+                
+                E --> F{Análisis de Presupuesto}
+                F -->|Excedente| G[Ahorros / Inversiones]
+                F -->|Déficit| H[Ajuste de Gastos]
+                
+                G --> I[Meta Financiera Alcanzada]
+                H --> B
+                
+                subgraph "Módulo de Comparación de Precios"
+                    J[Búsqueda de Producto] --> K[API Amazon/eBay/AliExpress]
+                    K --> L[Comparador de Precios]
+                    L --> M[Elección del Mejor Precio]
+                    M --> D
+                end
+                
+                I --> J
+        </div>
+    </div>
+    <div class="footer">
+        Generado automáticamente para el Proyecto PaginaRE - 2026
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+</body>
+</html>
