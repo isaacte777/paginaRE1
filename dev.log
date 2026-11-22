@@ -9,3 +9,5 @@ nohup: ignoring input
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: http://21.0.22.103:5173/
+3:01:59 PM [vite] (client) hmr update /src/App.tsx
+3:02:05 PM [vite] (client) hmr update /src/App.tsx
