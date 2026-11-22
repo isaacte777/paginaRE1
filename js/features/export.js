@@ -11,9 +11,67 @@ function toggleExportPopover(force) {
   popover.hidden = !willShow;
 
   if (willShow) {
+    popover.style.transform = 'translate(-50%, -50%)';
+    popover.style.top = '50%';
+    popover.style.left = '50%';
     // Generar código previo para el drawer
     generateMermaidString();
   }
+}
+
+/**
+ * Inicializa la capacidad de arrastrar la ventana de exportación desde la cabecera
+ */
+function initDraggableExportPopover() {
+  const popover = document.getElementById('expPopover');
+  const header = popover?.querySelector('.exp-popover-header');
+  const closeBtn = popover?.querySelector('.exp-close');
+  if (!popover || !header) return;
+
+  if (closeBtn) {
+    closeBtn.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+    });
+    closeBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleExportPopover(false);
+    });
+  }
+
+  let isDragging = false;
+  let startX = 0, startY = 0;
+  let initialX = 0, initialY = 0;
+
+  header.addEventListener('pointerdown', e => {
+    if (e.target.closest('.exp-close')) return;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+
+    const rect = popover.getBoundingClientRect();
+    initialX = rect.left;
+    initialY = rect.top;
+
+    popover.style.transform = 'none';
+    popover.style.left = initialX + 'px';
+    popover.style.top = initialY + 'px';
+
+    header.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  header.addEventListener('pointermove', e => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    popover.style.left = (initialX + dx) + 'px';
+    popover.style.top = (initialY + dy) + 'px';
+  });
+
+  header.addEventListener('pointerup', e => {
+    isDragging = false;
+    try { header.releasePointerCapture(e.pointerId); } catch {}
+  });
 }
 
 /**
@@ -428,7 +486,7 @@ function escapeMermaidLabel(text) {
 }
 
 /**
- * Inicializa tooltips flotantes que siguen al cursor al pasar el mouse por las opciones del header
+ * Inicializa tooltips flotantes que siguen al cursor al pasar el mouse por las opciones del header y de la paleta lateral
  */
 function initHeaderTooltips() {
   const tooltips = {
@@ -445,7 +503,31 @@ function initHeaderTooltips() {
     'btnClearLog': { title: 'limpiar', desc: 'Borra todo el historial de registros de la consola.' },
     'btnToggleCon': { title: 'minimizar consola', desc: 'Oculta por completo la consola inferior para maximizar el espacio.' },
     'btnShowConsole': { title: 'mostrar consola', desc: 'Vuelve a mostrar la consola inferior de registros.' },
-    'consoleInput': { title: 'consola powershell', desc: 'Escribe comandos interactivos (help, nodes, run, status, clear, export, reset).' }
+    'consoleInput': { title: 'consola powershell', desc: 'Escribe comandos interactivos (help, nodes, run, status, clear, export, reset).' },
+
+    // Herramientas de la paleta lateral
+    'start': { title: 'inicio()', desc: 'Punto de entrada principal del diagrama de flujo.' },
+    'end': { title: 'fin()', desc: 'Punto final o de salida del flujo de ejecución.' },
+    'process': { title: 'proceso()', desc: 'Bloque de tarea, paso operativo o procesamiento lógico.' },
+    'decision': { title: 'decision()', desc: 'Punto de bifurcación condicional (sí/no, ramificaciones).' },
+    'loop': { title: 'bucle()', desc: 'Estructura de repetición o iteración sobre colecciones.' },
+    'parallel': { title: 'paralelo()', desc: 'Ejecución concurrente de múltiples ramas de proceso.' },
+    'io': { title: 'entrada_salida()', desc: 'Operaciones de lectura y escritura de datos o archivos.' },
+    'db': { title: 'base_datos()', desc: 'Conexión, consulta o almacenamiento en base de datos.' },
+    'varset': { title: 'variable()', desc: 'Declaración, asignación o modificación de variables.' },
+    'api': { title: 'api_http()', desc: 'Llamada HTTP a servicios externos, REST o endpoints.' },
+    'hook': { title: 'webhook()', desc: 'Disparador de eventos por webhooks o notificaciones.' },
+    'tryc': { title: 'try_catch()', desc: 'Bloque de control de errores y excepciones.' },
+    'err': { title: 'error()', desc: 'Nodo de interrupción o manejo explícito de fallos.' },
+    'delay': { title: 'espera()', desc: 'Pausa temporal o retardo en la ejecución.' },
+    'ai': { title: 'llm_ia()', desc: 'Invocación a modelos de lenguaje o agentes de IA.' },
+    'human': { title: 'humano()', desc: 'Punto de aprobación, revisión o intervención manual.' },
+    'metrics': { title: 'metrica()', desc: 'Panel interactivo de gráficos financieros, ROI y KPIs de rendimiento.' },
+    'chart_line': { title: 'gráfico_línea()', desc: 'Visualización dinámica de tendencias temporales.' },
+    'chart_bar': { title: 'gráfico_barras()', desc: 'Comparativa categórica de leads y métricas.' },
+    'chart_donut': { title: 'gráfico_donut()', desc: 'Distribución porcentual por categorías.' },
+    'chart_gauge': { title: 'gráfico_gauge()', desc: 'Velocímetro de cumplimiento de metas y objetivos.' },
+    'chart_funnel': { title: 'gráfico_funnel()', desc: 'Embudo de conversión entre etapas del proceso.' }
   };
 
   const tooltipEl = document.getElementById('hoverTooltip');
@@ -457,6 +539,30 @@ function initHeaderTooltips() {
 
     el.addEventListener('mouseenter', e => {
       const info = tooltips[id];
+      tooltipEl.innerHTML = `
+        <div style="font-weight:700; color:var(--tx0); margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:3px;">:: ${info.title}</div>
+        <div style="color:var(--tx2); font-weight:400; line-height:1.35;">${info.desc}</div>
+      `;
+      tooltipEl.hidden = false;
+      tooltipEl.style.left = (e.clientX + 14) + 'px';
+      tooltipEl.style.top = (e.clientY + 14) + 'px';
+    });
+
+    el.addEventListener('mousemove', e => {
+      tooltipEl.style.left = (e.clientX + 14) + 'px';
+      tooltipEl.style.top = (e.clientY + 14) + 'px';
+    });
+
+    el.addEventListener('mouseleave', () => {
+      tooltipEl.hidden = true;
+    });
+  });
+
+  document.querySelectorAll('[data-add]').forEach(el => {
+    const addType = el.dataset.add;
+    const info = tooltips[addType] || { title: addType, desc: 'Herramienta de nodo para el diagrama.' };
+
+    el.addEventListener('mouseenter', e => {
       tooltipEl.innerHTML = `
         <div style="font-weight:700; color:var(--tx0); margin-bottom:4px; border-bottom:1px solid var(--line); padding-bottom:3px;">:: ${info.title}</div>
         <div style="color:var(--tx2); font-weight:400; line-height:1.35;">${info.desc}</div>

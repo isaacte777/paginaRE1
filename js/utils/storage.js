@@ -64,22 +64,94 @@ function exportJSON() {
   log('ok', 'JSON exportado');
 }
 
-function importJSON(file) {
+function importProjectFile(file) {
   const reader = new FileReader();
   reader.onload = (ev) => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      STATE.nodes = data.nodes || [];
-      STATE.edges = data.edges || [];
-      if (data.title) document.getElementById('projTitle').value = data.title;
-      STATE.history = [];
-      STATE.hPtr = -1;
-      commitHistory();
-      renderAll();
-      log('ok', 'JSON cargado');
-    } catch (e) {
-      log('err', 'Error JSON: ' + e.message);
+    const text = ev.target.result;
+    if (file.name.endsWith('.json') || text.trim().startsWith('{')) {
+      try {
+        const data = JSON.parse(text);
+        STATE.nodes = data.nodes || [];
+        STATE.edges = data.edges || [];
+        if (data.title) document.getElementById('projTitle').value = data.title;
+        STATE.history = [];
+        STATE.hPtr = -1;
+        commitHistory();
+        renderAll();
+        showToast('Proyecto JSON importado con éxito', 'ok');
+        log('ok', 'Archivo JSON importado correctamente');
+      } catch (e) {
+        showToast('Error al parsear archivo JSON', 'err');
+        log('err', 'Error JSON: ' + e.message);
+      }
+    } else {
+      try {
+        parseMermaidImport(text);
+        showToast('Diagrama Mermaid importado con éxito', 'ok');
+        log('ok', 'Archivo Markdown/Mermaid importado correctamente');
+      } catch (e) {
+        showToast('Error al importar formato Mermaid', 'err');
+        log('err', 'Error Mermaid: ' + e.message);
+      }
     }
   };
   reader.readAsText(file);
+}
+
+function parseMermaidImport(text) {
+  STATE.nodes = [];
+  STATE.edges = [];
+  const lines = text.split('\n');
+  const nodeMap = new Map();
+  let startX = 100, startY = 100, spacingX = 220, spacingY = 140, col = 0, row = 0;
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+    const edgeMatch = trimmed.match(/^([a-zA-Z0-9_-]+)\s*(?:\[.*?\])?\s*-->\s*(?:\|([^|]+)\|\s*)?([a-zA-Z0-9_-]+)/);
+    if (edgeMatch) {
+      const fromId = edgeMatch[1];
+      const label = edgeMatch[2] ? edgeMatch[2].trim() : '';
+      const toId = edgeMatch[3];
+
+      if (!nodeMap.has(fromId)) {
+        const n = createNode('process', fromId, startX + (col * spacingX), startY + (row * spacingY));
+        n.id = fromId;
+        nodeMap.set(fromId, n);
+        STATE.nodes.push(n);
+        col++;
+        if (col > 3) { col = 0; row++; }
+      }
+      if (!nodeMap.has(toId)) {
+        const n = createNode('process', toId, startX + (col * spacingX), startY + (row * spacingY));
+        n.id = toId;
+        nodeMap.set(toId, n);
+        STATE.nodes.push(n);
+        col++;
+        if (col > 3) { col = 0; row++; }
+      }
+
+      STATE.edges.push(createEdge(fromId, toId, label, 'normal'));
+    }
+  });
+
+  if (STATE.nodes.length === 0) {
+    const nMatch = text.matchAll(/([a-zA-Z0-9_-]+)\["([^"]+)"\]/g);
+    for (const m of nMatch) {
+      const id = m[1];
+      const txt = m[2];
+      if (!nodeMap.has(id)) {
+        const n = createNode('process', txt, startX + (col * spacingX), startY + (row * spacingY));
+        n.id = id;
+        nodeMap.set(id, n);
+        STATE.nodes.push(n);
+        col++;
+        if (col > 3) { col = 0; row++; }
+      }
+    }
+  }
+
+  STATE.history = [];
+  STATE.hPtr = -1;
+  commitHistory();
+  renderAll();
 }

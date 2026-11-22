@@ -7,6 +7,10 @@ function setSel(s) {
   } else {
     STATE.circuit = null;
     STATE.circuitHighlight = false;
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox && searchBox.value) {
+      searchBox.value = '';
+    }
   }
   renderAll();
 }

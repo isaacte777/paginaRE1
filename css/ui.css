@@ -358,18 +358,19 @@ input[type="checkbox"] {
 /* Popover de Exportación (Compacto, Flotante, No Intrusivo) */
 .export-popover {
   position: fixed;
-  top: 54px;
-  right: 16px;
-  width: 290px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
   background: var(--bg1);
   border: 1px solid var(--line2);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 1px rgba(255, 255, 255, 0.1);
-  z-index: 1000;
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 1px rgba(255, 255, 255, 0.15);
+  z-index: 10000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: popoverFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .export-popover[hidden] {
@@ -377,17 +378,23 @@ input[type="checkbox"] {
 }
 
 @keyframes popoverFadeIn {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.98); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
 .exp-popover-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: var(--bg2);
   border-bottom: 1px solid var(--line);
+  cursor: grab;
+  user-select: none;
+}
+
+.exp-popover-header:active {
+  cursor: grabbing;
 }
 
 .exp-popover-header .exp-title {
@@ -443,7 +450,7 @@ input[type="checkbox"] {
 }
 
 .exp-card-icon {
-  font-size: 15px;
+  color: var(--white);
   flex: 0 0 22px;
   display: flex;
   align-items: center;
@@ -671,6 +678,11 @@ input[type="checkbox"] {
 .node.circuit {
   animation: nodePulseHalo 2.5s ease-in-out infinite;
   border-color: #64748b;
+}
+
+.stat-type-row:hover {
+  background: var(--bg3);
+  color: var(--tx0);
 }
 
 /* Menú Contextual de Nodos (Clic Derecho) - Ultra Profesional */

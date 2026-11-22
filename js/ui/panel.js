@@ -177,8 +177,8 @@ function renderStatsTab(container) {
   });
 
   let typesHtml = Object.entries(byType).map(([t, count]) => `
-    <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:10px;border-bottom:1px solid var(--line)">
-      <span style="color:var(--tx2)">${CONFIG.NODE_TYPES[t] || t}</span>
+    <div class="stat-type-row" data-type="${t}" style="display:flex;justify-content:space-between;padding:4px 6px;font-size:10px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:4px;transition:.15s" title="Clic para resaltar nodos de este tipo">
+      <span style="color:var(--tx1);font-weight:500">${CONFIG.NODE_TYPES[t] || t}</span>
       <span style="font-weight:600">${count}</span>
     </div>
   `).join('');
@@ -216,9 +216,24 @@ function renderStatsTab(container) {
       </div>
 
       <div style="margin-top:4px">
-        <div style="font-size:10px;font-weight:600;margin-bottom:4px">Desglose por Tipo</div>
+        <div style="font-size:10px;font-weight:600;margin-bottom:4px">Desglose por Tipo (clic para resaltar)</div>
         ${typesHtml}
       </div>
     </div>
   `;
+
+  container.querySelectorAll('.stat-type-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const type = row.dataset.type;
+      const searchBox = document.getElementById('searchBox');
+      if (searchBox) searchBox.value = type;
+      renderNodes();
+
+      const firstNode = STATE.nodes.find(n => n.type === type);
+      if (firstNode) {
+        setSel({ kind: 'node', id: firstNode.id });
+      }
+      showToast(`Filtrando por tipo: ${CONFIG.NODE_TYPES[type] || type}`, 'info', 1500);
+    });
+  });
 }

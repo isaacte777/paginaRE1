@@ -10,6 +10,20 @@ function initApp() {
   // Renderizar interfaz inicial
   renderAll();
 
+  // Ajustar la vista automáticamente para que todo el mapa quepa centrado al iniciar
+  requestAnimationFrame(() => {
+    fitView();
+  });
+
+  // Sincronizar título de proyecto entre desktop y mobile
+  const pTitle = document.getElementById('projTitle');
+  const pTitleMob = document.getElementById('projTitleMobile');
+  if (pTitle && pTitleMob) {
+    pTitleMob.value = pTitle.value;
+    pTitle.addEventListener('input', () => { pTitleMob.value = pTitle.value; });
+    pTitleMob.addEventListener('input', () => { pTitle.value = pTitleMob.value; saveState(); });
+  }
+
   // Registrar event listeners
   registerEventListeners();
 
@@ -19,6 +33,7 @@ function initApp() {
   initHeaderTooltips();
   initConsoleResize();
   initConsoleInput();
+  initDraggableExportPopover();
 
   // Simular bridge activo
   STATE.bridgeActive = true;
@@ -100,7 +115,7 @@ function registerEventListeners() {
     document.getElementById('fileInput').click();
   });
   document.getElementById('fileInput').addEventListener('change', e => {
-    if (e.target.files[0]) importJSON(e.target.files[0]);
+    if (e.target.files[0]) importProjectFile(e.target.files[0]);
   });
   document.getElementById('btnNew').addEventListener('click', () => {
     resetState();
@@ -365,6 +380,13 @@ function registerEventListeners() {
     commitHistory();
     renderAll();
     setSel({ kind: 'node', id: n.id });
+  });
+
+  // Auto-fit on window resize
+  window.addEventListener('resize', () => {
+    requestAnimationFrame(() => {
+      fitView();
+    });
   });
 }
 

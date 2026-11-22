@@ -22,7 +22,12 @@ const CONFIG = {
     api: 'API', hook: 'Webhook', tryc: 'Try/Catch',
     err: 'Error', delay: 'Espera', ai: 'IA/LLM',
     human: 'Humano', note: 'Nota', sub: 'Subproceso',
-    metrics: 'Métrica Trading'
+    metrics: 'Métrica Trading',
+    chart_line: 'Gráfico Línea',
+    chart_bar: 'Gráfico Barras',
+    chart_donut: 'Gráfico Donut',
+    chart_gauge: 'Gráfico Gauge',
+    chart_funnel: 'Gráfico Funnel'
   },
 
   // Esquema de parámetros por tipo de nodo (para inspectores)

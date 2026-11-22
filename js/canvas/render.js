@@ -65,7 +65,14 @@ function renderNodes() {
     d.style.left = n.x + 'px';
     d.style.top = n.y + 'px';
     const txt = '<span class="txt">' + escapeHTML(n.text) + '</span>';
-    let html = n.type === 'metrics' ? renderMetricsWidget(n) : ((n.type === 'decision' || n.type === 'loop' || n.type === 'io') ? '<div class="core">' + txt + '</div>' : txt);
+    let html = '';
+    if (n.type.startsWith('chart_') && typeof renderChartNodeHtml === 'function') {
+      html = renderChartNodeHtml(n);
+    } else if (n.type === 'metrics') {
+      html = renderMetricsWidget(n);
+    } else {
+      html = (n.type === 'decision' || n.type === 'loop' || n.type === 'io') ? '<div class="core">' + txt + '</div>' : txt;
+    }
     html += '<span class="badge">' + (CONFIG.BADGE[n.status] || '[ ]') + '</span>';
     if ((n.progress || 0) > 0) html += '<span class="pbar"><i style="width:' + clamp(n.progress, 0, 100) + '%"></i></span>';
     const isLocked = !!n.locked;

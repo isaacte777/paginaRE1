@@ -17,6 +17,7 @@
 
 <header>
   <div class="dots"><span></span><span></span><span></span></div>
+  <button class="btn" id="btnMenu" title="Menú de herramientas" onclick="document.getElementById('palette').classList.toggle('mobile-open')" style="display:none">☰</button>
   <div class="logo">flowlab <span class="dim">--paginaRE</span></div>
   <input id="projTitle" placeholder="título_proyecto" value="orquestador_paginaRE">
   <input id="searchBox" placeholder="/buscar">
@@ -41,31 +42,40 @@
   <button class="btn" id="btnExp" title="exportar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
   <button class="btn primary" id="btnNew">nuevo</button>
 </header>
+<div id="mobileProjBar" class="mobile-proj-bar">
+  <span class="proj-label">proyecto::</span>
+  <input id="projTitleMobile" placeholder="título_proyecto" value="orquestador_paginaRE">
+</div>
 
 <main>
   <aside class="toolbox" id="palette">
     <h4>flujo</h4>
-    <button class="tool" data-add="start"><span class="prev pv-start"></span>inicio()</button>
-    <button class="tool" data-add="end"><span class="prev pv-end"></span>fin()</button>
-    <button class="tool" data-add="process"><span class="prev pv-proc"></span>proceso()</button>
-    <button class="tool" data-add="decision"><span class="prev pv-dec"></span>decision()</button>
-    <button class="tool" data-add="loop"><span class="prev pv-loop"></span>bucle()</button>
-    <button class="tool" data-add="parallel"><span class="prev pv-par"></span>paralelo()</button>
+    <button class="tool" data-add="start"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="8" fill="currentColor"/></svg></span>inicio()</button>
+    <button class="tool" data-add="end"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>fin()</button>
+    <button class="tool" data-add="process"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="3" fill="currentColor"/></svg></span>proceso()</button>
+    <button class="tool" data-add="decision"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,0 24,8 12,16 0,8" fill="currentColor"/></svg></span>decision()</button>
+    <button class="tool" data-add="loop"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="6,0 18,0 24,8 18,16 6,16 0,8" fill="currentColor"/></svg></span>bucle()</button>
+    <button class="tool" data-add="parallel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="2" y="0" width="3" height="16" fill="currentColor"/><rect x="19" y="0" width="3" height="16" fill="currentColor"/><rect x="8" y="3" width="8" height="10" fill="currentColor"/></svg></span>paralelo()</button>
     <h4>datos</h4>
-    <button class="tool" data-add="io"><span class="prev pv-io"></span>entrada_salida()</button>
-    <button class="tool" data-add="db"><span class="prev pv-db"></span>base_datos()</button>
-    <button class="tool" data-add="varset"><span class="prev pv-proc"></span>variable()</button>
+    <button class="tool" data-add="io"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="4,0 24,0 20,16 0,16" fill="currentColor"/></svg></span>entrada_salida()</button>
+    <button class="tool" data-add="db"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><ellipse cx="12" cy="3" rx="10" ry="3" fill="currentColor"/><path d="M2,3 v10 c0,1.6 4.5,3 10,3 c5.5,0 10,-1.4 10,-3 V3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>base_datos()</button>
+    <button class="tool" data-add="varset"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><text x="5" y="12" fill="currentColor" font-size="9" font-family="monospace">x=</text></svg></span>variable()</button>
     <h4>sistema</h4>
-    <button class="tool" data-add="api"><span class="prev pv-api"></span>api_http()</button>
-    <button class="tool" data-add="hook"><span class="prev pv-hook"></span>webhook()</button>
-    <button class="tool" data-add="tryc"><span class="prev pv-proc"></span>try_catch()</button>
-    <button class="tool" data-add="err"><span class="prev pv-err"></span>error()</button>
-    <button class="tool" data-add="delay"><span class="prev pv-proc"></span>espera()</button>
+    <button class="tool" data-add="api"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,3 1,8 6,13"/><polyline points="18,3 23,8 18,13"/><line x1="14" y1="2" x2="10" y2="14"/></svg></span>api_http()</button>
+    <button class="tool" data-add="hook"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"><rect width="24" height="16" rx="3"/></svg></span>webhook()</button>
+    <button class="tool" data-add="tryc"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><path d="M4,8 h16"/></svg></span>try_catch()</button>
+    <button class="tool" data-add="err"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,1 23,15 1,15" fill="currentColor"/></svg></span>error()</button>
+    <button class="tool" data-add="delay"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="12,4 12,8 15,10"/></svg></span>espera()</button>
     <h4>inteligencia</h4>
-    <button class="tool" data-add="ai"><span class="prev pv-ai"></span>llm_ia()</button>
-    <button class="tool" data-add="human"><span class="prev pv-human"></span>humano()</button>
+    <button class="tool" data-add="ai"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><path d="M12,0 L14,6 L20,8 L14,10 L12,16 L10,10 L4,8 L10,6 Z"/></svg></span>llm_ia()</button>
+    <button class="tool" data-add="human"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><circle cx="12" cy="5" r="4"/><path d="M3,16 C3,11 7,10 12,10 C17,10 21,11 21,16"/></svg></span>humano()</button>
     <h4>métricas</h4>
-    <button class="tool" data-add="metrics"><span class="prev pv-metrics"></span>metrica()</button>
+    <button class="tool" data-add="metrics"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,14 7,8 11,11 17,4 23,9"/></svg></span>metrica()</button>
+    <button class="tool" data-add="chart_line"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,13 6,8 11,10 17,4 23,7"/></svg></span>gráfico_línea()</button>
+    <button class="tool" data-add="chart_bar"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><rect x="1" y="6" width="3" height="10"/><rect x="7" y="2" width="3" height="14"/><rect x="13" y="4" width="3" height="12"/><rect x="19" y="8" width="3" height="8"/></svg></span>gráfico_barras()</button>
+    <button class="tool" data-add="chart_donut"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="8" r="6"/><path d="M12,2 A6,6 0 0 1 18,8"/></svg></span>gráfico_donut()</button>
+    <button class="tool" data-add="chart_gauge"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2,14 A10,10 0 0,1 22,14"/><line x1="12" y1="14" x2="16" y2="7"/></svg></span>gráfico_gauge()</button>
+    <button class="tool" data-add="chart_funnel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><polygon points="1,2 23,2 18,8 6,8"/><polygon points="7,10 17,10 14,15 10,15"/></svg></span>gráfico_funnel()</button>
     <h4>edición</h4>
     <select id="filterStatus" style="width:100%">
       <option value="">filtro: todos</option>
@@ -120,11 +130,13 @@
 <div id="consoleWrap">
   <div id="consoleResizeHandle" title="Arrastrar para redimensionar"></div>
   <div id="consoleBar">
-    <button class="btn primary" id="btnRun">▶ ejecutar</button>
-    <button class="btn" id="btnClearLog">limpiar</button>
-    <button class="btn" id="btnToggleCon">—</button>
+    <div class="console-actions">
+      <button class="btn primary" id="btnRun">▶ ejecutar</button>
+      <button class="btn" id="btnClearLog">limpiar</button>
+      <button class="btn" id="btnToggleCon">—</button>
+    </div>
     <span class="t">PS C:\paginaRE&gt;</span>
-    <input type="text" id="consoleInput" placeholder="Escribe un comando (ej. help, nodes, run)..." autocomplete="off" spellcheck="false">
+    <input type="text" id="consoleInput" placeholder="Comando (help, run...)" autocomplete="off" spellcheck="false">
   </div>
   <div id="console"></div>
 </div>
@@ -251,7 +263,7 @@
   <span class="hint">FlowLab v3 · Centro de Control paginaRE</span>
 </footer>
 
-<input type="file" id="fileInput" accept=".json" hidden>
+<input type="file" id="fileInput" accept=".json,.md,.txt" hidden>
 
 <!-- Scripts modularizados -->
 <script src="js/core/constants.js"></script>
@@ -272,6 +284,7 @@
 <script src="js/ui/panel.js"></script>
 <script src="js/ui/console.js"></script>
 <script src="js/ui/chat.js"></script>
+<script src="js/features/charts.js"></script>
 <script src="js/app.js"></script>
 
 </body>
