@@ -2,10 +2,23 @@ import { useState } from 'react'
 import FlowLab from './components/FlowLab'
 import FinanceFlow from './components/FinanceFlow'
 import ModulesDashboard from './components/ModulesDashboard'
+import Landing from './components/Landing'
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [currentView, setCurrentView] = useState<'flowlab' | 'modules' | 'finance'>('flowlab')
   const [financeTemplate, setFinanceTemplate] = useState<'computo' | 'family'>('computo')
+
+  if (showLanding) {
+    return (
+      <Landing
+        onEnter={(view) => {
+          if (view) setCurrentView(view)
+          setShowLanding(false)
+        }}
+      />
+    )
+  }
 
   return (
     <div style={{
@@ -25,6 +38,23 @@ export default function App() {
         gap: '12px',
         flexShrink: 0
       }}>
+        <button
+          onClick={() => setShowLanding(true)}
+          style={{
+            background: '#1a1c1e',
+            border: '1px solid #2e3134',
+            color: '#4ade80',
+            padding: '8px 16px',
+            borderRadius: 4,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            fontSize: 12,
+            fontWeight: 600,
+            marginRight: 4,
+          }}
+        >
+          [Inicio]
+        </button>
         <button
           onClick={() => setCurrentView('flowlab')}
           style={{
