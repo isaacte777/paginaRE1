@@ -1,6 +1,6 @@
 function renderMetricsWidget(n) {
   const points = [35, 52, 45, 70, 60, 82, 75, 92, 88, 98];
-  const w = 292, h = 48;
+  const w = 288, h = 38;
   const max = Math.max(...points, 1);
   const step = w / (points.length - 1);
   const pts = points.map((v, i) => `${i * step},${h - (v / max) * h}`).join(' ');
@@ -10,7 +10,7 @@ function renderMetricsWidget(n) {
       <span style="font-weight:700; font-size:11px; color:var(--tx0); letter-spacing:0.02em">📈 ${escapeHTML(n.text || 'Métrica de Rendimiento')}</span>
       <span style="font-size:9px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 5px; border-radius:3px; font-weight:700">● LIVE</span>
     </div>
-    <svg width="${w}" height="${h}" style="overflow:visible; display:block; margin-bottom:10px">
+    <svg width="${w}" height="${h}" style="overflow:visible; display:block; margin-bottom:8px">
       <defs>
         <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
@@ -19,9 +19,9 @@ function renderMetricsWidget(n) {
       </defs>
       <polygon fill="url(#chartGrad)" points="0,${h} ${pts} ${w},${h}" />
       <polyline fill="none" stroke="#38bdf8" stroke-width="2" points="${pts}" />
-      ${points.map((v, i) => `<circle cx="${i * step}" cy="${h - (v / max) * h}" r="3" fill="#ffffff" stroke="#38bdf8" stroke-width="1.5" />`).join('')}
+      ${points.map((v, i) => `<circle cx="${i * step}" cy="${h - (v / max) * h}" r="2.5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.2" />`).join('')}
     </svg>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; font-size:10px; color:var(--tx2); border-top:1px solid var(--line); padding-top:6px; width:100%">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; font-size:9.5px; color:var(--tx2); border-top:1px solid var(--line); padding-top:6px; width:100%">
       <div>ROI: <strong style="color:#4ade80">+34.2%</strong></div>
       <div>Uptime: <strong style="color:var(--tx0)">99.98%</strong></div>
       <div>Throughput: <strong style="color:var(--tx0)">140 op/s</strong></div>
