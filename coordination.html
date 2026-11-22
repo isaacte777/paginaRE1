@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>flowlab_ · centro de control</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/latin-400.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/latin-500.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/latin-700.css">
+<!-- Estilos modularizados -->
+<link rel="stylesheet" href="css/theme.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/nodes.css">
+<link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+
+<header>
+  <div class="dots"><span></span><span></span><span></span></div>
+  <button class="btn" id="btnMenu" title="Menú de herramientas" onclick="document.getElementById('palette').classList.toggle('mobile-open')" style="display:none">☰</button>
+  <div class="logo">flowlab <span class="dim">--paginaRE</span></div>
+  <input id="projTitle" placeholder="título_proyecto" value="orquestador_paginaRE">
+  <input id="searchBox" placeholder="/buscar">
+  <span style="font-size:10px;color:var(--tx2)"><span id="bridgeDot"></span>Claude+Qwen activo</span>
+  <div class="spacer"></div>
+  <select id="templateSelect">
+    <option value="">plantillas::</option>
+    <option value="comparacion_precios">comparacion_precios</option>
+    <option value="orquestador">orquestador_ia</option>
+    <option value="web">proyecto_web</option>
+    <option value="contratacion">contratacion_personal</option>
+    <option value="personal">plan_personal</option>
+    <option value="complex">pipeline_complejo</option>
+    <option value="blank">lienzo_blanco</option>
+  </select>
+  <button class="btn" id="btnJson">.json</button>
+  <button class="btn" id="btnLoad">abrir</button>
+  <button class="btn" id="btnMermaid">.md</button>
+  <button class="btn" id="btnPng">.png</button>
+  <button class="btn" id="btnChat" title="panel de chat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+  <button class="btn" id="btnInsp" title="inspector"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+  <button class="btn" id="btnExp" title="exportar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
+  <button class="btn primary" id="btnNew">nuevo</button>
+</header>
+<div id="mobileProjBar" class="mobile-proj-bar">
+  <span class="proj-label">proyecto::</span>
+  <input id="projTitleMobile" placeholder="título_proyecto" value="orquestador_paginaRE">
+</div>
+
+<main>
+  <aside class="toolbox" id="palette">
+    <h4>flujo</h4>
+    <button class="tool" data-add="start"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="8" fill="currentColor"/></svg></span>inicio()</button>
+    <button class="tool" data-add="end"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>fin()</button>
+    <button class="tool" data-add="process"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="3" fill="currentColor"/></svg></span>proceso()</button>
+    <button class="tool" data-add="decision"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,0 24,8 12,16 0,8" fill="currentColor"/></svg></span>decision()</button>
+    <button class="tool" data-add="loop"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="6,0 18,0 24,8 18,16 6,16 0,8" fill="currentColor"/></svg></span>bucle()</button>
+    <button class="tool" data-add="parallel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="2" y="0" width="3" height="16" fill="currentColor"/><rect x="19" y="0" width="3" height="16" fill="currentColor"/><rect x="8" y="3" width="8" height="10" fill="currentColor"/></svg></span>paralelo()</button>
+    <h4>datos</h4>
+    <button class="tool" data-add="io"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="4,0 24,0 20,16 0,16" fill="currentColor"/></svg></span>entrada_salida()</button>
+    <button class="tool" data-add="db"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><ellipse cx="12" cy="3" rx="10" ry="3" fill="currentColor"/><path d="M2,3 v10 c0,1.6 4.5,3 10,3 c5.5,0 10,-1.4 10,-3 V3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>base_datos()</button>
+    <button class="tool" data-add="varset"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><text x="5" y="12" fill="currentColor" font-size="9" font-family="monospace">x=</text></svg></span>variable()</button>
+    <h4>sistema</h4>
+    <button class="tool" data-add="api"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,3 1,8 6,13"/><polyline points="18,3 23,8 18,13"/><line x1="14" y1="2" x2="10" y2="14"/></svg></span>api_http()</button>
+    <button class="tool" data-add="hook"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"><rect width="24" height="16" rx="3"/></svg></span>webhook()</button>
+    <button class="tool" data-add="tryc"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><path d="M4,8 h16"/></svg></span>try_catch()</button>
+    <button class="tool" data-add="err"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,1 23,15 1,15" fill="currentColor"/></svg></span>error()</button>
+    <button class="tool" data-add="delay"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="12,4 12,8 15,10"/></svg></span>espera()</button>
+    <h4>inteligencia</h4>
+    <button class="tool" data-add="ai"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><path d="M12,0 L14,6 L20,8 L14,10 L12,16 L10,10 L4,8 L10,6 Z"/></svg></span>llm_ia()</button>
+    <button class="tool" data-add="human"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><circle cx="12" cy="5" r="4"/><path d="M3,16 C3,11 7,10 12,10 C17,10 21,11 21,16"/></svg></span>humano()</button>
+    <h4>métricas</h4>
+    <button class="tool" data-add="metrics"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,14 7,8 11,11 17,4 23,9"/></svg></span>metrica()</button>
+    <button class="tool" data-add="chart_line"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,13 6,8 11,10 17,4 23,7"/></svg></span>gráfico_línea()</button>
+    <button class="tool" data-add="chart_bar"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><rect x="1" y="6" width="3" height="10"/><rect x="7" y="2" width="3" height="14"/><rect x="13" y="4" width="3" height="12"/><rect x="19" y="8" width="3" height="8"/></svg></span>gráfico_barras()</button>
+    <button class="tool" data-add="chart_donut"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="8" r="6"/><path d="M12,2 A6,6 0 0 1 18,8"/></svg></span>gráfico_donut()</button>
+    <button class="tool" data-add="chart_gauge"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2,14 A10,10 0 0,1 22,14"/><line x1="12" y1="14" x2="16" y2="7"/></svg></span>gráfico_gauge()</button>
+    <button class="tool" data-add="chart_funnel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><polygon points="1,2 23,2 18,8 6,8"/><polygon points="7,10 17,10 14,15 10,15"/></svg></span>gráfico_funnel()</button>
+    <h4>edición</h4>
+    <select id="filterStatus" style="width:100%">
+      <option value="">filtro: todos</option>
+      <option value="pending">[ ] pendiente</option>
+      <option value="progress">[~] en curso</option>
+      <option value="done">[✓] hecho</option>
+    </select>
+    <button class="tool" id="toolUndo">[&lt;] deshacer</button>
+    <button class="tool" id="toolRedo">[&gt;] rehacer</button>
+    <button class="tool" id="toolDelete">[x] eliminar</button>
+    <button class="tool" id="toolFit">[ ] ajustar_vista</button>
+    <div class="helpbox">
+      <b>clic der</b> desplazar · <b>rueda</b> zoom<br>
+      <b>2x clic</b> editar · <b>puerto ●</b> conectar<br>
+      <b>supr</b> eliminar · <b>drag</b> mover
+    </div>
+  </aside>
+
+  <div id="viewport">
+    <div id="world">
+      <svg id="edgeSvg" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#85898d"></path></marker>
+          <marker id="arrowSel" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" refX="9" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#ffffff"></path></marker>
+        </defs>
+        <g id="edgesG"></g>
+      </svg>
+      <div id="canvasTitle"></div>
+    </div>
+    <canvas id="minimap" width="170" height="120"></canvas>
+    <div class="zoombar">
+      <button id="zOut">−</button><span id="zoomLbl">100%</span><button id="zIn">+</button>
+      <button id="zReset">1:1</button><button id="zFit">fit</button><button id="btnSnap" class="on">⌗</button>
+      <select id="speedSel" style="font-size:11px">
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+      </select>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div class="ptabs">
+      <button id="tabProps" class="on">props</button>
+      <button id="tabStats">stats</button>
+    </div>
+    <div class="pbody" id="panel"></div>
+  </aside>
+</main>
+
+<div id="consoleWrap">
+  <div id="consoleResizeHandle" title="Arrastrar para redimensionar"></div>
+  <div id="consoleBar">
+    <div class="console-actions">
+      <button class="btn primary" id="btnRun">▶ ejecutar</button>
+      <button class="btn" id="btnClearLog">limpiar</button>
+      <button class="btn" id="btnToggleCon">—</button>
+    </div>
+    <span class="t">PS C:\paginaRE&gt;</span>
+    <input type="text" id="consoleInput" placeholder="Comando (help, run...)" autocomplete="off" spellcheck="false">
+  </div>
+  <div id="console"></div>
+</div>
+
+<!-- Chat Panel -->
+<div id="chatWrap" class="modal-wrap" hidden>
+  <div class="modal-header">
+    <button class="tab-btn" id="tabIA">IA</button>
+    <button class="tab-btn" id="tabAgent">Agente</button>
+    <button class="tab-btn" id="tabSync">Sync</button>
+    <button class="tab-btn" id="tabDiag">Diag</button>
+    <button class="close-btn" onclick="this.closest('.modal-wrap').hidden=true">×</button>
+  </div>
+
+  <div class="tab-content" id="tab-ia">
+    <div id="chatMessages" class="chat-messages"></div>
+    <div class="chat-input-wrap">
+      <input type="text" id="chatInput" placeholder="Pregunta a la IA..." />
+      <button onclick="const val = document.getElementById('chatInput').value; sendChatMessage(val)">enviar</button>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-agent" hidden>
+    <div id="agentPanel" class="agent-panel"></div>
+  </div>
+
+  <div class="tab-content" id="tab-sync" hidden>
+    <div id="syncPanel" class="sync-panel"></div>
+  </div>
+
+  <div class="tab-content" id="tab-diag" hidden>
+    <div id="diagPanel" class="diag-panel"></div>
+  </div>
+</div>
+
+<!-- Inspector Modal -->
+<div id="inspWrap" class="modal-wrap modal-inspector" hidden>
+  <div class="modal-header">
+    <span>Inspector</span>
+    <button class="close-btn" onclick="this.closest('.modal-wrap').hidden=true">×</button>
+  </div>
+  <div id="inspPanel" class="insp-body"></div>
+</div>
+
+<!-- Popover de Exportación No Intrusivo -->
+<div id="expPopover" class="export-popover" hidden>
+  <div class="exp-popover-header">
+    <span class="exp-title">exportar_diagrama</span>
+    <button class="exp-close" onclick="toggleExportPopover(false)" title="Cerrar">✕</button>
+  </div>
+  <div class="exp-grid">
+    <button class="exp-card" onclick="exportMermaid()">
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span>
+      <div class="exp-card-info">
+        <div class="exp-card-title">Copiar Mermaid (.md)</div>
+        <div class="exp-card-sub">Copia la sintaxis al portapapeles</div>
+      </div>
+    </button>
+    <button class="exp-card" onclick="downloadMermaidFile()">
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>
+      <div class="exp-card-info">
+        <div class="exp-card-title">Descargar Markdown</div>
+        <div class="exp-card-sub">Archivo .md con diagrama</div>
+      </div>
+    </button>
+    <button class="exp-card" onclick="exportPNG()">
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
+      <div class="exp-card-info">
+        <div class="exp-card-title">Descargar Imagen PNG</div>
+        <div class="exp-card-sub">Renderizado de alta resolución</div>
+      </div>
+    </button>
+    <button class="exp-card" onclick="exportSVG()">
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10h4"/><path d="M12 10h1"/><path d="M8 10h1"/></svg></span>
+      <div class="exp-card-info">
+        <div class="exp-card-title">Descargar Vector SVG</div>
+        <div class="exp-card-sub">Gráfico vectorial escalable</div>
+      </div>
+    </button>
+  </div>
+  <div id="expPreviewDrawer" class="exp-preview-drawer" hidden>
+    <div class="exp-drawer-header">
+      <span>Vista previa Mermaid:</span>
+      <button class="btn-micro" onclick="document.getElementById('expPreviewDrawer').hidden=true">ocultar</button>
+    </div>
+    <pre id="expPreviewCode"></pre>
+  </div>
+</div>
+
+<!-- Menú Flotante de Ayuda al Pasar el Mouse -->
+<div id="hoverTooltip" class="hover-tooltip" hidden></div>
+
+<!-- Menú Contextual del Nodo (Clic Derecho) -->
+<div id="nodeContextMenu" class="context-menu" hidden>
+  <div class="ctx-header" id="ctxNodeTitle">:: nodo</div>
+  <div class="ctx-item" onclick="ctxAction('delete')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <span>Eliminar nodo</span>
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxAction('inspect')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Ver en inspector</span>
+  </div>
+  <div class="ctx-divider"></div>
+  <div class="ctx-item" onclick="ctxAction('done')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span>Marcar como hecho</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('pending')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+    <span>Marcar como pendiente</span>
+  </div>
+</div>
+
+<footer>
+  <span id="stNodes">nodos: 0</span>
+  <span id="stEdges">conexiones: 0</span>
+  <span id="stZoom">zoom: 100%</span>
+  <span id="stRun">idle</span>
+  <span class="sp"></span>
+  <span id="btnShowConsole" style="cursor:pointer;color:var(--tx1);padding:2px 6px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;display:none" title="mostrar consola">⚡ consola</span>
+  <span id="stSave">auto-guardado</span>
+  <span class="hint">FlowLab v3 · Centro de Control paginaRE</span>
+</footer>
+
+<input type="file" id="fileInput" accept=".json,.md,.txt" hidden>
+
+<!-- Scripts modularizados -->
+<script src="js/core/constants.js"></script>
+<script src="js/core/state.js"></script>
+<script src="js/utils/helpers.js"></script>
+<script src="js/utils/storage.js"></script>
+<script src="js/canvas/render.js"></script>
+<script src="js/canvas/viewport.js"></script>
+<script src="js/canvas/minimap.js"></script>
+<script src="js/interaction/gestures.js"></script>
+<script src="js/interaction/selection.js"></script>
+<script src="js/interaction/editing.js"></script>
+<script src="js/features/history.js"></script>
+<script src="js/features/circuits.js"></script>
+<script src="js/features/templates.js"></script>
+<script src="js/features/export.js"></script>
+<script src="js/features/execution.js"></script>
+<script src="js/ui/panel.js"></script>
+<script src="js/ui/console.js"></script>
+<script src="js/ui/chat.js"></script>
+<script src="js/features/charts.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
