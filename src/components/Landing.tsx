@@ -65,34 +65,83 @@ export default function Landing({ onEnter }: Props) {
           background: 'rgba(11,12,13,0.9)',
           backdropFilter: 'blur(8px)',
           zIndex: 10,
+          flexWrap: 'wrap',
+          gap: '12px'
         }}
       >
-        <div style={{ fontWeight: 700, fontSize: 16 }}>
+        <div style={{ fontWeight: 700, fontSize: 16, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: '#4ade80' }}>{'>'}</span> FlowLab
         </div>
-        <button
-          onClick={() => onEnter('flowlab')}
-          style={{
-            background: '#404040',
-            border: '1px solid #2e3134',
-            color: '#fff',
-            padding: '8px 20px',
-            borderRadius: 4,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
-          Entrar al panel {'->'}
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <a
+            href="modules-dashboard.html"
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #4ade80',
+              color: '#4ade80',
+              padding: '6px 14px',
+              borderRadius: 4,
+              textDecoration: 'none',
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            [Dashboard Módulos]
+          </a>
+          <a
+            href="coordination.html"
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              color: '#c9ccd0',
+              padding: '6px 14px',
+              borderRadius: 4,
+              textDecoration: 'none',
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            [Coordinación]
+          </a>
+          <a
+            href="price-comparison-implementation-flow.html"
+            style={{
+              background: '#1a1c1e',
+              border: '1px solid #2e3134',
+              color: '#c9ccd0',
+              padding: '6px 14px',
+              borderRadius: 4,
+              textDecoration: 'none',
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            [Flujo Precios]
+          </a>
+          <button
+            onClick={() => onEnter('flowlab')}
+            style={{
+              background: '#404040',
+              border: '1px solid #2e3134',
+              color: '#fff',
+              padding: '6px 16px',
+              borderRadius: 4,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
+            Panel React {'->'}
+          </button>
+        </div>
       </nav>
 
       {/* Hero */}
       <header
         style={{
           textAlign: 'center',
-          padding: '90px 24px 70px',
+          padding: '80px 24px 60px',
           background:
             'radial-gradient(ellipse at 50% 0%, rgba(74,222,128,0.12), transparent 60%)',
         }}
@@ -109,83 +158,108 @@ export default function Landing({ onEnter }: Props) {
             background: '#131416',
           }}
         >
-          Sistema Financiero Visual
+          Tus Páginas Clásicas y Módulos
         </div>
         <h1
           style={{
             margin: 0,
-            fontSize: 'clamp(32px, 6vw, 56px)',
+            fontSize: 'clamp(30px, 5vw, 50px)',
             lineHeight: 1.15,
             fontWeight: 800,
           }}
         >
-          Entiende tu dinero
+          Acceso directo a tus
           <br />
-          <span style={{ color: '#4ade80' }}>como un flujo de datos</span>
+          <span style={{ color: '#4ade80' }}>páginas y tableros originales</span>
         </h1>
         <p
           style={{
             maxWidth: 620,
-            margin: '24px auto 0',
+            margin: '20px auto 0',
             color: '#9aa0a6',
-            fontSize: 16,
-            lineHeight: 1.7,
+            fontSize: 15,
+            lineHeight: 1.6,
           }}
         >
-          FlowLab convierte números dispersos en diagramas claros: ve dónde entra,
-          dónde sale y dónde se atasca tu dinero. Sin hojas de cálculo eternas,
-          sin adivinar.
+          Aquí tienes todas tus páginas clásicas restauradas. Elige abajo el tablero o módulo exacto que tenías antes:
         </p>
-        <div style={{ marginTop: 36, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => onEnter('flowlab')}
+
+        {/* Botones directos a las páginas clásicas */}
+        <div style={{ marginTop: 32, display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <a
+            href="modules-dashboard.html"
             style={{
               background: '#4ade80',
               color: '#0b0c0d',
               border: 'none',
-              padding: '12px 28px',
+              padding: '12px 24px',
               borderRadius: 4,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 14,
+              textDecoration: 'none',
+              fontSize: 13,
               fontWeight: 700,
             }}
           >
-            Comenzar ahora
-          </button>
-          <button
-            onClick={() => onEnter('finance')}
+            Abrir modules-dashboard.html
+          </a>
+          <a
+            href="coordination.html"
             style={{
               background: '#1a1c1e',
               color: '#c9ccd0',
               border: '1px solid #2e3134',
-              padding: '12px 28px',
+              padding: '12px 24px',
               borderRadius: 4,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-              fontSize: 14,
+              textDecoration: 'none',
+              fontSize: 13,
               fontWeight: 600,
             }}
           >
-            Ver plantillas financieras
-          </button>
+            Abrir coordination.html
+          </a>
+          <a
+            href="price-comparison-implementation-flow.html"
+            style={{
+              background: '#1a1c1e',
+              color: '#c9ccd0',
+              border: '1px solid #2e3134',
+              padding: '12px 24px',
+              borderRadius: 4,
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            Abrir price-comparison-flow.html
+          </a>
+          <a
+            href="qwen-setup.html"
+            style={{
+              background: '#1a1c1e',
+              color: '#c9ccd0',
+              border: '1px solid #2e3134',
+              padding: '12px 24px',
+              borderRadius: 4,
+              textDecoration: 'none',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+          >
+            Abrir qwen-setup.html
+          </a>
         </div>
       </header>
 
       {/* ¿Por qué FlowLab? */}
-      <section style={{ padding: '60px 32px', maxWidth: 1100, margin: '0 auto' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, margin: 0 }}>
-          ¿Por qué usar FlowLab?
+      <section style={{ padding: '40px 32px', maxWidth: 1100, margin: '0 auto' }}>
+        <h2 style={{ textAlign: 'center', fontSize: 26, fontWeight: 700, margin: 0 }}>
+          Características del Sistema
         </h2>
-        <p style={{ textAlign: 'center', color: '#9aa0a6', marginTop: 12 }}>
-          Razones por las que nuestros usuarios dejaron las hojas de cálculo tradicionales
-        </p>
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: 20,
-            marginTop: 44,
+            marginTop: 36,
           }}
         >
           {features.map((f) => (
@@ -195,96 +269,30 @@ export default function Landing({ onEnter }: Props) {
                 background: '#131416',
                 border: '1px solid #2e3134',
                 borderRadius: 8,
-                padding: 24,
+                padding: 20,
               }}
             >
               <div
                 style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 8,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 6,
                   background: 'rgba(74,222,128,0.12)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 16,
+                  marginBottom: 12,
                 }}
               >
                 <i className={`fa-solid ${f.icon}`} style={{ color: '#4ade80' }} />
               </div>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700 }}>{f.title}</h3>
-              <p style={{ margin: '10px 0 0', color: '#9aa0a6', fontSize: 13, lineHeight: 1.6 }}>
+              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>{f.title}</h3>
+              <p style={{ margin: '8px 0 0', color: '#9aa0a6', fontSize: 12, lineHeight: 1.5 }}>
                 {f.desc}
               </p>
             </div>
           ))}
         </div>
-      </section>
-
-      {/* Cómo funciona */}
-      <section style={{ padding: '40px 32px 70px', maxWidth: 1100, margin: '0 auto' }}>
-        <h2 style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, margin: 0 }}>
-          ¿Cómo funciona?
-        </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: 20,
-            marginTop: 44,
-          }}
-        >
-          {steps.map((s) => (
-            <div
-              key={s.n}
-              style={{
-                background: '#131416',
-                border: '1px solid #2e3134',
-                borderRadius: 8,
-                padding: 24,
-              }}
-            >
-              <div style={{ color: '#4ade80', fontSize: 22, fontWeight: 800 }}>{s.n}</div>
-              <h3 style={{ margin: '12px 0 6px', fontSize: 16 }}>{s.t}</h3>
-              <p style={{ margin: 0, color: '#9aa0a6', fontSize: 13, lineHeight: 1.6 }}>{s.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA final */}
-      <section
-        style={{
-          textAlign: 'center',
-          padding: '70px 24px',
-          borderTop: '1px solid #2e3134',
-          background:
-            'radial-gradient(ellipse at 50% 100%, rgba(74,222,128,0.1), transparent 60%)',
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>
-          Listo para ver tu dinero con claridad?
-        </h2>
-        <p style={{ color: '#9aa0a6', marginTop: 12 }}>
-          Entra al panel y empieza a explorar los flujos en segundos.
-        </p>
-        <button
-          onClick={() => onEnter('flowlab')}
-          style={{
-            marginTop: 28,
-            background: '#4ade80',
-            color: '#0b0c0d',
-            border: 'none',
-            padding: '14px 36px',
-            borderRadius: 4,
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            fontSize: 15,
-            fontWeight: 700,
-          }}
-        >
-          Entrar al panel {'->'}
-        </button>
       </section>
 
       <footer
@@ -296,7 +304,7 @@ export default function Landing({ onEnter }: Props) {
           fontSize: 12,
         }}
       >
-        {'>'} FlowLab — Sistema Financiero Visual
+        {'>'} FlowLab — Sistema Financiero Visual & Páginas Clásicas Restauradas
       </footer>
     </div>
   )
