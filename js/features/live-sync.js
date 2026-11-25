@@ -70,6 +70,12 @@ async function fetchSharedProject() {
   try {
     const response = await fetch(LIVE_SYNC.endpoint, { cache: 'no-store' });
     if (!response.ok) throw new Error('Respuesta ' + response.status);
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      LIVE_SYNC.staticOnly = true;
+      setLiveSyncStatus('live', '● guardado local');
+      return null;
+    }
     const project = await response.json();
 
     if (LIVE_SYNC.ready && project.state && Number(project.revision) > LIVE_SYNC.revision) {
@@ -161,13 +167,17 @@ function localProjectIsNewerThan(project) {
 
 async function initLiveSync() {
   LIVE_SYNC.status = document.getElementById('liveSyncStatus');
-  if (window.location.hostname.endsWith('.github.io')) {
+  if (
+    window.location.hostname.endsWith('.github.io') ||
+    window.location.hostname.endsWith('githack.com')
+  ) {
     setLiveSyncStatus('live', '● guardado local');
     return;
   }
   setLiveSyncStatus('syncing', '◌ conectando');
 
   const remoteProject = await fetchSharedProject();
+  if (LIVE_SYNC.staticOnly) return;
   LIVE_SYNC.ready = true;
 
   if (remoteProject?.state) {
