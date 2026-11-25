@@ -31,14 +31,19 @@ function initChat() {
 }
 
 function toggleChatPanel() {
+  if (typeof openAISidebarTab === 'function') {
+    const rightPanel = document.getElementById('rightPanel');
+    const isNarrow = window.matchMedia('(max-width: 980px)').matches;
+    if (isNarrow && rightPanel && rightPanel.classList.contains('mobile-open') && currentPanelTab === 'ai') {
+      rightPanel.classList.remove('mobile-open');
+      return;
+    }
+    openAISidebarTab(false);
+    return;
+  }
   STATE.chatOpen = !STATE.chatOpen;
   const panel = document.getElementById('chatWrap');
   if (panel) panel.hidden = !STATE.chatOpen;
-
-  if (STATE.chatOpen) {
-    focusChatInput();
-    renderChatMessages();
-  }
 }
 
 function toggleInspectorPanel() {

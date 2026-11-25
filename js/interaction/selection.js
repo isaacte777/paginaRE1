@@ -69,6 +69,9 @@ function ctxAction(action) {
       insp.hidden = false;
       if (typeof renderInspector === 'function') renderInspector();
     }
+  } else if (action === 'ask_ai') {
+    if (n) setSel({ kind: 'node', id: n.id });
+    if (typeof openAISidebarTab === 'function') openAISidebarTab(false);
   } else if (action === 'done') {
     if (n) {
       n.status = 'done';

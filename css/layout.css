@@ -560,7 +560,8 @@ main {
 }
 
 .panel {
-  width: 292px;
+  width: 344px;
+  min-height: 0;
   background: var(--bg1);
   border-left: 1px solid var(--line);
   display: flex;

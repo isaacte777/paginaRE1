@@ -1,26 +1,42 @@
-// PANEL: Actualización del panel lateral de propiedades y estadísticas
+// PANEL: Actualización del panel lateral de propiedades, estadísticas y chat IA
 let currentPanelTab = 'props';
 
-function initPanelTabs() {
+function switchRightPanelTab(tabName) {
+  currentPanelTab = tabName;
   const tabProps = document.getElementById('tabProps');
   const tabStats = document.getElementById('tabStats');
-  if (tabProps && tabStats) {
-    tabProps.addEventListener('click', () => {
-      currentPanelTab = 'props';
-      tabProps.classList.add('on');
-      tabStats.classList.remove('on');
-      updatePanel();
-    });
-    tabStats.addEventListener('click', () => {
-      currentPanelTab = 'stats';
-      tabStats.classList.add('on');
-      tabProps.classList.remove('on');
-      updatePanel();
-    });
+  const tabAI = document.getElementById('tabAI');
+  const panelBody = DOM.panel || document.getElementById('panel');
+  const aiView = document.getElementById('aiSidebarView');
+
+  if (tabProps) tabProps.classList.toggle('on', tabName === 'props');
+  if (tabStats) tabStats.classList.toggle('on', tabName === 'stats');
+  if (tabAI) tabAI.classList.toggle('on', tabName === 'ai');
+
+  if (tabName === 'ai') {
+    if (panelBody) panelBody.hidden = true;
+    if (aiView) aiView.hidden = false;
+    if (typeof updateAIChatContextUI === 'function') updateAIChatContextUI();
+  } else {
+    if (panelBody) panelBody.hidden = false;
+    if (aiView) aiView.hidden = true;
+    updatePanel();
   }
 }
 
+function initPanelTabs() {
+  document.getElementById('tabProps')?.addEventListener('click', () => switchRightPanelTab('props'));
+  document.getElementById('tabStats')?.addEventListener('click', () => switchRightPanelTab('stats'));
+  document.getElementById('tabAI')?.addEventListener('click', () => {
+    switchRightPanelTab('ai');
+    setTimeout(() => document.getElementById('aiChatInput')?.focus(), 30);
+  });
+}
+
 function updatePanel() {
+  if (typeof updateAIChatContextUI === 'function') updateAIChatContextUI();
+  if (currentPanelTab === 'ai') return;
+
   const p = DOM.panel;
   if (!p) return;
   p.innerHTML = '';
@@ -32,7 +48,26 @@ function updatePanel() {
 
   // Pestaña Props
   if (!STATE.sel) {
-    p.innerHTML = '<div style="color:var(--tx3);font-size:9.5px;padding:8px">selecciona un nodo o conexión</div>';
+    p.innerHTML =
+      '<div class="props-empty-wrap">' +
+      '<div style="color:var(--tx3);font-size:10px;padding:4px 2px 12px">selecciona un nodo o conexión para editar sus propiedades</div>' +
+      '<div class="props-ai-promo">' +
+      '<div class="props-ai-promo__kicker">✦ asistente del flujo</div>' +
+      '<div class="props-ai-promo__title">Crea nodos hablando con IA</div>' +
+      '<p class="props-ai-promo__desc">Lee el contexto del archivo actual y genera nodos o flujos. Conecta <b>Ollama / LM Studio</b> en tu PC, una <b>API Key</b> o cualquier <b>URL</b>.</p>' +
+      '<div class="props-ai-promo__btns">' +
+      '<button type="button" class="btn primary" id="btnPromoOpenAI">✦ abrir chat ia</button>' +
+      '<button type="button" class="btn" id="btnPromoCfgAI">⚙ conectar</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>';
+
+    document.getElementById('btnPromoOpenAI')?.addEventListener('click', () => {
+      if (typeof openAISidebarTab === 'function') openAISidebarTab(false);
+    });
+    document.getElementById('btnPromoCfgAI')?.addEventListener('click', () => {
+      if (typeof openAISidebarTab === 'function') openAISidebarTab(true);
+    });
     return;
   }
 
