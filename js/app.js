@@ -35,7 +35,9 @@ function initApp() {
   // Inicializar pestañas de panel e inspector v4
   initPanelTabs();
   initChat();
+  if (typeof initAIAssistant === 'function') initAIAssistant();
   initHeaderTooltips();
+  if (typeof initCustomDropdowns === 'function') initCustomDropdowns();
   initConsoleResize();
   initConsoleInput();
   initDraggableExportPopover();

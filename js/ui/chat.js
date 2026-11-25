@@ -31,14 +31,19 @@ function initChat() {
 }
 
 function toggleChatPanel() {
+  if (typeof openAISidebarTab === 'function') {
+    const rightPanel = document.getElementById('rightPanel');
+    const isNarrow = window.matchMedia('(max-width: 980px)').matches;
+    if (isNarrow && rightPanel && rightPanel.classList.contains('mobile-open') && currentPanelTab === 'ai') {
+      rightPanel.classList.remove('mobile-open');
+      return;
+    }
+    openAISidebarTab(false);
+    return;
+  }
   STATE.chatOpen = !STATE.chatOpen;
   const panel = document.getElementById('chatWrap');
   if (panel) panel.hidden = !STATE.chatOpen;
-
-  if (STATE.chatOpen) {
-    focusChatInput();
-    renderChatMessages();
-  }
 }
 
 function toggleInspectorPanel() {
@@ -123,22 +128,22 @@ function generateAIResponse(query) {
   const doneCount = STATE.nodes.filter(n => n.status === 'done').length;
 
   if (q.includes('nodo') || q.includes('flujo') || q.includes('resumen') || q.includes('estado')) {
-    return `📊 Estado del flujo actual:\n• Nodos totales: ${nodeCount}\n• Conexiones: ${edgeCount}\n• Completados: ${doneCount}/${nodeCount}\n• Bloqueados: ${blockedCount}`;
+    return `Estado del flujo actual:\n• Nodos totales: ${nodeCount}\n• Conexiones: ${edgeCount}\n• Completados: ${doneCount}/${nodeCount}\n• Bloqueados: ${blockedCount}`;
   } else if (q.includes('bloqueo') || q.includes('bloquead')) {
     if (blockedCount === 0) {
-      return `✓ No hay nodos bloqueados actualmente en el flujo.`;
+      return `No hay nodos bloqueados actualmente en el flujo.`;
     }
     const blkNames = Array.from(STATE.blocked).map(id => {
       const n = byId(id);
       return n ? `"${n.text.split('\n')[0]}"` : id;
     }).slice(0, 5).join(', ');
-    return `⚠️ Hay ${blockedCount} nodo(s) bloqueado(s) esperando dependencias previas: ${blkNames}`;
+    return `Hay ${blockedCount} nodo(s) bloqueado(s) esperando dependencias previas: ${blkNames}`;
   } else if (q.includes('comparacion') || q.includes('precio')) {
-    return `💡 El flujo de Comparación de Precios integra 4 fases principales: MVP, Core, Advanced y Polish con endpoints API y persistencia en BD.`;
+    return `El flujo de Comparación de Precios integra 4 fases principales: MVP, Core, Advanced y Polish con endpoints API y persistencia en BD.`;
   } else if (q.includes('ejecutar') || q.includes('run')) {
-    return `▶ Puedes presionar el botón "ejecutar" en la barra inferior para iniciar la simulación secuencial del flujo.`;
+    return `Puedes presionar el botón "ejecutar" en la barra inferior para iniciar la simulación secuencial del flujo.`;
   } else if (q.includes('ayuda') || q.includes('help')) {
-    return `🤖 Asistente FlowLab:\n• Doble clic en lienzo: crear nodo\n• Arrastrar puertos ●: conectar nodos\n• Inspector 🔍: ver parámetros avanzados\n• .md / .png: exportar diagrama`;
+    return `Asistente FlowLab:\n• Doble clic en lienzo: crear nodo\n• Arrastrar puertos: conectar nodos\n• Inspector: ver parámetros avanzados\n• .md / .png: exportar diagrama`;
   } else {
     return `Entendido. He analizado tu solicitud sobre "${query}". El flujo cuenta actualmente con ${nodeCount} nodos y ${edgeCount} conexiones activas en el canvas.`;
   }
@@ -153,9 +158,14 @@ function renderChatMessages() {
     return;
   }
 
+  const userSvg =
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  const botSvg =
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="8" width="18" height="12" rx="2"/><path d="M12 2v6"/><circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/></svg>';
+
   container.innerHTML = STATE.chatMessages.map(msg => `
     <div class="chat-msg ${msg.role}">
-      <div class="chat-role">${msg.role === 'user' ? '👤' : '🤖'}</div>
+      <div class="chat-role">${msg.role === 'user' ? userSvg : botSvg}</div>
       <div class="chat-text">${escapeHTML(msg.content)}</div>
     </div>
   `).join('');
@@ -249,7 +259,7 @@ function renderInspector() {
         </label>
       </div>
 
-      ${isBlocked ? '<div style="color:#ff6b6b;font-size:10px;padding:6px;background:rgba(255,107,107,0.1);border-radius:4px;margin-bottom:10px">⚠️ Nodo bloqueado: dependencias incompletas</div>' : ''}
+      ${isBlocked ? '<div style="color:#ff6b6b;font-size:10px;padding:6px 8px;background:rgba(255,107,107,0.1);border-radius:4px;margin-bottom:10px;display:flex;align-items:center;gap:6px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Nodo bloqueado: dependencias incompletas</span></div>' : ''}
 
       ${paramsHtml}
     `;

@@ -21,7 +21,7 @@
   <div class="header-row header-top">
     <div class="header-brand-group">
       <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
-      <button class="btn" id="btnMenu" title="Menú de herramientas" onclick="document.getElementById('palette').classList.toggle('mobile-open')" style="display:none">☰</button>
+      <button class="btn" id="btnMenu" title="Menú de herramientas" onclick="document.getElementById('palette').classList.toggle('mobile-open')" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
       <a class="logo" href="index.html" title="Volver a la portada" aria-label="FlowLab: volver a la portada"><span class="app-logo-mark" aria-hidden="true"><img src="20261123_154131_0_UTC_0.png" alt=""></span></a>
       <span class="header-divider" aria-hidden="true"></span>
       <label class="header-field header-title-field" for="projTitle">
@@ -140,11 +140,11 @@
       <option value="progress">[~] en curso</option>
       <option value="done">[✓] hecho</option>
     </select>
-    <button class="tool" id="toolUndo">[&lt;] deshacer</button>
-    <button class="tool" id="toolRedo">[&gt;] rehacer</button>
-    <button class="tool" id="toolDelete">[x] eliminar</button>
-    <button class="tool" id="toolFit">[ ] ajustar_vista</button>
-    <button class="tool mobile-inspector-trigger" id="toolInspector" type="button">[?] propiedades</button>
+    <button class="tool" id="toolUndo"><span class="prev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span>deshacer</button>
+    <button class="tool" id="toolRedo"><span class="prev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 14 20 9 15 4"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg></span>rehacer</button>
+    <button class="tool" id="toolDelete"><span class="prev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></span>eliminar</button>
+    <button class="tool" id="toolFit"><span class="prev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg></span>ajustar_vista</button>
+    <button class="tool mobile-inspector-trigger" id="toolInspector" type="button"><span class="prev"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>propiedades</button>
     <div class="helpbox">
       <b>clic der</b> desplazar · <b>rueda</b> zoom<br>
       <b>2x clic</b> editar · <b>puerto ●</b> conectar<br>
@@ -167,7 +167,7 @@
     <canvas id="minimap" width="170" height="120"></canvas>
     <div class="zoombar">
       <button id="zOut">−</button><span id="zoomLbl">100%</span><button id="zIn">+</button>
-      <button id="zReset">1:1</button><button id="zFit">fit</button><button id="btnSnap" class="on">⌗</button>
+      <button id="zReset">1:1</button><button id="zFit">fit</button><button id="btnSnap" class="on" aria-label="Ajuste a cuadrícula"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></button>
       <select id="speedSel" style="font-size:11px">
         <option value="0.5">0.5x</option>
         <option value="1" selected>1x</option>
@@ -177,12 +177,174 @@
     </div>
   </div>
 
-  <aside class="panel">
-    <div class="ptabs">
-      <button id="tabProps" class="on">props</button>
-      <button id="tabStats">stats</button>
+  <aside class="panel" id="rightPanel">
+    <div class="ptabs" role="tablist" aria-label="Panel lateral derecho">
+      <button id="tabProps" class="on" type="button">props</button>
+      <button id="tabStats" type="button">stats</button>
+      <button id="tabAI" type="button">
+        <span class="ai-tab-dot" id="aiTabDot" aria-hidden="true"></span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+        <span>chat ia</span>
+      </button>
+      <button id="btnCloseRightPanel" class="ptabs-close" type="button" aria-label="Cerrar panel">×</button>
     </div>
+
     <div class="pbody" id="panel"></div>
+
+    <div class="ai-sidebar" id="aiSidebarView" hidden>
+      <div class="ai-topbar">
+        <button type="button" class="ai-provider-pill" id="btnAiProviderPill" title="Configurar conexión IA">
+          <span class="ai-provider-dot" id="aiProviderDot" aria-hidden="true"></span>
+          <span id="aiProviderLabel">Asistente integrado</span>
+        </button>
+        <div class="ai-topbar-actions">
+          <button type="button" class="ai-icon-btn" id="btnAiConfig" aria-label="Configurar conexión IA">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>conectar</span>
+          </button>
+          <button type="button" class="ai-icon-btn" id="btnAiClear" aria-label="Limpiar conversación" title="Limpiar chat">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="ai-config-drawer" id="aiConfigDrawer" hidden>
+        <div class="ai-mode-tabs" role="tablist">
+          <button type="button" class="ai-mode-tab is-active" data-ai-mode-tab="local">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+            <span>Local</span>
+          </button>
+          <button type="button" class="ai-mode-tab" data-ai-mode-tab="api">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2m-3 3l3 3m-6 1l3 3"/></svg>
+            <span>API</span>
+          </button>
+          <button type="button" class="ai-mode-tab" data-ai-mode-tab="url">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18z"/></svg>
+            <span>URL</span>
+          </button>
+          <button type="button" class="ai-mode-tab" data-ai-mode-tab="builtin">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Base</span>
+          </button>
+        </div>
+
+        <!-- Modo 1: IA Local en PC / Laptop -->
+        <div class="ai-mode-pane" data-ai-mode-pane="local">
+          <label class="ai-cfg-label">motor en tu pc / laptop</label>
+          <select id="aiLocalPreset" aria-label="Motor local">
+            <option value="ollama">Ollama (localhost:11434)</option>
+            <option value="lmstudio">LM Studio (localhost:1234)</option>
+            <option value="jan">Jan AI (localhost:1337)</option>
+            <option value="llamacpp">llama.cpp / LocalAI (:8080)</option>
+            <option value="textgen">TextGen WebUI (:5000)</option>
+          </select>
+
+          <label class="ai-cfg-label">url local</label>
+          <input type="text" id="aiLocalUrl" placeholder="http://localhost:11434/v1/chat/completions">
+
+          <div class="ai-cfg-row-head">
+            <label class="ai-cfg-label">modelo instalado</label>
+            <button type="button" class="ai-mini-link" id="btnDetectLocalModels">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>detectar en mi pc</span>
+            </button>
+          </div>
+          <input type="text" id="aiLocalModel" placeholder="qwen2.5-coder:7b, llama3.2...">
+          <div class="ai-detected-models" id="aiDetectedModels"></div>
+          <p class="ai-cfg-note">En Ollama, si abres desde web externa activa CORS con: <code>OLLAMA_ORIGINS="*" ollama serve</code></p>
+        </div>
+
+        <!-- Modo 2: Cloud API Key -->
+        <div class="ai-mode-pane" data-ai-mode-pane="api" hidden>
+          <label class="ai-cfg-label">proveedor cloud</label>
+          <select id="aiCloudProvider" aria-label="Proveedor de IA">
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="anthropic">Anthropic Claude</option>
+            <option value="openrouter">OpenRouter (modelos gratis)</option>
+            <option value="groq">Groq</option>
+            <option value="deepseek">DeepSeek</option>
+          </select>
+
+          <label class="ai-cfg-label">api key (guardada solo en tu navegador)</label>
+          <div class="ai-key-wrap">
+            <input type="password" id="aiCloudKey" placeholder="sk-..." autocomplete="off">
+            <button type="button" class="ai-key-eye" id="btnToggleKeyVis" title="Mostrar u ocultar clave" aria-label="Mostrar u ocultar clave">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <label class="ai-cfg-label">modelo</label>
+          <input type="text" id="aiCloudModel" placeholder="gpt-4o-mini">
+        </div>
+
+        <!-- Modo 3: URL / Endpoint Personalizado -->
+        <div class="ai-mode-pane" data-ai-mode-pane="url" hidden>
+          <label class="ai-cfg-label">endpoint url (http / https)</label>
+          <input type="text" id="aiCustomUrl" placeholder="https://tu-api.com/v1/chat/completions">
+
+          <label class="ai-cfg-label">formato de petición</label>
+          <select id="aiCustomFormat" aria-label="Formato de endpoint">
+            <option value="openai">Compatible con OpenAI (/chat/completions)</option>
+            <option value="webhook">Webhook JSON ({ message, context })</option>
+          </select>
+
+          <label class="ai-cfg-label">token bearer / api key (opcional)</label>
+          <input type="password" id="aiCustomKey" placeholder="Bearer token opcional" autocomplete="off">
+
+          <label class="ai-cfg-label">nombre del modelo (opcional)</label>
+          <input type="text" id="aiCustomModel" placeholder="default">
+        </div>
+
+        <!-- Modo 4: Asistente integrado sin conexión -->
+        <div class="ai-mode-pane" data-ai-mode-pane="builtin" hidden>
+          <p class="ai-cfg-note" style="margin-top:4px">
+            <b>Asistente integrado FlowLab:</b> funciona al instante sin claves ni descargas para analizar el archivo actual y generar estructuras de nodos base en español.
+          </p>
+        </div>
+
+        <div class="ai-test-status" id="aiTestStatus"></div>
+
+        <div class="ai-cfg-actions">
+          <button type="button" class="btn" id="btnAiTest">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>probar</span>
+          </button>
+          <button type="button" class="btn primary" id="btnAiSaveConfig">guardar conexión</button>
+        </div>
+      </div>
+
+      <div class="ai-context-bar">
+        <button type="button" class="ai-chip is-active" id="btnAiToggleCtx" title="Enviar contexto del archivo actual a la IA">
+          <span class="ai-chip-dot"></span>
+          <span id="aiCtxSummary">contexto: activo</span>
+        </button>
+        <span class="ai-sel-badge" id="aiSelBadge" hidden></span>
+        <button type="button" class="ai-chip is-active ai-chip-right" id="btnAiAutoApply" title="Crear nodos automáticamente en el lienzo">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>auto-nodos</span>
+        </button>
+      </div>
+
+      <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
+
+      <div class="ai-composer">
+        <textarea id="aiChatInput" rows="2" placeholder="Pide crear nodos, expandir ramas o analizar este flujo..."></textarea>
+        <div class="ai-composer-foot">
+          <span class="ai-composer-hint">Enter enviar · Shift+Enter salto</span>
+          <div class="ai-composer-btns">
+            <button type="button" class="ai-stop-btn" id="btnAiStop" hidden>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+              <span>detener</span>
+            </button>
+            <button type="button" class="ai-send-btn" id="btnAiSend">
+              <span>enviar</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </aside>
 </main>
 
@@ -190,7 +352,7 @@
   <div id="consoleResizeHandle" title="Arrastrar para redimensionar"></div>
   <div id="consoleBar">
     <div class="console-actions">
-      <button class="btn primary" id="btnRun">▶ ejecutar</button>
+      <button class="btn primary" id="btnRun"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1px;margin-right:3px" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>ejecutar</button>
       <button class="btn" id="btnClearLog">limpiar</button>
       <button class="btn" id="btnToggleCon">—</button>
     </div>
@@ -244,7 +406,7 @@
 <div id="expPopover" class="export-popover" hidden>
   <div class="exp-popover-header">
     <span class="exp-title">exportar_diagrama</span>
-    <button class="exp-close" onclick="toggleExportPopover(false)" title="Cerrar">✕</button>
+    <button class="exp-close" onclick="toggleExportPopover(false)" title="Cerrar" aria-label="Cerrar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   </div>
   <div class="exp-grid">
     <button class="exp-card" onclick="exportMermaid()">
@@ -300,6 +462,10 @@
     <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
     <span>Ver en inspector</span>
   </div>
+  <div class="ctx-item" onclick="ctxAction('ask_ai')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+    <span>Preguntar a la IA</span>
+  </div>
   <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxAction('done')">
     <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -317,7 +483,7 @@
   <span id="stZoom">zoom: 100%</span>
   <span id="stRun">idle</span>
   <span class="sp"></span>
-  <span id="btnShowConsole" style="cursor:pointer;color:var(--tx1);padding:2px 6px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;display:none" title="mostrar consola">⚡ consola</span>
+  <span id="btnShowConsole" style="cursor:pointer;color:var(--tx1);padding:2px 6px;background:var(--bg2);border:1px solid var(--line);border-radius:4px;display:none" title="mostrar consola"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1.5px" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg> consola</span>
   <span id="stSave">auto-guardado</span>
   <span class="hint">FlowLab v3 · Centro de Control paginaRE</span>
 </footer>
@@ -341,6 +507,8 @@
 <script src="js/ui/chat.js"></script>
 <script src="js/features/charts.js"></script>
 <script src="js/features/live-sync.js"></script>
+<script src="js/features/ai-assistant.js"></script>
+<script src="js/ui/dropdowns.js"></script>
 <script src="js/app.js"></script>
 
 </body>
