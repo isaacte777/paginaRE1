@@ -34,7 +34,25 @@
     alert:
       '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
     settings:
-      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    chevronDown:
+      '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>',
+    shield:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+    layers:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
+    database:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>',
+    cpu:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>',
+    book:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+    chat:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    edit:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+    trash:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
   };
 
   class AIConnectionError extends Error {
@@ -225,10 +243,60 @@
     }
   };
 
+  function activeAIConfigKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('ai-config')
+      : STORAGE_KEY;
+  }
+
+  function activeAIChatKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('ai-chat')
+      : 'flowlab-ai-chat-v1';
+  }
+
+  function activeAISessionsKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('ai-sessions')
+      : 'flowlab-ai-sessions-v1';
+  }
+
+  function activeAISessionIdKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('ai-active-session')
+      : 'flowlab-ai-active-session-v1';
+  }
+
+  function currentProjectNameSafe() {
+    return (document.getElementById('projTitle')?.value || 'sin_titulo').trim() || 'sin_titulo';
+  }
+
+  function generateChatSessionId() {
+    return 'chat_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+  }
+
+  function deriveSessionTitle(msgs, fallback = 'Nuevo chat FlowLab') {
+    if (!Array.isArray(msgs) || msgs.length === 0) return fallback;
+    const firstUser = msgs.find(m => m && m.role === 'user' && String(m.content || '').trim());
+    if (!firstUser) return fallback;
+    const clean = String(firstUser.content || '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return fallback;
+    return clean.length > 42 ? clean.slice(0, 41).trimEnd() + '…' : clean;
+  }
+
   let aiConfig = loadAIConfig();
+  let aiSessions = [];
+  let activeSessionId = '';
   let messages = [];
+  let sessionsSearchQuery = '';
+  let renamingSessionId = null;
+  let pendingDeleteSessionId = null;
   let isGenerating = false;
   let currentAbort = null;
+  let liveTraceState = null; // Seguimiento en vivo de pasos/fuentes mientras genera
+  let liveTraceTimer = null;
   let editingModeTab = aiConfig.mode === 'builtin' ? 'local' : aiConfig.mode;
 
   // Estado visual en vivo de la conexión actual ('idle' | 'ok' | 'error')
@@ -239,9 +307,12 @@
     resolvedEndpoint: ''
   };
 
+  // Inicializar en memoria sin sobreescribir localStorage hasta que initUserWorkspace termine
+  hydrateAISessionsFromStorage(false);
+
   function loadAIConfig() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(activeAIConfigKey());
       if (!raw) return structuredCloneFallback(DEFAULT_CONFIG);
       const parsed = JSON.parse(raw);
       return {
@@ -256,13 +327,146 @@
     }
   }
 
+  function loadLegacyAIChatHistory() {
+    try {
+      const key = activeAIChatKey();
+      let raw = localStorage.getItem(key);
+      if (!raw && key === 'flowlab-user-local-ai-chat') {
+        raw = localStorage.getItem('flowlab-ai-chat-v1');
+      }
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.slice(-80) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function hydrateAISessionsFromStorage(shouldPersist = true) {
+    let loaded = [];
+    try {
+      const raw = localStorage.getItem(activeAISessionsKey());
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          loaded = parsed
+            .filter(s => s && typeof s === 'object' && typeof s.id === 'string')
+            .map(s => ({
+              id: s.id,
+              title: String(s.title || 'Nuevo chat FlowLab'),
+              customTitle: Boolean(s.customTitle),
+              projectTitle: String(s.projectTitle || currentProjectNameSafe()),
+              createdAt: Number(s.createdAt) || Date.now(),
+              updatedAt: Number(s.updatedAt) || Date.now(),
+              messages: Array.isArray(s.messages) ? s.messages.slice(-80) : []
+            }));
+        }
+      }
+    } catch {}
+
+    // Migración transparente del historial previo (ai-chat) si aún no había registro multi-chat
+    if (loaded.length === 0) {
+      const legacyMsgs = loadLegacyAIChatHistory();
+      const now = Date.now();
+      loaded = [
+        {
+          id: generateChatSessionId(),
+          title: legacyMsgs.length ? deriveSessionTitle(legacyMsgs) : 'Nuevo chat FlowLab',
+          customTitle: false,
+          projectTitle: currentProjectNameSafe(),
+          createdAt: now,
+          updatedAt: now,
+          messages: legacyMsgs
+        }
+      ];
+    }
+
+    aiSessions = loaded;
+
+    let savedActiveId = '';
+    try {
+      savedActiveId = localStorage.getItem(activeAISessionIdKey()) || '';
+    } catch {}
+
+    const foundActive = aiSessions.find(s => s.id === savedActiveId) || aiSessions[0];
+    activeSessionId = foundActive.id;
+    messages = foundActive.messages;
+    if (shouldPersist) {
+      persistAISessionsRegistry(false);
+    }
+  }
+
+  function getActiveAISession() {
+    let session = aiSessions.find(s => s.id === activeSessionId);
+    if (!session) {
+      if (aiSessions.length === 0) {
+        const now = Date.now();
+        session = {
+          id: generateChatSessionId(),
+          title: 'Nuevo chat FlowLab',
+          customTitle: false,
+          projectTitle: currentProjectNameSafe(),
+          createdAt: now,
+          updatedAt: now,
+          messages: []
+        };
+        aiSessions.unshift(session);
+      } else {
+        session = aiSessions[0];
+      }
+      activeSessionId = session.id;
+    }
+    return session;
+  }
+
+  function persistAISessionsRegistry(bumpTimestamp = true) {
+    const active = getActiveAISession();
+    active.messages = Array.isArray(messages) ? messages.slice(-80) : [];
+    if (!active.customTitle) {
+      active.title = active.messages.length
+        ? deriveSessionTitle(active.messages, active.title || 'Nuevo chat FlowLab')
+        : 'Nuevo chat FlowLab';
+    }
+    if (bumpTimestamp) {
+      active.updatedAt = Date.now();
+      active.projectTitle = currentProjectNameSafe();
+    }
+
+    // Conservar hasta 50 chats completos ordenados por actividad reciente
+    aiSessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    if (aiSessions.length > 50) {
+      aiSessions = aiSessions.slice(0, 50);
+      if (!aiSessions.some(s => s.id === activeSessionId)) {
+        activeSessionId = aiSessions[0].id;
+        messages = aiSessions[0].messages;
+      }
+    }
+
+    try {
+      localStorage.setItem(activeAISessionsKey(), JSON.stringify(aiSessions));
+      localStorage.setItem(activeAISessionIdKey(), activeSessionId);
+      // Espejo del chat activo por compatibilidad
+      localStorage.setItem(activeAIChatKey(), JSON.stringify(active.messages.slice(-40)));
+    } catch {}
+
+    updateAISessionBarUI();
+    const drawer = document.getElementById('aiSessionsDrawer');
+    if (drawer && !drawer.hidden) {
+      renderAISessionsList();
+    }
+  }
+
+  function saveAIChatHistory(bumpTimestamp = true) {
+    persistAISessionsRegistry(bumpTimestamp);
+  }
+
   function structuredCloneFallback(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
 
   function saveAIConfig() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(aiConfig));
+      localStorage.setItem(activeAIConfigKey(), JSON.stringify(aiConfig));
     } catch {}
     updateProviderHeaderUI();
   }
@@ -360,6 +564,311 @@
     };
   }
 
+  // =========================================================================
+  // GUARDIÁN DE DOMINIO EXCLUSIVO PARA FLOWLAB + TELEMETRÍA DE ANÁLISIS
+  // =========================================================================
+  function normalizePlainSpanish(str) {
+    return String(str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  const OFF_TOPIC_RULES = [
+    {
+      category: 'gastronomía / cocina',
+      regex:
+        /\b(cocinar|cocino|coinar|cocinando|receta|recetas|arroz|arros|pollo|carne|pescado|pasta|espagueti|tallarin|sopa|guiso|pastel|torta|bizcocho|galletas|hornear|freir|hervir|sazonar|ingrediente|ingredientes|almuerzo|cena|desayuno|postre|ensalada|pizza|hamburguesa|tacos|empanada|empanadas|asado|chipa|sopa paraguaya|calorias|dieta)\b/i
+    },
+    {
+      category: 'entretenimiento / ocio general',
+      regex:
+        /\b(chiste|chistes|broma|poema|poesia|cancion|letra de|cuento infantil|novela|pelicula|peliculas|serie de tv|netflix|anime|horoscopo|zodiaco|tarot|astrologia|adivinanza|trabalenguas|celebridad|famosos)\b/i
+    },
+    {
+      category: 'deportes / clima / cultura general',
+      regex:
+        /\b(futbol|partido de|champions|mundial de|messi|cristiano ronaldo|nba|tenis|clima en|va a llover|pronostico del tiempo|capital de|presidente de|rey de|guerra mundial|imperio romano|quien pinto|quien descubrio|sistema solar|planetas|dinosaurios|fotosintesis|tabla periodica|huesos del cuerpo|por que el cielo)\b/i
+    },
+    {
+      category: 'salud / consejos personales',
+      regex:
+        /\b(dolor de cabeza|dolor de estomago|fiebre|gripe|medicamento|pastilla|antibiotico|receta medica|sintomas de|enfermedad|veterinario|mi novio|mi novia|consejo de amor)\b/i
+    }
+  ];
+
+  const FLOWLAB_SCOPE_REGEX =
+    /\b(flowlab|lienzo|canvas|nodo|nodos|conexion|conexiones|conectar|conectado|arista|aristas|puerto|puertos|flujo|flujos|diagrama|diagramas|workflow|pipeline|mapa|plantilla|plantillas|inspector|propiedades|props|stats|estadistica|estadisticas|metrica|metricas|kpi|roi|grafico|chart|donut|gauge|funnel|barra|barras|consola|terminal|powershell|cmd|comando|puente|bridge|exportar|importar|mermaid|markdown|json|svg|png|proyecto|proyectos|espacio|workspace|usuario|perfil|sesion|sesiones|guardar|guardado|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simular|simulacion|ejecutar|velocidad|bloqueado|bloquear|circuito|atajo|atajos|panel|paleta|cabecera|header|boton|dropdown|selector|chat|chats|historial|inicio|start|fin|end|proceso|procesos|process|decision|condicion|bifurcacion|rama|ramas|entrada|salida|bucle|loop|iteracion|paralelo|subproceso|base de datos|bd|db|sql|postgres|mysql|mongo|variable|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error|errores|excepcion|espera|delay|timeout|agente|ia|ai|llm|modelo|modelos|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatizacion|automatizar|orquestador|etapa|etapas|paso|pasos|secuencia|cuello de botella|optimizar|validar|validacion|autenticacion|login|registro|checkout|pago|pagos|venta|ventas|pedido|pedidos|onboarding|inventario|logistica|soporte|ticket|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
+
+  const FLOWLAB_GREETING_OR_META_REGEX =
+    /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal|saludos|gracias|muchas gracias|ok|okay|vale|perfecto|entendido|genial|excelente)\b|\b(que puedes hacer|para que sirves|quien eres|que eres|como funcionas|ayuda|ayudame|como uso|como se usa|explicame)\b/i;
+
+  const FLOWLAB_FOLLOWUP_REGEX =
+    /^(si|claro|dale|exacto|asi mismo|hazlo|aplicalo|agregalo|anadelo|conectalo|borralo|deshazlo|mejoralo|amplialo|continua|mas detalle|explica mejor|y despues|luego que)\b/i;
+
+  function evaluateFlowLabDomainGuard(rawPrompt, priorMessages = []) {
+    const norm = normalizePlainSpanish(rawPrompt);
+    if (!norm) {
+      return { allowed: true, reason: 'Consulta vacía', category: 'flowlab' };
+    }
+
+    const explicitCanvasModeling =
+      /\b(flowlab|nodo|nodos|lienzo|canvas|diagrama de flujo|flujo con nodos|plantilla)\b/i.test(norm);
+
+    // 1. Detectar explícitamente consultas fuera de dominio (cocina, chistes, deportes, clima, medicina, etc.)
+    for (const rule of OFF_TOPIC_RULES) {
+      const m = norm.match(rule.regex);
+      if (m && !explicitCanvasModeling) {
+        return {
+          allowed: false,
+          category: rule.category,
+          matchedTerm: m[0],
+          reason: `Tema detectado fuera del ámbito de FlowLab (${rule.category}: "${m[0]}")`
+        };
+      }
+    }
+
+    // 2. Permitir consultas propias de FlowLab, diagramación, procesos, nodos, terminal, proyectos o arquitectura
+    if (FLOWLAB_SCOPE_REGEX.test(norm)) {
+      return {
+        allowed: true,
+        category: 'flowlab',
+        reason: 'Consulta vinculada a diagramación, nodos o herramientas de FlowLab'
+      };
+    }
+
+    // 3. Permitir saludos o preguntas sobre las capacidades del asistente en la página
+    if (FLOWLAB_GREETING_OR_META_REGEX.test(norm)) {
+      return {
+        allowed: true,
+        category: 'meta_flowlab',
+        reason: 'Consulta sobre capacidades y uso del asistente de FlowLab'
+      };
+    }
+
+    // 4. Permitir respuestas breves de seguimiento si ya existe una conversación activa de FlowLab
+    const hasPriorFlowLabTurn =
+      Array.isArray(priorMessages) &&
+      priorMessages.some(m => m && m.role === 'assistant' && !m.isOffTopic);
+    if (hasPriorFlowLabTurn && norm.length <= 48 && FLOWLAB_FOLLOWUP_REGEX.test(norm)) {
+      return {
+        allowed: true,
+        category: 'followup_flowlab',
+        reason: 'Seguimiento contextual de la conversación activa en FlowLab'
+      };
+    }
+
+    // 5. Cualquier otra pregunta general no vinculada con FlowLab ni procesos/flujos se filtra
+    return {
+      allowed: false,
+      category: 'consulta general ajena a FlowLab',
+      matchedTerm: '',
+      reason: 'La consulta no guarda relación con FlowLab, diagramas de flujo ni herramientas de la plataforma'
+    };
+  }
+
+  function buildOffTopicRefusalMessage(domainCheck) {
+    const topicHint = domainCheck?.category
+      ? ` (*detectado: ${domainCheck.category}*)`
+      : '';
+    return (
+      `Estoy preparado exclusivamente para trabajar en la plataforma **FlowLab**, por lo que no puedo responder consultas ajenas a esta herramienta${topicHint}.\n\n` +
+      `En **FlowLab** puedo ayudarte con todo lo referente a tu entorno de trabajo:\n` +
+      `- **Crear y conectar nodos** en el lienzo (\`Inicio\`, \`Proceso\`, \`Decisión\`, \`API\`, \`Base de datos\`, \`Agente IA\`, \`Métricas\`...).\n` +
+      `- **Analizar tu diagrama activo** para detectar cuellos de botella, rutas incompletas o mejoras de arquitectura.\n` +
+      `- **Guiarte en funciones de la página**: gestión de proyectos locales, perfiles de usuario, exportación (\`.json\`, \`.md\`, \`Mermaid\`, \`PNG\`, \`SVG\`) o uso de la consola integrada.`
+    );
+  }
+
+  function countSavedProjectsSafe() {
+    try {
+      const key =
+        typeof getUserStorageKey === 'function'
+          ? getUserStorageKey('projects')
+          : 'flowlab-projects-v1';
+      const raw = localStorage.getItem(key);
+      if (!raw) return 0;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.length : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  function buildAnalysisTelemetry(rawPrompt, domainCheck) {
+    const activeUser =
+      typeof getActiveUser === 'function'
+        ? getActiveUser()
+        : { id: 'guest', name: 'Invitado', workspaceLabel: 'espacio_local' };
+    const prov = getActiveProviderSummary();
+    const activeSession = getActiveAISession();
+    const priorTurns = Math.max(0, (messages || []).length - 1);
+
+    if (!domainCheck.allowed) {
+      return {
+        domainStatus: 'blocked_offtopic',
+        sources: [
+          {
+            kind: 'shield',
+            label: 'guardia:: ámbito_exclusivo_flowlab',
+            detail: domainCheck.reason
+          },
+          {
+            kind: 'engine',
+            label: `motor:: ${prov.text}`,
+            detail: 'Filtro semántico aplicado antes de generar contenido externo'
+          }
+        ],
+        steps: [
+          {
+            title: 'Inspección semántica de la consulta',
+            detail: `Analizando intención de: "${String(rawPrompt || '').slice(0, 64)}${String(rawPrompt || '').length > 64 ? '…' : ''}"`,
+            ms: 38
+          },
+          {
+            title: 'Verificación de política exclusiva FlowLab',
+            detail: `${domainCheck.reason}. Se omite respuesta fuera de propósito.`,
+            ms: 54
+          }
+        ]
+      };
+    }
+
+    const sources = [];
+    const steps = [];
+
+    steps.push({
+      title: 'Validación de dominio FlowLab',
+      detail: domainCheck.reason,
+      ms: 34
+    });
+
+    sources.push({
+      kind: 'shield',
+      label: 'dominio:: verificado FlowLab',
+      detail: 'Consulta autorizada dentro del ámbito de la plataforma'
+    });
+
+    if (aiConfig.includeContext) {
+      const ctx = buildWorkspaceContext();
+      const canvasKey =
+        typeof getUserStorageKey === 'function'
+          ? getUserStorageKey('canvas')
+          : 'flowlab-coordination-state';
+
+      sources.push({
+        kind: 'canvas',
+        label: `lienzo:: ${ctx.projectTitle}`,
+        detail: `${ctx.summary.totalNodes} nodos · ${ctx.summary.totalEdges} conexiones (${canvasKey})`
+      });
+
+      steps.push({
+        title: `Lectura del grafo activo "${ctx.projectTitle}"`,
+        detail: `Extraídos ${ctx.summary.totalNodes} nodos (${ctx.summary.done} listos, ${ctx.summary.progress} en curso, ${ctx.summary.pending} pendientes, ${ctx.summary.blocked} bloqueados) y ${ctx.summary.totalEdges} aristas desde memoria activa.`,
+        ms: 92
+      });
+
+      if (ctx.selected) {
+        if (ctx.selected.kind === 'node') {
+          const shortTxt = String(ctx.selected.text || '').split('\n')[0].slice(0, 28);
+          sources.push({
+            kind: 'target',
+            label: `selección:: ${ctx.selected.type} "${shortTxt}"`,
+            detail: `estado ${ctx.selected.status} · ${ctx.selected.incoming.length} entradas · ${ctx.selected.outgoing.length} salidas`
+          });
+          steps.push({
+            title: 'Inspección de nodo enfocado en el inspector',
+            detail: `Nodo "${shortTxt}" (${ctx.selected.type}, id ${ctx.selected.id}) con ${ctx.selected.incoming.length} conexiones entrantes y ${ctx.selected.outgoing.length} salientes.`,
+            ms: 68
+          });
+        } else {
+          sources.push({
+            kind: 'target',
+            label: `selección:: conexión #${String(ctx.selected.id).slice(0, 8)}`,
+            detail: `${ctx.selected.from} -> ${ctx.selected.to}`
+          });
+          steps.push({
+            title: 'Inspección de arista seleccionada',
+            detail: `Conexión activa desde ${ctx.selected.from} hacia ${ctx.selected.to}${ctx.selected.label ? ` ("${ctx.selected.label}")` : ''}.`,
+            ms: 56
+          });
+        }
+      } else {
+        const incomingSet = new Set((STATE.edges || []).map(e => e.to));
+        const outgoingSet = new Set((STATE.edges || []).map(e => e.from));
+        const roots = (STATE.nodes || []).filter(n => !incomingSet.has(n.id)).length;
+        const leaves = (STATE.nodes || []).filter(n => !outgoingSet.has(n.id)).length;
+        steps.push({
+          title: 'Análisis topológico del diagrama',
+          detail: `Recorrido global sin selección fija: ${roots} nodo(s) raíz y ${leaves} nodo(s) terminales evaluados.`,
+          ms: 74
+        });
+      }
+    } else {
+      sources.push({
+        kind: 'canvas',
+        label: 'lienzo:: lectura desactivada',
+        detail: 'Chip contexto desactivado manualmente por el usuario'
+      });
+      steps.push({
+        title: 'Omisión de lectura del lienzo',
+        detail: 'El usuario desactivó temporalmente el envío del archivo actual; se usa solo el esquema de FlowLab.',
+        ms: 28
+      });
+    }
+
+    const savedProjects = countSavedProjectsSafe();
+    sources.push({
+      kind: 'storage',
+      label: `espacio:: ${activeUser.name}`,
+      detail: `${savedProjects} proy. guardados · sesión "${activeSession.title.slice(0, 24)}" (${priorTurns} msjs previos)`
+    });
+
+    const nodeTypesCount = Object.keys((typeof CONFIG !== 'undefined' && CONFIG.NODE_TYPES) || {}).length || 23;
+    const templatesCount = Object.keys((typeof TEMPLATES !== 'undefined' && TEMPLATES) || {}).length || 7;
+    sources.push({
+      kind: 'schema',
+      label: 'catálogo:: esquema FlowLab',
+      detail: `${nodeTypesCount} tipos de nodo · ${templatesCount} plantillas · guía interna`
+    });
+
+    steps.push({
+      title: 'Consulta de catálogo FlowLab e historial de sesión',
+      detail: `Espacio "${activeUser.workspaceLabel || activeUser.name}" (${savedProjects} proyecto(s) en biblioteca), ${nodeTypesCount} tipos de nodo disponibles y ${priorTurns} mensaje(s) previos en este chat.`,
+      ms: 64
+    });
+
+    let engineDetail = 'Motor estructurado local sin latencia externa';
+    if (aiConfig.mode === 'local') {
+      engineDetail = `Endpoint local ${aiConfig.local.url || 'localhost'}`;
+    } else if (aiConfig.mode === 'api') {
+      const p = CLOUD_PROVIDERS[aiConfig.api.provider];
+      engineDetail = `${p ? p.name : aiConfig.api.provider} · modelo ${aiConfig.api.model}`;
+    } else if (aiConfig.mode === 'url') {
+      engineDetail = `Gateway ${aiConfig.url.endpoint || 'URL personalizada'}`;
+    }
+
+    sources.push({
+      kind: 'engine',
+      label: `motor:: ${prov.text}`,
+      detail: engineDetail
+    });
+
+    steps.push({
+      title: `Síntesis de respuesta con ${prov.text}`,
+      detail: `${engineDetail}${aiConfig.autoApply ? ' · auto-aplicación de nodos activa' : ' · modo vista previa de acciones'}.`,
+      ms: 110
+    });
+
+    return {
+      domainStatus: 'flowlab',
+      sources,
+      steps
+    };
+  }
+
   function buildSystemPrompt() {
     const ctxBlock = aiConfig.includeContext
       ? '\n\nCONTEXTO ACTUAL DEL ARCHIVO EN EL LIENZO (JSON):\n' +
@@ -367,11 +876,14 @@
       : '\n\n(El usuario desactivó temporalmente el envío del contexto del lienzo).';
 
     return (
-      'Eres el Asistente IA integrado en FlowLab (sistema visual de flujos y arquitectura). ' +
-      'Hablas en español de forma clara, directa y útil.\n\n' +
+      'Eres el Asistente IA exclusivo de la plataforma web FlowLab (sistema visual de diagramas de flujo, nodos y arquitectura). ' +
+      'Hablas en español de forma clara, técnica y directa.\n\n' +
+      'REGLA ESTRICTA E INQUEBRANTABLE DE ÁMBITO (SOLO FLOWLAB):\n' +
+      '- Estás preparado ÚNICA Y EXCLUSIVAMENTE para asistir en el uso de FlowLab, creación/edición/análisis de flujos de nodos, arquitectura de procesos o software en el lienzo, uso de plantillas, proyectos guardados, perfiles de espacio de trabajo, exportación (.json, .md, Mermaid, PNG, SVG) y terminal integrada.\n' +
+      '- Si el usuario hace cualquier pregunta ajena a FlowLab (por ejemplo: recetas de cocina como cocinar arroz, deportes, clima, chistes, poemas, medicina, historia general, entretenimiento o tareas no vinculadas a diagramas en FlowLab), NO respondas la pregunta ajena bajo ninguna circunstancia. Indica amablemente que estás preparado exclusivamente para trabajar dentro de la página FlowLab.\n\n' +
       'CAPACIDAD DE CREAR Y EDITAR NODOS EN EL LIENZO:\n' +
       'Cuando el usuario te pida crear nodos, diseñar un flujo, expandir pasos, conectar bloques, cambiar estados o modificar el diagrama, ' +
-      'debes explicar brevemente tu propuesta y añadir AL FINAL de tu mensaje un único bloque de código con la etiqueta ```flowlab-actions contenant JSON válido.\n\n' +
+      'debes explicar brevemente tu propuesta y añadir AL FINAL de tu mensaje un único bloque de código con la etiqueta ```flowlab-actions con JSON válido.\n\n' +
       'Tipos de nodo válidos (type): start, end, process, decision, loop, parallel, io, db, varset, api, hook, tryc, err, delay, ai, human, metrics, chart_line, chart_bar, chart_donut, chart_gauge, chart_funnel.\n' +
       'Estados válidos (status): pending, progress, done, error.\n\n' +
       'Formato exacto del bloque ```flowlab-actions:\n' +
@@ -394,7 +906,7 @@
       '- `{ "op": "delete_node", "id": "<id_existente>" }`\n' +
       '- `{ "op": "clear_canvas" }` (SOLO si el usuario pide explícitamente borrar/reemplazar todo el lienzo).\n' +
       '- Si el usuario dice "a partir de este nodo" o hay un nodo seleccionado (`selected.id`), conecta desde ese `id` existente usando `"after": "<selected.id>"` y `{ "op": "add_edge", "from": "<selected.id>", "to": "p1" }`.\n' +
-      '- Si el usuario SOLO hace una pregunta o pide analizar el diagrama sin pedir cambios, responde normalmente SIN incluir ```flowlab-actions.' +
+      '- Si el usuario SOLO hace una pregunta sobre FlowLab o pide analizar el diagrama sin pedir cambios, responde normalmente SIN incluir ```flowlab-actions.' +
       ctxBlock
     );
   }
@@ -787,30 +1299,108 @@
   // MOTOR INTEGRADO OFFLINE (SIN SERVIDOR EXTERNO NI API KEY)
   // =========================================================================
   function runBuiltinAssistant(userPrompt) {
+    const domainCheck = evaluateFlowLabDomainGuard(userPrompt, messages);
+    if (!domainCheck.allowed) {
+      return {
+        cleanReply: buildOffTopicRefusalMessage(domainCheck),
+        actions: null,
+        isOffTopic: true
+      };
+    }
+
     const q = userPrompt.toLowerCase().trim();
+    const norm = normalizePlainSpanish(userPrompt);
     const ctx = buildWorkspaceContext();
     const selNode = ctx.selected && ctx.selected.kind === 'node' ? ctx.selected : null;
 
-    const wantsCreation =
-      /\b(crea|crear|genera|generar|agrega|agregar|anade|añade|añadir|construye|arma|diseña|disena|haz|hacer|nuevo nodo|nuevos nodos|flujo de|proceso de|rama|ramas|expande|expandir|conecta)\b/i.test(
-        q
-      );
+    const isHowToQuestion =
+      /^(como|donde|para que|que es|cuales son|puedo)\b/i.test(norm) &&
+      !/\b(crea|genera|agrega|anade|inserta|construye|arma|disena)\b/i.test(norm);
 
-    // 1. Solicitudes de creación de flujos o nodos
+    const wantsCreation =
+      !isHowToQuestion &&
+      (/\b(crea|crear|genera|generar|agrega|agregar|anade|añade|añadir|inserta|insertar|construye|arma|diseña|disena|nuevo nodo|nuevos nodos|flujo de|proceso de|expande|expandir)\b/i.test(
+        q
+      ) ||
+        /\b(haz|hacer)\s+(un|una|el|la|dos|tres|\d+)\s+(flujo|diagrama|nodo|nodos|rama|ramas|proceso|secuencia|validacion|validación)\b/i.test(
+          q
+        ));
+
+    // 1. Solicitudes explícitas de creación de flujos o nodos
     if (wantsCreation) {
       return generateBuiltinFlowProposal(userPrompt, q, selNode);
     }
 
-    // 2. Consultas analíticas con contexto real del archivo actual
-    if (q.includes('bloque') || q.includes('cuello') || q.includes('pendiente')) {
+    // 2. Guía de funcionalidades propias de la página FlowLab
+    if (/\b(guardar|guardo|proyecto|proyectos|abrir|biblioteca)\b/i.test(norm)) {
+      return {
+        cleanReply:
+          `Gestión de proyectos en **FlowLab**:\n` +
+          `• **Autoguardado continuo**: tu lienzo actual (**\`${ctx.projectTitle}\`**) se sincroniza automáticamente en \`localStorage\` dentro de tu espacio activo.\n` +
+          `• **Biblioteca de proyectos**: pulsa el botón **\`proyectos\`** en la cabecera superior para guardar instantáneas con nombre, abrir proyectos previos, duplicarlos o crear un proyecto en blanco.\n` +
+          `• Actualmente tienes **${countSavedProjectsSafe()} proyecto(s)** guardado(s) en tu biblioteca local.`,
+        actions: null
+      };
+    }
+
+    if (/\b(usuario|perfil|sesion|sesiones|cuenta|workspace|espacio de trabajo)\b/i.test(norm)) {
+      const u = typeof getActiveUser === 'function' ? getActiveUser() : { name: 'Invitado' };
+      return {
+        cleanReply:
+          `Espacios de usuario en **FlowLab** (sesión activa: **${u.name}**):\n` +
+          `• Pulsa el indicador de **usuario** en la esquina superior derecha para cambiar de perfil, crear un nuevo espacio de trabajo aislado o protegerlo con PIN local.\n` +
+          `• Cada usuario conserva por separado sus **proyectos**, su **lienzo activo**, su **configuración de IA** y su **registro de chats**.`,
+        actions: null
+      };
+    }
+
+    if (/\b(exportar|importar|mermaid|markdown|png|svg|json)\b/i.test(norm)) {
+      return {
+        cleanReply:
+          `Opciones de exportación e importación en **FlowLab**:\n` +
+          `• Usa la barra superior derecha junto a \`plantillas::\` para exportar tu diagrama en **\`.json\`**, **Markdown (\`.md\`)**, código **Mermaid**, imagen **PNG** o vector **SVG**.\n` +
+          `• También puedes importar archivos \`.json\` de FlowLab para restaurar cualquier arquitectura en el lienzo.`,
+        actions: null
+      };
+    }
+
+    if (/\b(powershell|terminal|consola|puente|bridge)\b/i.test(norm)) {
+      return {
+        cleanReply:
+          `Consola integrada **PowerShell** en **FlowLab**:\n` +
+          `• Abre el panel inferior **\`consola\`** y cambia a la pestaña **PowerShell** para ejecutar comandos reales en tu PC mediante el puente local de Vite o el script puente standalone.\n` +
+          `• Permite inspeccionar directorios, correr scripts y controlar procesos sin salir del diagrama.`,
+        actions: null
+      };
+    }
+
+    if (FLOWLAB_GREETING_OR_META_REGEX.test(norm) && !norm.includes('analiza') && !norm.includes('nodo')) {
+      return {
+        cleanReply:
+          `Soy el asistente exclusivo de **FlowLab**. Estoy conectado en tiempo real al lienzo **\`${ctx.projectTitle}\`** (**${ctx.summary.totalNodes} nodos** y **${ctx.summary.totalEdges} conexiones**).\n\n` +
+          `Puedo ayudarte únicamente con tareas de esta plataforma:\n` +
+          `• **Diseñar y añadir nodos**: *"crea un flujo de autenticación"*, *"añade un nodo de decisión Sí/No"*.\n` +
+          `• **Auditar tu arquitectura**: *"analiza los cuellos de botella o nodos bloqueados"*.\n` +
+          `• **Resolver dudas de FlowLab**: proyectos, espacios de usuario, consola PowerShell o exportación.`,
+        actions: null
+      };
+    }
+
+    // 3. Consultas analíticas con contexto real del archivo actual
+    if (q.includes('bloque') || q.includes('cuello') || q.includes('pendiente') || q.includes('analiza') || q.includes('revision') || q.includes('revisión')) {
       const blockedNodes = ctx.nodes.filter(n => n.blocked);
+      const incomingSet = new Set(ctx.edges.map(e => e.to));
+      const outgoingSet = new Set(ctx.edges.map(e => e.from));
+      const isolated = ctx.nodes.filter(n => !incomingSet.has(n.id) && !outgoingSet.has(n.id));
+
       if (blockedNodes.length === 0) {
         return {
           cleanReply:
-            `Revisé **${ctx.projectTitle}** y actualmente **no hay nodos bloqueados**.\n\n` +
-            `• Completados: **${ctx.summary.done}/${ctx.summary.totalNodes}**\n` +
-            `• En curso: **${ctx.summary.progress}** · Pendientes: **${ctx.summary.pending}**\n\n` +
-            `Si quieres añadir validaciones o pasos nuevos, dime por ejemplo: *"agrega una validación y manejo de error"*.`,
+            `Análisis de **${ctx.projectTitle}** completado:\n` +
+            `• **Estado general**: **${ctx.summary.done}/${ctx.summary.totalNodes}** completados · **${ctx.summary.progress}** en curso · **${ctx.summary.pending}** pendientes.\n` +
+            `• **Bloqueos**: **0 nodos bloqueados** en la ruta actual.\n` +
+            `• **Conectividad**: **${ctx.summary.totalEdges} conexiones** activas${isolated.length ? ` (${isolated.length} nodo(s) sin conectar)` : ' (todos los nodos están integrados)'}.\n\n` +
+            `Si deseas ampliar el diagrama, pídeme por ejemplo: *"agrega validación de errores y métricas al final"*.`,
           actions: null
         };
       }
@@ -820,7 +1410,7 @@
         .join('\n');
       return {
         cleanReply:
-          `Detecté **${blockedNodes.length} nodo(s) bloqueado(s)** en **${ctx.projectTitle}** esperando tareas previas:\n\n` +
+          `Detecté **${blockedNodes.length} nodo(s) bloqueado(s)** en **${ctx.projectTitle}** esperando dependencias previas:\n\n` +
           `${list}\n\nCompleta los nodos de entrada anteriores para desbloquear la ruta crítica.`,
         actions: null
       };
@@ -856,7 +1446,7 @@
         `Estoy leyendo el contexto vivo de **${ctx.projectTitle}** (**${ctx.summary.totalNodes} nodos** y **${ctx.summary.totalEdges} conexiones**, **${ctx.summary.done}** completados).\n` +
         (sampleNodes ? `\nNodos principales: ${sampleNodes}${ctx.nodes.length > 5 ? '…' : ''}.\n` : '') +
         (selNode ? `\nTienes seleccionado **\`${selNode.text.split('\n')[0]}\`**.\n` : '') +
-        `\nPuedes pedirme crear nodos directamente (ej. *"crea un flujo de autenticación con base de datos"*, *"añade un nodo de decisión con Sí y No"*) o pulsar **conectar** arriba para enlazar **Ollama / LM Studio en tu PC**, una **API Key** o una **URL propia**.`,
+        `\nPuedes pedirme crear nodos directamente (ej. *"crea un flujo de autenticación con base de datos"*, *"añade un nodo de decisión con Sí y No"*) o pulsar el icono de configuración arriba para enlazar **Ollama / LM Studio en tu PC**, una **API Key** o una **URL propia**.`,
       actions: null
     };
   }
@@ -2199,6 +2789,367 @@
     }
   }
 
+  function formatRelativeChatTime(ts) {
+    if (!ts) return 'ahora';
+    const diffSec = Math.max(0, Math.floor((Date.now() - Number(ts)) / 1000));
+    if (diffSec < 45) return 'ahora';
+    const diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return `hace ${diffMin}m`;
+    const diffHr = Math.floor(diffMin / 60);
+    if (diffHr < 24) return `hace ${diffHr}h`;
+    const d = new Date(Number(ts));
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}`;
+  }
+
+  function formatDurationShort(ms) {
+    const n = Math.max(40, Number(ms) || 0);
+    if (n < 1000) return `${Math.round(n)}ms`;
+    return `${(n / 1000).toFixed(1)}s`;
+  }
+
+  function getTraceSourceIcon(kind) {
+    if (kind === 'shield') return AI_SVG.shield;
+    if (kind === 'canvas') return AI_SVG.layers;
+    if (kind === 'target') return AI_SVG.target;
+    if (kind === 'storage') return AI_SVG.database;
+    if (kind === 'schema') return AI_SVG.book;
+    if (kind === 'engine') return AI_SVG.cpu;
+    return AI_SVG.spark;
+  }
+
+  function updateAISessionBarUI() {
+    const active = getActiveAISession();
+    const countBadge = document.getElementById('aiSessionsCount');
+    const titleEl = document.getElementById('aiActiveSessionTitle');
+    const metaEl = document.getElementById('aiActiveSessionMeta');
+    const subEl = document.getElementById('aiSessionsSubtitle');
+    const searchWrap = document.getElementById('aiSessionsSearchWrap');
+
+    if (countBadge) {
+      countBadge.textContent = String(aiSessions.length);
+    }
+    if (titleEl) {
+      titleEl.textContent = active.title || 'Nuevo chat FlowLab';
+    }
+    if (metaEl) {
+      const msgCount = Array.isArray(active.messages) ? active.messages.length : 0;
+      metaEl.textContent = msgCount > 0 ? `${msgCount} msj · guardado` : 'nuevo · guardado';
+    }
+    if (subEl) {
+      subEl.textContent = `${aiSessions.length} chat${aiSessions.length === 1 ? '' : 's'} guardado${aiSessions.length === 1 ? '' : 's'} en este espacio`;
+    }
+    if (searchWrap) {
+      searchWrap.hidden = aiSessions.length < 3 && !sessionsSearchQuery;
+    }
+  }
+
+  function toggleSessionsDrawer(forceState) {
+    const drawer = document.getElementById('aiSessionsDrawer');
+    const btnHist = document.getElementById('btnAiHistory');
+    const btnCur = document.getElementById('btnAiSessionCurrent');
+    if (!drawer) return;
+
+    const nextOpen = typeof forceState === 'boolean' ? forceState : drawer.hidden;
+    if (nextOpen) {
+      // Cerrar gaveta de conexión si estaba abierta para mantener limpio el panel
+      const cfgDrawer = document.getElementById('aiConfigDrawer');
+      if (cfgDrawer && !cfgDrawer.hidden) {
+        toggleConfigDrawer(false);
+      }
+      renamingSessionId = null;
+      pendingDeleteSessionId = null;
+      renderAISessionsList();
+    }
+
+    drawer.hidden = !nextOpen;
+    if (btnHist) {
+      btnHist.classList.toggle('is-active', nextOpen);
+      btnHist.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+    }
+    if (btnCur) {
+      btnCur.classList.toggle('is-open', nextOpen);
+    }
+  }
+
+  function renderAISessionsList() {
+    const listEl = document.getElementById('aiSessionsList');
+    if (!listEl) return;
+
+    updateAISessionBarUI();
+
+    const q = normalizePlainSpanish(sessionsSearchQuery);
+    const filtered = q
+      ? aiSessions.filter(s => {
+          const inTitle = normalizePlainSpanish(s.title).includes(q);
+          const inProj = normalizePlainSpanish(s.projectTitle).includes(q);
+          const inMsgs = Array.isArray(s.messages)
+            ? s.messages.some(m => normalizePlainSpanish(m.content).includes(q))
+            : false;
+          return inTitle || inProj || inMsgs;
+        })
+      : aiSessions;
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `<div class="ai-sessions-empty">No hay conversaciones que coincidan con "${escapeHTML(sessionsSearchQuery)}".</div>`;
+      return;
+    }
+
+    listEl.innerHTML = filtered
+      .map(session => {
+        const isCurrent = session.id === activeSessionId;
+        const msgCount = Array.isArray(session.messages) ? session.messages.length : 0;
+        const timeStr = formatRelativeChatTime(session.updatedAt);
+        const projStr = session.projectTitle ? ` · ${session.projectTitle}` : '';
+
+        if (renamingSessionId === session.id) {
+          return `
+            <div class="ai-session-item ${isCurrent ? 'is-active' : ''} is-editing">
+              <div class="ai-session-rename-row">
+                <input type="text" class="ai-session-rename-input" data-rename-input="${escapeHTML(session.id)}" value="${escapeHTML(session.title)}" maxlength="60" autocomplete="off">
+                <button type="button" class="ai-mini-btn" data-rename-save="${escapeHTML(session.id)}" title="Guardar título">${AI_SVG.check}</button>
+                <button type="button" class="ai-mini-btn" data-rename-cancel="1" title="Cancelar">${AI_SVG.cross}</button>
+              </div>
+            </div>
+          `;
+        }
+
+        if (pendingDeleteSessionId === session.id) {
+          return `
+            <div class="ai-session-item ${isCurrent ? 'is-active' : ''} is-confirm-del">
+              <span class="ai-session-del-label">¿Eliminar "${escapeHTML(session.title.slice(0, 24))}"?</span>
+              <div class="ai-session-del-btns">
+                <button type="button" class="ai-mini-btn is-danger" data-del-confirm="${escapeHTML(session.id)}">sí</button>
+                <button type="button" class="ai-mini-btn" data-del-cancel="1">no</button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="ai-session-item ${isCurrent ? 'is-active' : ''}" role="option" aria-selected="${isCurrent ? 'true' : 'false'}">
+            <button type="button" class="ai-session-select" data-select-session="${escapeHTML(session.id)}">
+              <span class="ai-session-icon">${AI_SVG.chat}</span>
+              <span class="ai-session-body">
+                <span class="ai-session-title-row">
+                  <span class="ai-session-title">${escapeHTML(session.title || 'Nuevo chat FlowLab')}</span>
+                  ${isCurrent ? '<span class="ai-session-pill">activo</span>' : ''}
+                </span>
+                <span class="ai-session-sub">${msgCount} msj${msgCount === 1 ? '' : 's'}${escapeHTML(projStr)} · ${escapeHTML(timeStr)}</span>
+              </span>
+            </button>
+            <div class="ai-session-actions">
+              <button type="button" class="ai-session-act-btn" data-start-rename="${escapeHTML(session.id)}" title="Renombrar chat" aria-label="Renombrar chat">${AI_SVG.edit}</button>
+              <button type="button" class="ai-session-act-btn is-del" data-start-del="${escapeHTML(session.id)}" title="Eliminar chat" aria-label="Eliminar chat">${AI_SVG.trash}</button>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+
+    listEl.querySelectorAll('[data-select-session]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        switchAISession(btn.dataset.selectSession);
+      });
+    });
+
+    listEl.querySelectorAll('[data-start-rename]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        renamingSessionId = btn.dataset.startRename;
+        pendingDeleteSessionId = null;
+        renderAISessionsList();
+        const inp = listEl.querySelector(`[data-rename-input="${renamingSessionId}"]`);
+        if (inp) {
+          inp.focus();
+          inp.select();
+        }
+      });
+    });
+
+    listEl.querySelectorAll('[data-rename-save]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const sid = btn.dataset.renameSave;
+        const inp = listEl.querySelector(`[data-rename-input="${sid}"]`);
+        if (inp) renameAISession(sid, inp.value);
+      });
+    });
+
+    listEl.querySelectorAll('[data-rename-input]').forEach(inp => {
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          renameAISession(inp.dataset.renameInput, inp.value);
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          renamingSessionId = null;
+          renderAISessionsList();
+        }
+      });
+    });
+
+    listEl.querySelectorAll('[data-rename-cancel]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        renamingSessionId = null;
+        renderAISessionsList();
+      });
+    });
+
+    listEl.querySelectorAll('[data-start-del]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        pendingDeleteSessionId = btn.dataset.startDel;
+        renamingSessionId = null;
+        renderAISessionsList();
+      });
+    });
+
+    listEl.querySelectorAll('[data-del-confirm]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        deleteAISession(btn.dataset.delConfirm);
+      });
+    });
+
+    listEl.querySelectorAll('[data-del-cancel]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        pendingDeleteSessionId = null;
+        renderAISessionsList();
+      });
+    });
+  }
+
+  function createNewAISession() {
+    if (isGenerating && currentAbort) {
+      try { currentAbort.abort(); } catch {}
+    }
+
+    // Guardar primero el estado íntegro del chat actual
+    persistAISessionsRegistry(false);
+
+    const active = getActiveAISession();
+    if (Array.isArray(active.messages) && active.messages.length === 0) {
+      toggleSessionsDrawer(false);
+      renderAIMessages(true);
+      if (!window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches) {
+        document.getElementById('aiChatInput')?.focus();
+      }
+      if (typeof showToast === 'function') {
+        showToast('Ya estás en un nuevo chat limpio', 'info', 1600);
+      }
+      return active;
+    }
+
+    const now = Date.now();
+    const newSession = {
+      id: generateChatSessionId(),
+      title: 'Nuevo chat FlowLab',
+      customTitle: false,
+      projectTitle: currentProjectNameSafe(),
+      createdAt: now,
+      updatedAt: now,
+      messages: []
+    };
+
+    aiSessions.unshift(newSession);
+    activeSessionId = newSession.id;
+    messages = newSession.messages;
+    persistAISessionsRegistry(false);
+    toggleSessionsDrawer(false);
+    renderAIMessages(true);
+
+    if (!window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches) {
+      document.getElementById('aiChatInput')?.focus();
+    }
+    if (typeof showToast === 'function') {
+      showToast('Nuevo chat creado · Tus chats anteriores siguen guardados', 'ok', 2000);
+    }
+    return newSession;
+  }
+
+  function switchAISession(targetSessionId) {
+    if (!targetSessionId) return false;
+    if (isGenerating && currentAbort) {
+      try { currentAbort.abort(); } catch {}
+    }
+
+    // Guardar el chat saliente antes de cambiar
+    persistAISessionsRegistry(false);
+
+    const target = aiSessions.find(s => s.id === targetSessionId);
+    if (!target) return false;
+
+    activeSessionId = target.id;
+    messages = target.messages;
+    try {
+      localStorage.setItem(activeAISessionIdKey(), activeSessionId);
+      localStorage.setItem(activeAIChatKey(), JSON.stringify((messages || []).slice(-40)));
+    } catch {}
+
+    toggleSessionsDrawer(false);
+    updateAISessionBarUI();
+    renderAIMessages(true);
+    return true;
+  }
+
+  function renameAISession(sessionId, rawTitle) {
+    const target = aiSessions.find(s => s.id === sessionId);
+    renamingSessionId = null;
+    if (!target) {
+      renderAISessionsList();
+      return false;
+    }
+    const clean = String(rawTitle || '').trim();
+    if (clean) {
+      target.title = clean.slice(0, 60);
+      target.customTitle = true;
+      persistAISessionsRegistry(false);
+    }
+    renderAISessionsList();
+    return true;
+  }
+
+  function deleteAISession(sessionId) {
+    pendingDeleteSessionId = null;
+    const idx = aiSessions.findIndex(s => s.id === sessionId);
+    if (idx === -1) return false;
+
+    const wasActive = aiSessions[idx].id === activeSessionId;
+    aiSessions.splice(idx, 1);
+
+    if (aiSessions.length === 0) {
+      const now = Date.now();
+      const fresh = {
+        id: generateChatSessionId(),
+        title: 'Nuevo chat FlowLab',
+        customTitle: false,
+        projectTitle: currentProjectNameSafe(),
+        createdAt: now,
+        updatedAt: now,
+        messages: []
+      };
+      aiSessions.push(fresh);
+      activeSessionId = fresh.id;
+      messages = fresh.messages;
+    } else if (wasActive) {
+      activeSessionId = aiSessions[0].id;
+      messages = aiSessions[0].messages;
+    }
+
+    persistAISessionsRegistry(false);
+    renderAIMessages(true);
+    renderAISessionsList();
+
+    if (typeof showToast === 'function') {
+      showToast('Conversación eliminada del registro', 'info', 1600);
+    }
+    return true;
+  }
+
   function formatAssistantMarkdown(rawText) {
     const safe = escapeHTML(rawText || '');
     return safe
@@ -2208,16 +3159,156 @@
       .replace(/\n/g, '<br>');
   }
 
-  function renderAIMessages() {
+  function renderTraceAccordionHtml(trace, msgIdx, isExpanded) {
+    if (!trace || (!Array.isArray(trace.sources) && !Array.isArray(trace.steps))) {
+      return '';
+    }
+    const sources = Array.isArray(trace.sources) ? trace.sources : [];
+    const steps = Array.isArray(trace.steps) ? trace.steps : [];
+    const isBlocked = trace.domainStatus === 'blocked_offtopic';
+    const headIcon = isBlocked ? AI_SVG.shield : AI_SVG.spark;
+    const summaryLabel = isBlocked
+      ? `Ámbito FlowLab verificado · consulta filtrada (${formatDurationShort(trace.durationMs)})`
+      : `Analizado · ${sources.length} fuente${sources.length === 1 ? '' : 's'} · ${formatDurationShort(trace.durationMs)}`;
+
+    const sourcesHtml = sources.length
+      ? `
+        <div class="ai-trace-section">
+          <div class="ai-trace-sec-title">:: de dónde obtiene la información</div>
+          <div class="ai-trace-sources">
+            ${sources
+              .map(
+                s => `
+              <div class="ai-source-chip" title="${escapeHTML(s.detail || '')}">
+                <span class="ai-source-chip__icon">${getTraceSourceIcon(s.kind)}</span>
+                <span class="ai-source-chip__label">${escapeHTML(s.label || '')}</span>
+                ${s.detail ? `<span class="ai-source-chip__detail">${escapeHTML(s.detail)}</span>` : ''}
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+      `
+      : '';
+
+    const stepsHtml = steps.length
+      ? `
+        <div class="ai-trace-section">
+          <div class="ai-trace-sec-title">:: registros de análisis paso a paso</div>
+          <div class="ai-trace-steps">
+            ${steps
+              .map(
+                st => `
+              <div class="ai-trace-step">
+                <span class="ai-trace-step__icon">${isBlocked ? AI_SVG.shield : AI_SVG.check}</span>
+                <div class="ai-trace-step__body">
+                  <div class="ai-trace-step__head">
+                    <strong>${escapeHTML(st.title || '')}</strong>
+                    ${st.ms ? `<span class="ai-trace-step__ms">${escapeHTML(formatDurationShort(st.ms))}</span>` : ''}
+                  </div>
+                  ${st.detail ? `<div class="ai-trace-step__detail">${escapeHTML(st.detail)}</div>` : ''}
+                </div>
+              </div>
+            `
+              )
+              .join('')}
+          </div>
+        </div>
+      `
+      : '';
+
+    return `
+      <div class="ai-trace-box ${isExpanded ? 'is-open' : ''} ${isBlocked ? 'is-guard' : ''}">
+        <button type="button" class="ai-trace-toggle" data-trace-toggle="${msgIdx}" aria-expanded="${isExpanded ? 'true' : 'false'}">
+          <span class="ai-trace-toggle__left">
+            <span class="ai-trace-toggle__icon">${headIcon}</span>
+            <span class="ai-trace-toggle__text">${escapeHTML(summaryLabel)}</span>
+          </span>
+          <span class="ai-trace-toggle__right">
+            <span>registros</span>
+            <span class="ai-trace-chev">${AI_SVG.chevronDown}</span>
+          </span>
+        </button>
+        <div class="ai-trace-panel" ${isExpanded ? '' : 'hidden'}>
+          ${sourcesHtml}
+          ${stepsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  function buildLiveTraceCardInnerHtml() {
+    if (!liveTraceState) {
+      return `
+        <div class="ai-typing">
+          <span class="ai-typing-dots"><i></i><i></i><i></i></span>
+          <span>analizando contexto de FlowLab...</span>
+        </div>
+      `;
+    }
+
+    const elapsedMs = Math.max(0, Date.now() - liveTraceState.startedAt);
+    const activeIdx = liveTraceState.activeStepIndex || 0;
+    const steps = liveTraceState.steps || [];
+    const sources = liveTraceState.sources || [];
+    const visibleSources = sources.slice(0, Math.min(sources.length, activeIdx + 2));
+
+    return `
+      <div class="ai-live-trace">
+        <div class="ai-live-trace__head">
+          <span class="ai-live-trace__title">
+            <span class="ai-typing-dots"><i></i><i></i><i></i></span>
+            <span>Analizando registros de FlowLab…</span>
+          </span>
+          <span class="ai-live-trace__timer" id="aiLiveTraceElapsed">${escapeHTML(formatDurationShort(elapsedMs))}</span>
+        </div>
+        <div class="ai-live-trace__sources">
+          ${visibleSources
+            .map(
+              s => `
+            <span class="ai-live-source-pill">
+              ${getTraceSourceIcon(s.kind)}
+              <span>${escapeHTML(s.label)}</span>
+            </span>
+          `
+            )
+            .join('')}
+        </div>
+        <div class="ai-live-trace__steps">
+          ${steps
+            .slice(0, activeIdx + 1)
+            .map((st, idx) => {
+              const done = idx < activeIdx;
+              return `
+                <div class="ai-live-step ${done ? 'is-done' : 'is-running'}">
+                  <span class="ai-live-step__mark">${done ? AI_SVG.check : AI_SVG.loader}</span>
+                  <div class="ai-live-step__text">
+                    <strong>${escapeHTML(st.title)}</strong>
+                    <span>${escapeHTML(st.detail)}</span>
+                  </div>
+                </div>
+              `;
+            })
+            .join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAIMessages(skipPersist = false) {
+    if (!skipPersist) saveAIChatHistory(false);
+    else updateAISessionBarUI();
+
     const container = document.getElementById('aiMessages');
     if (!container) return;
 
-    if (messages.length === 0) {
+    if (messages.length === 0 && !isGenerating) {
       container.innerHTML = `
         <div class="ai-welcome">
-          <div class="ai-welcome-badge">${AI_SVG.spark}<span>copiloto del lienzo</span></div>
+          <div class="ai-welcome-badge">${AI_SVG.spark}<span>copiloto exclusivo de flowlab</span></div>
           <h4>Habla con tu flujo y crea nodos</h4>
-          <p>Tengo contexto en vivo del proyecto abierto. Conecta <b>Ollama / LM Studio</b> en tu PC, una <b>API Key</b> o una <b>URL</b>, o usa las acciones rápidas:</p>
+          <p>Analizo en tiempo real el lienzo activo, tus proyectos y el esquema de FlowLab. Tus conversaciones quedan guardadas automáticamente incluso si recargas la página.</p>
           <div class="ai-quick-grid">
             <button type="button" class="ai-quick-btn" data-prompt="Analiza el flujo actual, resume su arquitectura y dime si hay bloqueos o mejoras.">
               <span class="ai-quick-icon">${AI_SVG.search}</span>
@@ -2256,6 +3347,8 @@
             </div>
           `;
         }
+
+        const traceHtml = renderTraceAccordionHtml(msg.trace, idx, Boolean(msg.traceExpanded));
 
         let actionCardHtml = '';
         if (msg.actions && Array.isArray(msg.actions.operations) && msg.actions.operations.length > 0) {
@@ -2307,9 +3400,10 @@
           : '';
 
         return `
-          <div class="ai-msg ai-msg--assistant ${msg.isError ? 'is-error' : ''}">
+          <div class="ai-msg ai-msg--assistant ${msg.isError ? 'is-error' : ''} ${msg.isOffTopic ? 'is-offtopic' : ''}">
             <div class="ai-msg-meta">${escapeHTML(msg.providerTag || 'IA')}</div>
             <div class="ai-bubble ai-bubble--assistant">
+              ${traceHtml}
               <div class="ai-bubble-text">${formatAssistantMarkdown(msg.content)}</div>
               ${actionCardHtml}
               ${errorActionsHtml}
@@ -2322,14 +3416,31 @@
     if (isGenerating) {
       const thinkingEl = document.createElement('div');
       thinkingEl.className = 'ai-msg ai-msg--assistant';
+      thinkingEl.id = 'aiLiveThinkingWrap';
       thinkingEl.innerHTML = `
-        <div class="ai-bubble ai-bubble--assistant ai-typing">
-          <span class="ai-typing-dots"><i></i><i></i><i></i></span>
-          <span>analizando contexto del flujo...</span>
+        <div class="ai-bubble ai-bubble--assistant ai-bubble--live">
+          ${buildLiveTraceCardInnerHtml()}
         </div>
       `;
       container.appendChild(thinkingEl);
     }
+
+    container.querySelectorAll('[data-trace-toggle]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = Number(btn.dataset.traceToggle);
+        const m = messages[idx];
+        if (!m) return;
+        m.traceExpanded = !m.traceExpanded;
+        const box = btn.closest('.ai-trace-box');
+        const panel = box ? box.querySelector('.ai-trace-panel') : null;
+        if (box && panel) {
+          box.classList.toggle('is-open', Boolean(m.traceExpanded));
+          btn.setAttribute('aria-expanded', m.traceExpanded ? 'true' : 'false');
+          panel.hidden = !m.traceExpanded;
+        }
+        saveAIChatHistory(false);
+      });
+    });
 
     container.querySelectorAll('[data-open-cfg]').forEach(btn => {
       btn.addEventListener('click', () => toggleConfigDrawer(true));
@@ -2345,7 +3456,8 @@
         m.createdNodeIds = res.addedNodes.map(n => n.id);
         m.appliedSummary = `${res.addedNodes.length} nodo(s) · ${res.addedEdges.length} conexión(es)`;
         updateAIChatContextUI();
-        renderAIMessages();
+        saveAIChatHistory(true);
+        renderAIMessages(true);
       });
     });
 
@@ -2363,13 +3475,50 @@
           const m = messages[Number(btn.dataset.undoIdx)];
           if (m) m.applied = false;
           updateAIChatContextUI();
-          renderAIMessages();
+          saveAIChatHistory(true);
+          renderAIMessages(true);
           showToast('Cambios de IA deshechos', 'info', 1600);
         }
       });
     });
 
     container.scrollTop = container.scrollHeight;
+  }
+
+  function updateLiveThinkingDOM() {
+    const wrap = document.getElementById('aiLiveThinkingWrap');
+    const container = document.getElementById('aiMessages');
+    if (!wrap) return;
+    const bubble = wrap.querySelector('.ai-bubble--live');
+    if (bubble) {
+      bubble.innerHTML = buildLiveTraceCardInnerHtml();
+    }
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }
+
+  function waitAbortableStep(ms, signal) {
+    if (!ms || ms <= 0) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+      if (signal && signal.aborted) {
+        const err = new Error('Aborted');
+        err.name = 'AbortError';
+        reject(err);
+        return;
+      }
+      const timer = setTimeout(() => {
+        if (signal) signal.removeEventListener('abort', onAbort);
+        resolve();
+      }, ms);
+      function onAbort() {
+        clearTimeout(timer);
+        const err = new Error('Aborted');
+        err.name = 'AbortError';
+        reject(err);
+      }
+      if (signal) signal.addEventListener('abort', onAbort, { once: true });
+    });
   }
 
   async function sendAIChatMessage(rawInput) {
@@ -2381,21 +3530,90 @@
       inputEl.value = '';
     }
 
+    // Cerrar lista de sesiones si estaba desplegada para ver el proceso en vivo
+    toggleSessionsDrawer(false);
+
+    const priorSnapshot = messages.slice();
+
     messages.push({
       role: 'user',
       content: text,
       timestamp: Date.now()
     });
+    saveAIChatHistory(true);
+
+    const startedAt = Date.now();
+    const domainCheck = evaluateFlowLabDomainGuard(text, priorSnapshot);
+    const telemetry = buildAnalysisTelemetry(text, domainCheck);
+
+    liveTraceState = {
+      startedAt,
+      activeStepIndex: 0,
+      domainStatus: telemetry.domainStatus,
+      sources: telemetry.sources,
+      steps: telemetry.steps
+    };
 
     isGenerating = true;
     currentAbort = new AbortController();
     toggleGeneratingControls(true);
-    renderAIMessages();
+    renderAIMessages(true);
+
+    if (liveTraceTimer) clearInterval(liveTraceTimer);
+    liveTraceTimer = setInterval(() => {
+      const timerEl = document.getElementById('aiLiveTraceElapsed');
+      if (timerEl && liveTraceState) {
+        timerEl.textContent = formatDurationShort(Date.now() - liveTraceState.startedAt);
+      }
+    }, 100);
 
     const provSummary = getActiveProviderSummary();
+    const stepDelay = window.__FLOWLAB_FAST_TEST ? 0 : 95;
 
     try {
+      // Recorrer en vivo las fases de inspección de fuentes antes de emitir la síntesis final
+      const totalPreSteps = Math.max(0, telemetry.steps.length - 1);
+      for (let i = 0; i < totalPreSteps; i++) {
+        liveTraceState.activeStepIndex = i;
+        updateLiveThinkingDOM();
+        await waitAbortableStep(stepDelay, currentAbort.signal);
+      }
+      liveTraceState.activeStepIndex = Math.max(0, telemetry.steps.length - 1);
+      updateLiveThinkingDOM();
+
+      // Si la consulta es ajena a FlowLab, filtrarla sin consumir API externa ni salir del dominio
+      if (!domainCheck.allowed) {
+        await waitAbortableStep(stepDelay, currentAbort.signal);
+        const totalDuration = Math.max(85, Date.now() - startedAt);
+        messages.push({
+          role: 'assistant',
+          content: buildOffTopicRefusalMessage(domainCheck),
+          actions: null,
+          applied: false,
+          createdNodeIds: [],
+          isOffTopic: true,
+          providerTag: `Guardia FlowLab · ${provSummary.text}`,
+          traceExpanded: false,
+          trace: {
+            durationMs: totalDuration,
+            domainStatus: 'blocked_offtopic',
+            sources: telemetry.sources,
+            steps: telemetry.steps
+          },
+          timestamp: Date.now()
+        });
+        saveAIChatHistory(true);
+        return;
+      }
+
+      if (aiConfig.mode === 'builtin') {
+        await waitAbortableStep(stepDelay, currentAbort.signal);
+      }
+
+      const llmStart = Date.now();
       const result = await callExternalAI(text, currentAbort.signal);
+      const llmElapsed = Math.max(60, Date.now() - llmStart);
+
       if (aiConfig.mode !== 'builtin') {
         connectionHealth = {
           state: 'ok',
@@ -2406,6 +3624,20 @@
         updateProviderHeaderUI();
       }
 
+      const finalSteps = telemetry.steps.map((st, idx) =>
+        idx === telemetry.steps.length - 1 ? { ...st, ms: llmElapsed } : st
+      );
+
+      if (result.actions && Array.isArray(result.actions.operations) && result.actions.operations.length > 0) {
+        finalSteps.push({
+          title: 'Estructuración de operaciones sobre el lienzo',
+          detail: `Preparadas ${result.actions.operations.length} operación(es) (${result.actions.summary || 'cambios en nodos y conexiones'}).`,
+          ms: 26
+        });
+      }
+
+      const totalDuration = Math.max(110, Date.now() - startedAt);
+
       const assistantMsg = {
         role: 'assistant',
         content: result.cleanReply,
@@ -2413,7 +3645,15 @@
         actions: result.actions,
         applied: false,
         createdNodeIds: [],
+        isOffTopic: Boolean(result.isOffTopic),
         providerTag: provSummary.text,
+        traceExpanded: false,
+        trace: {
+          durationMs: totalDuration,
+          domainStatus: result.isOffTopic ? 'blocked_offtopic' : 'flowlab',
+          sources: telemetry.sources,
+          steps: finalSteps
+        },
         timestamp: Date.now()
       };
 
@@ -2432,6 +3672,7 @@
       }
 
       messages.push(assistantMsg);
+      saveAIChatHistory(true);
     } catch (err) {
       if (err && err.name === 'AbortError') {
         messages.push({
@@ -2466,15 +3707,34 @@
           isError: true,
           canOpenConfig: true,
           providerTag: provSummary.text,
+          trace: {
+            durationMs: Math.max(60, Date.now() - startedAt),
+            domainStatus: 'error',
+            sources: telemetry.sources,
+            steps: [
+              ...telemetry.steps.slice(0, -1),
+              {
+                title: 'Fallo al contactar proveedor externo',
+                detail: errTitle,
+                ms: Math.max(40, Date.now() - startedAt)
+              }
+            ]
+          },
           timestamp: Date.now()
         });
       }
+      saveAIChatHistory(true);
     } finally {
+      if (liveTraceTimer) {
+        clearInterval(liveTraceTimer);
+        liveTraceTimer = null;
+      }
+      liveTraceState = null;
       isGenerating = false;
       currentAbort = null;
       toggleGeneratingControls(false);
       updateAIChatContextUI();
-      renderAIMessages();
+      renderAIMessages(true);
     }
   }
 
@@ -2575,6 +3835,12 @@
     if (!drawer) return;
 
     const nextOpen = typeof forceState === 'boolean' ? forceState : drawer.hidden;
+    if (nextOpen) {
+      const sessDrawer = document.getElementById('aiSessionsDrawer');
+      if (sessDrawer && !sessDrawer.hidden) {
+        toggleSessionsDrawer(false);
+      }
+    }
     drawer.hidden = !nextOpen;
     if (btn) btn.classList.toggle('is-active', nextOpen);
     if (nextOpen) {
@@ -2617,18 +3883,53 @@
   }
 
   function initAIAssistant() {
+    hydrateAISessionsFromStorage();
     updateProviderHeaderUI();
     updateAIChatContextUI();
-    renderAIMessages();
+    updateAISessionBarUI();
+    renderAIMessages(true);
 
     document.getElementById('btnAiConfig')?.addEventListener('click', () => toggleConfigDrawer());
     document.getElementById('btnAiProviderPill')?.addEventListener('click', () => toggleConfigDrawer());
     document.getElementById('btnAiFixConn')?.addEventListener('click', () => toggleConfigDrawer(true));
 
+    document.getElementById('btnAiNewChat')?.addEventListener('click', () => createNewAISession());
+    document.getElementById('btnAiDrawerNewChat')?.addEventListener('click', () => createNewAISession());
+    document.getElementById('btnAiHistory')?.addEventListener('click', () => toggleSessionsDrawer());
+    document.getElementById('btnAiSessionCurrent')?.addEventListener('click', () => toggleSessionsDrawer());
+
+    const searchInput = document.getElementById('aiSessionSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', e => {
+        sessionsSearchQuery = e.target.value || '';
+        renderAISessionsList();
+      });
+    }
+
     document.getElementById('btnAiClear')?.addEventListener('click', () => {
+      if (!messages || messages.length === 0) {
+        if (typeof showToast === 'function') {
+          showToast('El chat actual ya está vacío', 'info', 1400);
+        }
+        return;
+      }
+      const active = getActiveAISession();
       messages = [];
-      renderAIMessages();
-      showToast('Conversación limpiada', 'info', 1400);
+      active.messages = [];
+      if (!active.customTitle) {
+        active.title = 'Nuevo chat FlowLab';
+      }
+      persistAISessionsRegistry(true);
+      renderAIMessages(true);
+      if (typeof showToast === 'function') {
+        showToast('Chat actual vaciado (los demás chats siguen guardados)', 'info', 1800);
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      try {
+        persistAISessionsRegistry(false);
+      } catch {}
     });
 
     document.querySelectorAll('[data-ai-mode-tab]').forEach(btn => {
@@ -2725,8 +4026,42 @@
     });
   }
 
+  function reloadAIAssistantForActiveUser() {
+    if (currentAbort) {
+      try { currentAbort.abort(); } catch {}
+      currentAbort = null;
+    }
+    if (liveTraceTimer) {
+      clearInterval(liveTraceTimer);
+      liveTraceTimer = null;
+    }
+    liveTraceState = null;
+    isGenerating = false;
+    sessionsSearchQuery = '';
+    renamingSessionId = null;
+    pendingDeleteSessionId = null;
+    const searchEl = document.getElementById('aiSessionSearchInput');
+    if (searchEl) searchEl.value = '';
+
+    aiConfig = loadAIConfig();
+    hydrateAISessionsFromStorage();
+    editingModeTab = aiConfig.mode === 'builtin' ? 'local' : aiConfig.mode;
+    connectionHealth = { state: 'idle', title: '', detail: '', resolvedEndpoint: '' };
+    toggleConfigDrawer(false);
+    toggleSessionsDrawer(false);
+    updateProviderHeaderUI();
+    updateAIChatContextUI();
+    updateAISessionBarUI();
+    renderAIMessages(true);
+  }
+
   window.initAIAssistant = initAIAssistant;
   window.openAISidebarTab = openAISidebarTab;
   window.updateAIChatContextUI = updateAIChatContextUI;
   window.sendAIChatMessage = sendAIChatMessage;
+  window.reloadAIAssistantForActiveUser = reloadAIAssistantForActiveUser;
+  window.createNewAISession = createNewAISession;
+  window.switchAISession = switchAISession;
+  window.getAISessionsSnapshot = () => aiSessions.map(s => ({ ...s }));
+  window.evaluateFlowLabDomainGuard = evaluateFlowLabDomainGuard;
 })();
