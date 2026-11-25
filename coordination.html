@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>flowlab_ · centro de control</title>
 <link rel="icon" type="image/jpeg" href="isologo_1.jpg">
 <link rel="apple-touch-icon" href="isologo_1.jpg">
@@ -58,9 +58,19 @@
     </div>
 
     <div class="header-actions">
-      <div class="action-cluster" role="group" aria-label="Archivo y exportación">
-        <button class="btn" id="btnLoad">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <div class="action-cluster" role="group" aria-label="Proyectos, archivo y exportación">
+        <button class="btn" id="btnSaveProj" type="button" aria-label="Guardar proyecto local">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span>guardar</span>
+        </button>
+        <button class="btn" id="btnSavedProjects" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="projectsPopover" aria-label="Proyectos guardados">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+          <span>proyectos</span>
+          <span class="proj-count-badge" id="savedProjectsCount" hidden>0</span>
+          <svg class="proj-btn-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button class="btn" id="btnLoad" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span>abrir</span>
         </button>
         <span class="cluster-sep" aria-hidden="true"></span>
@@ -78,6 +88,11 @@
         </button>
         <button class="btn btn-icon" id="btnInsp" aria-label="Inspector">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="btn mobile-panel-trigger" id="btnMobilePanel" type="button" aria-label="Abrir propiedades y Chat IA" title="Propiedades, métricas y Chat IA">
+          <span class="ai-tab-dot" id="aiTabDotMobile" aria-hidden="true"></span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+          <span class="mobile-panel-trigger__txt">ia / props</span>
         </button>
       </div>
 
@@ -164,6 +179,30 @@
       </svg>
       <div id="canvasTitle"></div>
     </div>
+
+    <!-- Barra flotante táctil al seleccionar un nodo o conexión en móvil/tablet -->
+    <div id="mobileNodeBar" class="mobile-node-bar" role="toolbar" aria-label="Acciones rápidas de selección" hidden>
+      <button type="button" class="mnb-btn" id="mnbEdit" title="Editar texto">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        <span>editar</span>
+      </button>
+      <button type="button" class="mnb-btn" id="mnbProps" title="Editar propiedades">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        <span>props</span>
+      </button>
+      <button type="button" class="mnb-btn" id="mnbAI" title="Consultar a la IA sobre este nodo">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+        <span>ia</span>
+      </button>
+      <button type="button" class="mnb-btn" id="mnbState" title="Cambiar estado del nodo">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="mnbStateLbl">estado</span>
+      </button>
+      <button type="button" class="mnb-btn mnb-btn--danger" id="mnbDelete" title="Eliminar selección" aria-label="Eliminar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>
+
     <canvas id="minimap" width="170" height="120"></canvas>
     <div class="zoombar">
       <button id="zOut">−</button><span id="zoomLbl">100%</span><button id="zIn">+</button>
@@ -551,6 +590,13 @@
         <div class="exp-card-sub">Gráfico vectorial escalable</div>
       </div>
     </button>
+    <button class="exp-card" onclick="exportJSON(); toggleExportPopover(false)">
+      <span class="exp-card-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+      <div class="exp-card-info">
+        <div class="exp-card-title">Guardar Proyecto (.json)</div>
+        <div class="exp-card-sub">Respaldo completo del flujo</div>
+      </div>
+    </button>
   </div>
   <div id="expPreviewDrawer" class="exp-preview-drawer" hidden>
     <div class="exp-drawer-header">
@@ -558,6 +604,76 @@
       <button class="btn-micro" onclick="document.getElementById('expPreviewDrawer').hidden=true">ocultar</button>
     </div>
     <pre id="expPreviewCode"></pre>
+  </div>
+</div>
+
+<!-- Gestor / Selector Desplegable de Proyectos Guardados en localStorage -->
+<div id="projectsPopover" class="projects-popover" role="dialog" aria-label="Gestor de proyectos guardados" hidden>
+  <div class="proj-popover-head">
+    <div class="proj-popover-title-wrap">
+      <span class="proj-popover-title">proyectos_guardados</span>
+      <span class="proj-popover-count" id="projectsPopoverCount">0 archivos</span>
+    </div>
+    <button type="button" class="exp-close" id="btnCloseProjectsPopover" title="Cerrar" aria-label="Cerrar gestor de proyectos">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <div class="proj-quick-save">
+    <input id="quickSaveProjInput" type="text" placeholder="Nombre para guardar proyecto actual..." aria-label="Nombre para guardar el proyecto actual">
+    <button type="button" class="btn primary" id="btnQuickSaveProj">
+      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+      <span>Guardar</span>
+    </button>
+  </div>
+
+  <div class="proj-search-wrap" id="savedProjectsSearchWrap" hidden>
+    <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="savedProjectsSearch" type="text" placeholder="Filtrar proyectos guardados..." aria-label="Filtrar proyectos guardados">
+  </div>
+
+  <div id="savedProjectsList" class="proj-list"></div>
+
+  <div class="proj-popover-foot">
+    <button type="button" class="btn" id="btnProjImportFile">
+      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>Importar archivo</span>
+    </button>
+    <button type="button" class="btn" id="btnProjNewBlank">
+      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="4 3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span>Lienzo en blanco</span>
+    </button>
+  </div>
+</div>
+
+<!-- Modal de Confirmación / Guardado Personalizado y Nuevo Lienzo en Blanco -->
+<div id="projectActionModal" class="proj-modal-backdrop" hidden>
+  <div class="proj-modal-card" role="dialog" aria-modal="true" aria-labelledby="projModalTitle">
+    <div class="proj-modal-head">
+      <span class="proj-modal-title" id="projModalTitle">guardar_proyecto</span>
+      <button type="button" class="exp-close" id="projModalClose" aria-label="Cerrar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <p class="proj-modal-desc" id="projModalDesc"></p>
+
+    <div class="proj-modal-field" id="projModalField1Wrap">
+      <label id="projModalField1Label" for="projModalInput1">Nombre del proyecto</label>
+      <input id="projModalInput1" type="text" autocomplete="off">
+    </div>
+
+    <div class="proj-modal-field" id="projModalField2Wrap" hidden>
+      <label id="projModalField2Label" for="projModalInput2">Título del nuevo lienzo</label>
+      <input id="projModalInput2" type="text" autocomplete="off">
+    </div>
+
+    <div class="proj-modal-actions">
+      <button type="button" class="btn" id="projModalCancel">Cancelar</button>
+      <div class="proj-modal-actions-right">
+        <button type="button" class="btn" id="projModalSecondary" hidden>Secundario</button>
+        <button type="button" class="btn primary" id="projModalPrimary">Guardar</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -623,6 +739,7 @@
 <script src="js/features/live-sync.js"></script>
 <script src="js/features/ai-assistant.js"></script>
 <script src="js/features/terminal.js"></script>
+<script src="js/features/projects.js"></script>
 <script src="js/ui/dropdowns.js"></script>
 <script src="js/app.js"></script>
 

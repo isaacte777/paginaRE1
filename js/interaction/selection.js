@@ -13,6 +13,9 @@ function setSel(s) {
     }
   }
   renderAll();
+  if (typeof updateMobileNodeBar === 'function') {
+    updateMobileNodeBar();
+  }
 }
 
 function deleteSel() {
@@ -27,13 +30,16 @@ function deleteSel() {
   STATE.circuit = null;
   commitHistory();
   renderAll();
+  if (typeof updateMobileNodeBar === 'function') {
+    updateMobileNodeBar();
+  }
 }
 
 let ctxNodeId = null;
 
 function showNodeContextMenu(e, nodeId) {
-  e.preventDefault();
-  e.stopPropagation();
+  if (e && typeof e.preventDefault === 'function') e.preventDefault();
+  if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
   ctxNodeId = nodeId;
   setSel({ kind: 'node', id: nodeId });
 
@@ -46,8 +52,15 @@ function showNodeContextMenu(e, nodeId) {
 
   if (menu) {
     menu.hidden = false;
-    menu.style.left = e.clientX + 'px';
-    menu.style.top = e.clientY + 'px';
+    const rawX = e?.clientX ?? window.innerWidth / 2;
+    const rawY = e?.clientY ?? window.innerHeight / 2;
+    const mRect = menu.getBoundingClientRect();
+    const mW = mRect.width || 190;
+    const mH = mRect.height || 185;
+    const clampedX = Math.min(Math.max(8, rawX), Math.max(8, window.innerWidth - mW - 8));
+    const clampedY = Math.min(Math.max(8, rawY), Math.max(8, window.innerHeight - mH - 8));
+    menu.style.left = Math.round(clampedX) + 'px';
+    menu.style.top = Math.round(clampedY) + 'px';
   }
 }
 

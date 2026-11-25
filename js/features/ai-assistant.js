@@ -2126,6 +2126,7 @@
     const pill = document.getElementById('btnAiProviderPill');
     const dot = document.getElementById('aiProviderDot');
     const tabDot = document.getElementById('aiTabDot');
+    const tabDotMob = document.getElementById('aiTabDotMobile');
     const banner = document.getElementById('aiConnBanner');
     const bannerTitle = document.getElementById('aiConnBannerTitle');
     const bannerText = document.getElementById('aiConnBannerText');
@@ -2137,7 +2138,7 @@
     const isLive = aiConfig.mode !== 'builtin' && connectionHealth.state === 'ok' && info.configured;
     const isConfigured = aiConfig.mode !== 'builtin' && info.configured && !isErr && !isLive;
 
-    [dot, tabDot].forEach(el => {
+    [dot, tabDot, tabDotMob].forEach(el => {
       if (!el) return;
       el.classList.toggle('is-live', isLive);
       el.classList.toggle('is-error', isErr);
@@ -2594,18 +2595,21 @@
   }
 
   function openAISidebarTab(openConfig = false) {
-    const panelEl = document.getElementById('rightPanel') || document.querySelector('aside.panel');
-    if (panelEl && window.matchMedia('(max-width: 980px)').matches) {
-      panelEl.classList.add('mobile-open');
-    }
-
-    if (typeof switchRightPanelTab === 'function') {
-      switchRightPanelTab('ai');
+    if (typeof openMobileRightPanel === 'function' && window.matchMedia('(max-width: 980px)').matches) {
+      openMobileRightPanel('ai');
+    } else {
+      const panelEl = document.getElementById('rightPanel') || document.querySelector('aside.panel');
+      if (panelEl && window.matchMedia('(max-width: 980px)').matches) {
+        panelEl.classList.add('mobile-open');
+      }
+      if (typeof switchRightPanelTab === 'function') {
+        switchRightPanelTab('ai');
+      }
     }
 
     if (openConfig) {
       toggleConfigDrawer(true);
-    } else {
+    } else if (!window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches) {
       setTimeout(() => {
         document.getElementById('aiChatInput')?.focus();
       }, 40);
@@ -2713,7 +2717,11 @@
     }
 
     document.getElementById('btnCloseRightPanel')?.addEventListener('click', () => {
-      document.getElementById('rightPanel')?.classList.remove('mobile-open');
+      if (typeof closeMobileRightPanel === 'function') {
+        closeMobileRightPanel();
+      } else {
+        document.getElementById('rightPanel')?.classList.remove('mobile-open');
+      }
     });
   }
 

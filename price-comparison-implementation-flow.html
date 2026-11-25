@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Flujo de Implementación - Comparador de Precios</title>
     <style>
         * {
@@ -419,20 +419,64 @@
         }
 
         @media (max-width: 768px) {
-            header h1 {
-                font-size: 1.8em;
+            body {
+                padding: 14px 12px calc(24px + env(safe-area-inset-bottom));
             }
 
-            .module-grid {
-                grid-template-columns: 1fr;
+            header {
+                padding: 20px 14px;
+                margin-bottom: 24px;
+            }
+
+            header h1 {
+                font-size: 1.55em;
             }
 
             .tabs {
-                flex-direction: column;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                padding-bottom: 8px;
+                gap: 8px;
+            }
+
+            .tabs::-webkit-scrollbar {
+                display: none;
             }
 
             .tab-btn {
-                width: 100%;
+                width: auto;
+                flex: 0 0 auto;
+                padding: 10px 14px;
+                font-size: 0.9em;
+            }
+
+            .flow-diagram {
+                padding: 14px;
+                overflow-x: auto;
+                font-size: 0.78em;
+            }
+
+            .phase {
+                padding: 16px 14px;
+            }
+
+            .phase-header {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .phase-body,
+            .module-grid {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .endpoint {
+                overflow-x: auto;
+                word-break: break-word;
+                font-size: 0.82em;
             }
         }
     </style>
@@ -846,7 +890,7 @@ const STATE = {
                 <span class="endpoint-status"><span class="status-badge status-done">✓ EXISTENTE</span></span>
             </div>
 
-            <h3 style="color: #ffd700; margin: 30px 0 15px;">Nuevos (A Implementar ⏳)</h3>
+            <h3 style="color: #ffd700; margin: 30px 0 15px;">Nuevos (A Implementar <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px;display:inline-block" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>)</h3>
             <div class="endpoint new">
                 GET /api/price-history.php?product_id=p001&days=30
                 <span class="endpoint-status"><span class="status-badge status-pending">FASE 2</span></span>

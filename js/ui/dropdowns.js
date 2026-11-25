@@ -185,39 +185,76 @@
       return;
     }
 
+    const vv = window.visualViewport;
+    const vpWidth = vv ? vv.width : window.innerWidth;
+    const vpHeight = vv ? vv.height : window.innerHeight;
+    const vpTop = vv ? vv.offsetTop : 0;
+    const vpLeft = vv ? vv.offsetLeft : 0;
+
     const rect = anchor.getBoundingClientRect();
     let minWidth = rect.width;
     if (selectEl.id === 'templateSelect') {
-      minWidth = Math.max(rect.width, 248);
+      minWidth = Math.max(rect.width, 236);
     } else if (selectEl.id === 'speedSel') {
-      minWidth = Math.max(rect.width, 136);
+      minWidth = Math.max(rect.width, 132);
     } else {
-      minWidth = Math.max(rect.width, 168);
+      minWidth = Math.max(rect.width, 164);
     }
 
+    const maxAllowedW = Math.max(140, vpWidth - 16);
+    minWidth = Math.min(minWidth, maxAllowedW);
+
     menu.style.minWidth = Math.round(minWidth) + 'px';
-    menu.style.maxWidth = Math.min(340, window.innerWidth - 16) + 'px';
+    menu.style.maxWidth = Math.round(Math.min(340, maxAllowedW)) + 'px';
+
+    const listEl = menu.querySelector('.fl-dropdown-list');
+    if (listEl) {
+      const vpMax = Math.max(120, vpHeight - 80);
+      if (selectEl.id === 'templateSelect') {
+        const totalItems = state.items ? state.items.length : 0;
+        if (totalItems >= 5) {
+          // A partir de 5 plantillas el listado se limita en altura y activa desplazamiento vertical
+          let measuredCap = 0;
+          const visibleRows = 4; // 4 filas completas + asomo parcial de la 5.ª fila para indicar scroll desde >= 5
+          for (let i = 0; i < Math.min(visibleRows, totalItems); i++) {
+            measuredCap += (state.items[i].offsetHeight || 33) + 2;
+          }
+          const fifthRowH = state.items[4] ? state.items[4].offsetHeight || 33 : 33;
+          measuredCap += Math.round(fifthRowH * 0.62);
+          listEl.classList.add('is-scrollable');
+          listEl.style.overflowY = 'auto';
+          listEl.style.maxHeight = Math.round(Math.min(measuredCap || 162, vpMax)) + 'px';
+        } else {
+          listEl.classList.remove('is-scrollable');
+          listEl.style.overflowY = 'visible';
+          listEl.style.maxHeight = 'none';
+        }
+      } else {
+        listEl.style.overflowY = 'auto';
+        listEl.style.maxHeight = Math.round(Math.min(280, vpMax)) + 'px';
+      }
+    }
 
     const menuRect = menu.getBoundingClientRect();
     const mW = menuRect.width || minWidth;
     const mH = menuRect.height || 180;
 
-    const spaceBelow = window.innerHeight - rect.bottom - 10;
-    const spaceAbove = rect.top - 10;
+    const spaceBelow = vpTop + vpHeight - rect.bottom - 10;
+    const spaceAbove = rect.top - vpTop - 10;
     const openUpward = spaceBelow < mH && spaceAbove > spaceBelow;
 
     menu.dataset.side = openUpward ? 'top' : 'bottom';
 
     const top = openUpward
-      ? Math.max(8, rect.top - mH - 6)
-      : Math.min(window.innerHeight - mH - 8, rect.bottom + 6);
+      ? Math.max(vpTop + 8, rect.top - mH - 6)
+      : Math.min(vpTop + vpHeight - mH - 8, rect.bottom + 6);
 
     let left = rect.left;
     if (selectEl.id === 'speedSel') {
       // Alinear al borde derecho en controles inferiores derechos
       left = rect.right - mW;
     }
-    left = Math.min(Math.max(8, left), Math.max(8, window.innerWidth - mW - 8));
+    left = Math.min(Math.max(vpLeft + 8, left), Math.max(vpLeft + 8, vpLeft + vpWidth - mW - 8));
 
     menu.style.top = Math.round(top) + 'px';
     menu.style.left = Math.round(left) + 'px';
@@ -265,6 +302,7 @@
     const tooltipEl = document.getElementById('hoverTooltip');
     if (tooltipEl) tooltipEl.hidden = true;
     if (typeof toggleExportPopover === 'function') toggleExportPopover(false);
+    if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
     if (typeof hideNodeContextMenu === 'function') hideNodeContextMenu();
 
     const trigger = selectEl._flTrigger;
@@ -274,14 +312,24 @@
     const anchor = wrapperModule || trigger;
 
     const menu = document.createElement('div');
-    menu.className = 'fl-dropdown-menu';
+    menu.className =
+      'fl-dropdown-menu' + (selectEl.id === 'templateSelect' ? ' fl-dropdown-menu--templates' : '');
+    if (selectEl.id) menu.dataset.selectId = selectEl.id;
     menu.setAttribute('role', 'listbox');
 
     const title = getMenuTitle(selectEl);
+    let headCountEl = null;
     if (title) {
       const head = document.createElement('div');
       head.className = 'fl-dropdown-header';
-      head.textContent = title;
+      const headTxt = document.createElement('span');
+      headTxt.textContent = title;
+      head.appendChild(headTxt);
+      if (selectEl.id === 'templateSelect') {
+        headCountEl = document.createElement('span');
+        headCountEl.className = 'fl-dropdown-count';
+        head.appendChild(headCountEl);
+      }
       menu.appendChild(head);
     }
 
@@ -345,6 +393,13 @@
       listWrap.appendChild(itemBtn);
       items.push(itemBtn);
     });
+
+    if (headCountEl) {
+      headCountEl.textContent = `${items.length} disponibles`;
+    }
+    if (selectEl.id === 'templateSelect' && items.length >= 5) {
+      listWrap.classList.add('is-scrollable');
+    }
 
     menu.appendChild(listWrap);
     document.body.appendChild(menu);
@@ -556,6 +611,12 @@
       if (activeDropdown) positionDropdownMenu(activeDropdown);
     });
 
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (activeDropdown) positionDropdownMenu(activeDropdown);
+      });
+    }
+
     window.addEventListener(
       'scroll',
       e => {
@@ -586,4 +647,5 @@
   }
 
   window.initCustomDropdowns = initCustomDropdowns;
+  window.closeActiveDropdown = closeActiveDropdown;
 })();

@@ -11,6 +11,7 @@ function toggleExportPopover(force) {
   popover.hidden = !willShow;
 
   if (willShow) {
+    if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
     popover.style.transform = 'translate(-50%, -50%)';
     popover.style.top = '50%';
     popover.style.left = '50%';
@@ -490,9 +491,11 @@ function escapeMermaidLabel(text) {
  */
 function initHeaderTooltips() {
   const tooltips = {
-    'templateSelect': { title: 'plantillas', desc: 'Carga arquitecturas y flujos prediseñados (pipelines, comparación, web).' },
-    'btnJson': { title: 'exportar json', desc: 'Guarda el proyecto completo y su estado en un archivo JSON local.' },
-    'btnLoad': { title: 'abrir json', desc: 'Carga un diagrama guardado desde un archivo JSON local.' },
+    'templateSelect': { title: 'plantillas', desc: 'Carga arquitecturas y flujos prediseñados (menú desplazable).' },
+    'btnSaveProj': { title: 'guardar proyecto (ctrl+s)', desc: 'Guarda el flujo actual con un nombre personalizado en el navegador (localStorage).' },
+    'btnSavedProjects': { title: 'proyectos guardados', desc: 'Abre el gestor local para elegir, abrir, renombrar o eliminar proyectos guardados.' },
+    'btnJson': { title: 'exportar json', desc: 'Descarga el proyecto completo y su estado en un archivo JSON local.' },
+    'btnLoad': { title: 'importar archivo', desc: 'Carga un diagrama externo desde un archivo JSON o Mermaid (.md).' },
     'btnMermaid': { title: 'copiar mermaid', desc: 'Copia rápidamente el código Mermaid (.md) al portapapeles.' },
     'btnPng': { title: 'exportar png', desc: 'Genera y descarga una imagen PNG de alta resolución del diagrama.' },
     'btnChat': { title: 'chat & agentes', desc: 'Abre el panel con chat de IA, monitor de agentes y diagnósticos.' },
