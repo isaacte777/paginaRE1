@@ -1,6 +1,7 @@
 // CONSTANTS: Configuración central de FlowLab
 const CONFIG = {
   KEY: 'flowlab-paginaRE-v3',
+  PROJECTS_KEY: 'flowlab-saved-projects-v1',
   ZOOM_MIN: 0.25,
   ZOOM_MAX: 2.5,
   SNAP_GRID: 12,

@@ -27,6 +27,8 @@ const STATE = {
   circuitHighlight: false, // Mostrar circuito actual
   exportFormat: 'mermaid', // 'mermaid' o 'png'
   isBlankCanvas: false,
+  activeProjectId: null,
+  savedBaselineFingerprint: '',
   speed: 1,                // Velocidad de ejecución (0.5, 1, 2, 4)
   localSavedAt: 0,
   persistenceFingerprint: ''
@@ -67,7 +69,11 @@ function resetState() {
   STATE.pan = { x: 60, y: 80 };
   STATE.zoom = 1;
   STATE.sel = null;
+  STATE.circuit = null;
+  STATE.blocked = new Set();
   STATE.history = [];
   STATE.hPtr = -1;
   STATE.isBlankCanvas = true;
+  STATE.activeProjectId = null;
+  STATE.savedBaselineFingerprint = '';
 }

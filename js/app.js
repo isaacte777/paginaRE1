@@ -36,6 +36,7 @@ function initApp() {
   initPanelTabs();
   initChat();
   if (typeof initAIAssistant === 'function') initAIAssistant();
+  if (typeof initProjectManager === 'function') initProjectManager();
   initHeaderTooltips();
   if (typeof initCustomDropdowns === 'function') initCustomDropdowns();
   initConsoleResize();
@@ -472,21 +473,41 @@ function registerEventListeners() {
 
   // Plantillas
   document.getElementById('templateSelect').addEventListener('change', e => {
-    if (!e.target.value) return;
-    const tmpl = getTemplate(e.target.value);
+    const chosen = e.target.value;
+    if (!chosen) return;
+    e.target.value = '';
+
+    if (chosen === 'blank') {
+      if (typeof promptNewBlankCanvas === 'function') {
+        promptNewBlankCanvas();
+        return;
+      }
+    }
+
+    const tmpl = getTemplate(chosen);
     STATE.nodes = tmpl.nodes;
     STATE.edges = tmpl.edges;
-    STATE.isBlankCanvas = false;
+    STATE.isBlankCanvas = STATE.nodes.length === 0 && STATE.edges.length === 0;
+    STATE.activeProjectId = null;
+    STATE.sel = null;
+    STATE.circuit = null;
     STATE.hPtr = -1;
     STATE.history = [];
+
+    const pTitle = document.getElementById('projTitle');
+    const pTitleMob = document.getElementById('projTitleMobile');
+    if (pTitle) pTitle.value = chosen;
+    if (pTitleMob) pTitleMob.value = chosen;
+
     commitHistory();
-    log('ok', 'plantilla: ' + e.target.value);
+    if (typeof markBaselineAsClean === 'function') markBaselineAsClean();
+    if (typeof refreshProjectsUI === 'function') refreshProjectsUI();
+    log('ok', 'plantilla: ' + chosen);
     renderAll();
     // Defer fitView to ensure DOM elements are fully rendered with correct dimensions
     requestAnimationFrame(() => {
       fitView();
     });
-    e.target.value = '';
   });
 
   // Export/Import
@@ -495,9 +516,16 @@ function registerEventListeners() {
     document.getElementById('fileInput').click();
   });
   document.getElementById('fileInput').addEventListener('change', e => {
-    if (e.target.files[0]) importProjectFile(e.target.files[0]);
+    if (e.target.files[0]) {
+      importProjectFile(e.target.files[0]);
+      e.target.value = '';
+    }
   });
   document.getElementById('btnNew').addEventListener('click', () => {
+    if (typeof promptNewBlankCanvas === 'function') {
+      promptNewBlankCanvas();
+      return;
+    }
     resetState();
     commitHistory();
     log('warn', 'lienzo nuevo');
@@ -631,6 +659,9 @@ function registerEventListeners() {
     if (e.key === 'Escape') {
       setSel(null);
       toggleExportPopover(false);
+      if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
+      const projModal = document.getElementById('projectActionModal');
+      if (projModal && !projModal.hidden) projModal.hidden = true;
       closeAllMobileDrawers();
     }
   });

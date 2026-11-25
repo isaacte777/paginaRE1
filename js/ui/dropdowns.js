@@ -209,7 +209,30 @@
 
     const listEl = menu.querySelector('.fl-dropdown-list');
     if (listEl) {
-      listEl.style.maxHeight = Math.round(Math.min(280, Math.max(140, vpHeight - 80))) + 'px';
+      const vpMax = Math.max(120, vpHeight - 80);
+      if (selectEl.id === 'templateSelect') {
+        const totalItems = state.items ? state.items.length : 0;
+        if (totalItems >= 5) {
+          // A partir de 5 plantillas el listado se limita en altura y activa desplazamiento vertical
+          let measuredCap = 0;
+          const visibleRows = 4; // 4 filas completas + asomo parcial de la 5.ª fila para indicar scroll desde >= 5
+          for (let i = 0; i < Math.min(visibleRows, totalItems); i++) {
+            measuredCap += (state.items[i].offsetHeight || 33) + 2;
+          }
+          const fifthRowH = state.items[4] ? state.items[4].offsetHeight || 33 : 33;
+          measuredCap += Math.round(fifthRowH * 0.62);
+          listEl.classList.add('is-scrollable');
+          listEl.style.overflowY = 'auto';
+          listEl.style.maxHeight = Math.round(Math.min(measuredCap || 162, vpMax)) + 'px';
+        } else {
+          listEl.classList.remove('is-scrollable');
+          listEl.style.overflowY = 'visible';
+          listEl.style.maxHeight = 'none';
+        }
+      } else {
+        listEl.style.overflowY = 'auto';
+        listEl.style.maxHeight = Math.round(Math.min(280, vpMax)) + 'px';
+      }
     }
 
     const menuRect = menu.getBoundingClientRect();
@@ -279,6 +302,7 @@
     const tooltipEl = document.getElementById('hoverTooltip');
     if (tooltipEl) tooltipEl.hidden = true;
     if (typeof toggleExportPopover === 'function') toggleExportPopover(false);
+    if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
     if (typeof hideNodeContextMenu === 'function') hideNodeContextMenu();
 
     const trigger = selectEl._flTrigger;
@@ -288,14 +312,24 @@
     const anchor = wrapperModule || trigger;
 
     const menu = document.createElement('div');
-    menu.className = 'fl-dropdown-menu';
+    menu.className =
+      'fl-dropdown-menu' + (selectEl.id === 'templateSelect' ? ' fl-dropdown-menu--templates' : '');
+    if (selectEl.id) menu.dataset.selectId = selectEl.id;
     menu.setAttribute('role', 'listbox');
 
     const title = getMenuTitle(selectEl);
+    let headCountEl = null;
     if (title) {
       const head = document.createElement('div');
       head.className = 'fl-dropdown-header';
-      head.textContent = title;
+      const headTxt = document.createElement('span');
+      headTxt.textContent = title;
+      head.appendChild(headTxt);
+      if (selectEl.id === 'templateSelect') {
+        headCountEl = document.createElement('span');
+        headCountEl.className = 'fl-dropdown-count';
+        head.appendChild(headCountEl);
+      }
       menu.appendChild(head);
     }
 
@@ -359,6 +393,13 @@
       listWrap.appendChild(itemBtn);
       items.push(itemBtn);
     });
+
+    if (headCountEl) {
+      headCountEl.textContent = `${items.length} disponibles`;
+    }
+    if (selectEl.id === 'templateSelect' && items.length >= 5) {
+      listWrap.classList.add('is-scrollable');
+    }
 
     menu.appendChild(listWrap);
     document.body.appendChild(menu);
@@ -606,4 +647,5 @@
   }
 
   window.initCustomDropdowns = initCustomDropdowns;
+  window.closeActiveDropdown = closeActiveDropdown;
 })();

@@ -1061,6 +1061,9 @@ select.fl-select-native {
 }
 
 .fl-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 5px 9px 5px;
   margin-bottom: 3px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -1071,9 +1074,20 @@ select.fl-select-native {
 }
 
 .fl-dropdown-header::before {
-  content: ":: ";
+  content: "::";
   color: var(--green-strong);
   opacity: 0.8;
+}
+
+.fl-dropdown-count {
+  margin-left: auto;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(134, 239, 172, 0.18);
+  color: var(--tx2);
+  font-size: 8.5px;
+  font-weight: 500;
 }
 
 .fl-dropdown-list {
@@ -1082,6 +1096,39 @@ select.fl-select-native {
   gap: 2px;
   max-height: 280px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(134, 239, 172, 0.34) rgba(255, 255, 255, 0.04);
+}
+
+.fl-dropdown-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.fl-dropdown-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 99px;
+}
+
+.fl-dropdown-list::-webkit-scrollbar-thumb {
+  background: rgba(134, 239, 172, 0.32);
+  border-radius: 99px;
+}
+
+.fl-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(74, 222, 128, 0.56);
+}
+
+/* Límite de altura desplazable a partir de 5 elementos en el menú de plantillas */
+#templateSelect {
+  max-height: 164px;
+  overflow-y: auto;
+}
+
+.fl-dropdown-menu--templates .fl-dropdown-list.is-scrollable {
+  max-height: 164px;
+  overflow-y: auto;
+  padding-right: 3px;
 }
 
 .fl-dropdown-item {
@@ -2913,14 +2960,22 @@ select.fl-select-native {
     display: none !important;
   }
 
-  /* Botón Abrir solo con icono en móvil */
+  /* Botones de archivo compactos solo con icono en móvil */
+  #btnSaveProj,
   #btnLoad {
     width: 28px;
     padding: 0 !important;
   }
 
-  #btnLoad span {
+  #btnSaveProj span,
+  #btnLoad span,
+  #btnSavedProjects > span:not(.proj-count-badge) {
     display: none;
+  }
+
+  #btnSavedProjects {
+    padding: 0 6px !important;
+    gap: 3px;
   }
 
   .action-cluster .btn {
@@ -3321,7 +3376,8 @@ select.fl-select-native {
     justify-content: center;
   }
 
-  #btnJson {
+  #btnJson,
+  #btnLoad {
     display: none !important;
   }
 
@@ -3356,6 +3412,10 @@ select.fl-select-native {
 
   #btnChat {
     display: none !important;
+  }
+
+  .proj-btn-chevron {
+    display: none;
   }
 
   .app-header #btnNew {
@@ -3416,10 +3476,573 @@ select.fl-select-native {
   .panel input[type="number"],
   .panel #aiChatInput,
   .ai-config-drawer input,
-  #chatInput {
+  #chatInput,
+  #quickSaveProjInput,
+  #savedProjectsSearch,
+  .proj-rename-input,
+  #projModalInput1,
+  #projModalInput2 {
     font-size: 16px !important;
   }
 }
+
+/* =========================================================================
+   GESTIÓN DE PROYECTOS GUARDADOS (localStorage) Y MODAL DE LIENZO EN BLANCO
+   ========================================================================= */
+#btnSavedProjects.is-open {
+  border-color: rgba(134, 239, 172, 0.55);
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--green);
+}
+
+#btnSavedProjects .proj-btn-chevron {
+  color: var(--tx3);
+  transition: transform 0.16s ease, color 0.16s ease;
+}
+
+#btnSavedProjects.is-open .proj-btn-chevron {
+  transform: rotate(180deg);
+  color: var(--green-strong);
+}
+
+.proj-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.16);
+  border: 1px solid rgba(134, 239, 172, 0.32);
+  color: var(--green);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.proj-count-badge[hidden] {
+  display: none !important;
+}
+
+.projects-popover {
+  position: fixed;
+  z-index: 14500;
+  width: 352px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 11px;
+  border: 1px solid rgba(134, 239, 172, 0.26);
+  background: linear-gradient(180deg, rgba(24, 27, 30, 0.98) 0%, rgba(14, 16, 18, 0.99) 100%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 22px 52px rgba(0, 0, 0, 0.72),
+    0 0 0 1px rgba(0, 0, 0, 0.55);
+  animation: flMenuInBottom 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.projects-popover[hidden] {
+  display: none !important;
+}
+
+.proj-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.proj-popover-title-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.proj-popover-title {
+  font: 700 10.5px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+}
+
+.proj-popover-title::before {
+  content: ":: ";
+  color: var(--green-strong);
+}
+
+.proj-popover-count {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  color: var(--tx2);
+  font-size: 9px;
+}
+
+.proj-quick-save {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.proj-quick-save input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg0);
+  color: var(--tx0);
+  font: 400 10.5px 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.proj-quick-save input:focus {
+  border-color: var(--green-strong);
+  box-shadow: 0 0 0 2px var(--green-soft);
+}
+
+.proj-quick-save .btn {
+  height: 30px;
+  padding: 0 10px;
+  flex: 0 0 auto;
+  font-size: 10px;
+}
+
+.proj-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(18, 20, 22, 0.85);
+  color: var(--tx3);
+}
+
+.proj-search-wrap[hidden] {
+  display: none !important;
+}
+
+.proj-search-wrap input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--tx0);
+  font: 400 10px 'JetBrains Mono', monospace;
+  outline: none;
+}
+
+.proj-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 235px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(134, 239, 172, 0.34) rgba(255, 255, 255, 0.04);
+}
+
+.proj-list.is-scrollable {
+  max-height: 215px;
+  padding-right: 3px;
+}
+
+.proj-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.proj-list::-webkit-scrollbar-thumb {
+  background: rgba(134, 239, 172, 0.32);
+  border-radius: 99px;
+}
+
+.proj-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 18px 12px;
+  text-align: center;
+  border-radius: 8px;
+  border: 1px dashed var(--line);
+  background: rgba(18, 20, 22, 0.5);
+  color: var(--tx2);
+  font-size: 10px;
+}
+
+.proj-empty-state svg {
+  color: var(--tx3);
+}
+
+.proj-empty-state small {
+  color: var(--tx3);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.proj-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(24, 27, 30, 0.65);
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.proj-item:hover {
+  border-color: rgba(134, 239, 172, 0.3);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.proj-item.is-active {
+  border-color: rgba(74, 222, 128, 0.42);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.proj-item.is-deleting {
+  border-color: rgba(248, 113, 113, 0.42);
+  background: rgba(127, 29, 29, 0.18);
+  padding: 7px 9px;
+}
+
+.proj-del-prompt {
+  font-size: 10px;
+  color: var(--tx0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-item-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 3px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.proj-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 6px;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  color: var(--tx2);
+}
+
+.proj-item.is-active .proj-item-icon {
+  color: var(--green);
+  border-color: rgba(134, 239, 172, 0.35);
+}
+
+.proj-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.proj-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.proj-item-name {
+  font-size: 10.8px;
+  font-weight: 600;
+  color: var(--tx0);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-active-pill {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.16);
+  border: 1px solid rgba(134, 239, 172, 0.32);
+  color: var(--green);
+  font-size: 8.5px;
+  font-weight: 600;
+}
+
+.proj-item-meta {
+  font-size: 9px;
+  color: var(--tx3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+}
+
+.proj-act-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 5px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tx2);
+  font: 600 9.5px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+}
+
+.proj-act-btn:hover {
+  background: var(--bg1);
+  border-color: var(--line);
+  color: var(--tx0);
+}
+
+.proj-act-btn.is-confirm {
+  color: var(--green);
+  border-color: rgba(134, 239, 172, 0.32);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.proj-act-btn.is-danger,
+.proj-act-btn.is-danger-hover:hover {
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.38);
+  background: rgba(127, 29, 29, 0.24);
+}
+
+.proj-rename-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 5px;
+  border: 1px solid var(--green-strong);
+  background: var(--bg0);
+  color: var(--tx0);
+  font: 500 10.5px 'JetBrains Mono', monospace;
+  outline: none;
+}
+
+.proj-popover-foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.proj-popover-foot .btn {
+  justify-content: center;
+  height: 29px;
+  font-size: 9.8px;
+}
+
+/* Modal de confirmación y guardado personalizado (#projectActionModal) */
+.proj-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 16000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(6, 8, 10, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.proj-modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.proj-modal-card {
+  width: min(430px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(134, 239, 172, 0.28);
+  background: linear-gradient(180deg, #171a1d 0%, #101214 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 60px rgba(0, 0, 0, 0.75);
+  animation: flMenuInBottom 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.proj-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.proj-modal-title {
+  font: 700 12px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+}
+
+.proj-modal-title::before {
+  content: ":: ";
+  color: var(--green-strong);
+}
+
+.proj-modal-desc {
+  margin: 0;
+  font-size: 10.8px;
+  line-height: 1.55;
+  color: var(--tx2);
+}
+
+.proj-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.proj-modal-field[hidden] {
+  display: none !important;
+}
+
+.proj-modal-field label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--tx1);
+}
+
+.proj-modal-field input {
+  width: 100%;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--bg0);
+  color: var(--tx0);
+  font: 500 11.5px 'JetBrains Mono', monospace;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.proj-modal-field input:focus {
+  border-color: var(--green-strong);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.proj-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  flex-wrap: wrap;
+}
+
+.proj-modal-actions-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.proj-modal-actions .btn[hidden] {
+  display: none !important;
+}
+
+.btn.proj-btn-danger {
+  border-color: rgba(248, 113, 113, 0.36);
+  background: rgba(127, 29, 29, 0.18);
+  color: #fecaca;
+}
+
+.btn.proj-btn-danger:hover {
+  border-color: rgba(248, 113, 113, 0.62);
+  background: rgba(153, 27, 27, 0.3);
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .projects-popover {
+    top: auto !important;
+    right: 8px !important;
+    bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+    left: 8px !important;
+    width: auto !important;
+    max-height: calc(100dvh - 24px);
+    border-radius: 14px;
+  }
+
+  .proj-act-btn {
+    min-width: 28px;
+    height: 28px;
+  }
+
+  .proj-modal-backdrop {
+    align-items: flex-end;
+    padding: 8px;
+  }
+
+  .proj-modal-card {
+    width: 100%;
+    padding: 15px 14px calc(15px + env(safe-area-inset-bottom));
+    border-radius: 15px;
+  }
+
+  .proj-modal-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .proj-modal-actions-right {
+    width: 100%;
+    flex-direction: column;
+    margin-left: 0;
+  }
+
+  .proj-modal-actions .btn {
+    width: 100%;
+    min-height: 38px;
+    justify-content: center;
+  }
+}
+
 
 
 
