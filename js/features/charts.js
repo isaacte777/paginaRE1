@@ -23,12 +23,14 @@ function renderChartNodeHtml(n) {
 
   // Si no está conectado a nada, mostrar estado vacío / pendiente
   if (upstream.length === 0) {
+    const plugSvg =
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></svg>';
     return `
       <div style="position:relative; width:280px; background:var(--bg2); border:1px solid var(--line2); border-radius:10px; padding:12px; font-family:'JetBrains Mono',monospace; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden">
         <div style="position:absolute; top:0; left:0; bottom:0; width:4px; background:${accent}"></div>
         <div style="font-size:11px; font-weight:700; color:var(--tx0); margin-bottom:6px; padding-left:6px">${title}</div>
-        <div style="padding:16px 6px; text-align:center; font-size:10px; color:var(--tx3); border:1px dashed var(--line); border-radius:6px; margin-left:6px">
-          🔌 Sin datos (Conecta nodos upstream)
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; padding:16px 6px; text-align:center; font-size:10px; color:var(--tx3); border:1px dashed var(--line); border-radius:6px; margin-left:6px">
+          ${plugSvg}<span>Sin datos (Conecta nodos upstream)</span>
         </div>
       </div>
     `;

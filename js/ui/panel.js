@@ -47,17 +47,22 @@ function updatePanel() {
   }
 
   // Pestaña Props
+  const sparkSvg =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>';
+  const slidersSvg =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>';
+
   if (!STATE.sel) {
     p.innerHTML =
       '<div class="props-empty-wrap">' +
       '<div style="color:var(--tx3);font-size:10px;padding:4px 2px 12px">selecciona un nodo o conexión para editar sus propiedades</div>' +
       '<div class="props-ai-promo">' +
-      '<div class="props-ai-promo__kicker">✦ asistente del flujo</div>' +
+      '<div class="props-ai-promo__kicker">' + sparkSvg + '<span>asistente del flujo</span></div>' +
       '<div class="props-ai-promo__title">Crea nodos hablando con IA</div>' +
       '<p class="props-ai-promo__desc">Lee el contexto del archivo actual y genera nodos o flujos. Conecta <b>Ollama / LM Studio</b> en tu PC, una <b>API Key</b> o cualquier <b>URL</b>.</p>' +
       '<div class="props-ai-promo__btns">' +
-      '<button type="button" class="btn primary" id="btnPromoOpenAI">✦ abrir chat ia</button>' +
-      '<button type="button" class="btn" id="btnPromoCfgAI">⚙ conectar</button>' +
+      '<button type="button" class="btn primary" id="btnPromoOpenAI">' + sparkSvg + '<span>abrir chat ia</span></button>' +
+      '<button type="button" class="btn" id="btnPromoCfgAI">' + slidersSvg + '<span>conectar</span></button>' +
       '</div>' +
       '</div>' +
       '</div>';
@@ -98,12 +103,14 @@ function updatePanel() {
   let circuitInfoHtml = '';
   if (typeof computeCircuit === 'function') {
     const c = computeCircuit(n.id);
+    const circuitSvg =
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
     circuitInfoHtml = `
       <div style="margin-top:12px;padding:8px;background:var(--bg2);border-radius:4px;border:1px solid var(--line)">
         <div style="font-size:10px;font-weight:600;color:var(--tx0);margin-bottom:4px">circuito de dependencias</div>
         <div style="font-size:9.5px;color:var(--tx2)">upstream (causas): ${c.upstream.size}</div>
         <div style="font-size:9.5px;color:var(--tx2)">downstream (efectos): ${c.downstream.size}</div>
-        <button id="btnToggleCircuit" class="btn" style="width:100%;margin-top:6px;font-size:10px">${STATE.circuitHighlight ? '⚡ apagar circuito' : '⚡ resaltar circuito'}</button>
+        <button id="btnToggleCircuit" class="btn" style="width:100%;margin-top:6px;font-size:10px">${circuitSvg}<span>${STATE.circuitHighlight ? 'apagar circuito' : 'resaltar circuito'}</span></button>
       </div>
     `;
   }

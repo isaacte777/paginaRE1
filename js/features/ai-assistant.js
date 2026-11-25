@@ -4,6 +4,47 @@
 (function () {
   const STORAGE_KEY = 'flowlab-ai-config-v1';
 
+  const AI_SVG = {
+    spark:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>',
+    search:
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    plusSquare:
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
+    branch:
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>',
+    chart:
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>',
+    target:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>',
+    undo:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>',
+    check:
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+    cross:
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    loader:
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>',
+    plus:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+    eye:
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff:
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+  };
+
+  function setStatusIndicator(el, kind, msg) {
+    if (!el) return;
+    if (!kind) {
+      el.className = 'ai-test-status';
+      el.innerHTML = '';
+      return;
+    }
+    const icon = kind === 'ok' ? AI_SVG.check : kind === 'err' ? AI_SVG.cross : AI_SVG.loader;
+    el.className = `ai-test-status is-${kind}`;
+    el.innerHTML = `${icon}<span>${escapeHTML(msg)}</span>`;
+  }
+
   const LOCAL_PRESETS = {
     ollama: {
       name: 'Ollama (Local)',
@@ -1240,8 +1281,7 @@
     const rawUrl = (urlInput?.value || aiConfig.local.url || LOCAL_PRESETS.ollama.url).trim();
 
     if (statusEl) {
-      statusEl.className = 'ai-test-status is-pending';
-      statusEl.textContent = '◌ Buscando modelos en tu PC...';
+      setStatusIndicator(statusEl, 'pending', 'Buscando modelos en tu PC...');
     }
     if (chipsWrap) chipsWrap.innerHTML = '';
 
@@ -1249,10 +1289,7 @@
     try {
       origin = new URL(rawUrl).origin;
     } catch {
-      if (statusEl) {
-        statusEl.className = 'ai-test-status is-err';
-        statusEl.textContent = '✕ URL local inválida.';
-      }
+      setStatusIndicator(statusEl, 'err', 'URL local inválida.');
       return;
     }
 
@@ -1285,13 +1322,13 @@
     } catch {}
 
     if (foundModels.length === 0) {
-      if (statusEl) {
-        statusEl.className = 'ai-test-status is-err';
-        statusEl.textContent =
-          window.location.protocol === 'https:'
-            ? '✕ Sin respuesta local. Enciende Ollama/LM Studio y activa CORS (OLLAMA_ORIGINS="*").'
-            : '✕ No se detectó servidor activo en ' + origin;
-      }
+      setStatusIndicator(
+        statusEl,
+        'err',
+        window.location.protocol === 'https:'
+          ? 'Sin respuesta local. Enciende Ollama/LM Studio y activa CORS (OLLAMA_ORIGINS="*").'
+          : 'No se detectó servidor activo en ' + origin
+      );
       return;
     }
 
@@ -1300,10 +1337,7 @@
       modelInput.value = foundModels[0];
     }
 
-    if (statusEl) {
-      statusEl.className = 'ai-test-status is-ok';
-      statusEl.textContent = `✓ ${foundModels.length} modelo(s) detectado(s) en tu equipo`;
-    }
+    setStatusIndicator(statusEl, 'ok', `${foundModels.length} modelo(s) detectado(s) en tu equipo`);
 
     if (chipsWrap) {
       chipsWrap.innerHTML = foundModels
@@ -1330,13 +1364,11 @@
     if (!statusEl) return;
 
     if (editingModeTab === 'builtin') {
-      statusEl.className = 'ai-test-status is-ok';
-      statusEl.textContent = '✓ Motor integrado listo (no requiere conexión externa)';
+      setStatusIndicator(statusEl, 'ok', 'Motor integrado listo (no requiere conexión externa)');
       return;
     }
 
-    statusEl.className = 'ai-test-status is-pending';
-    statusEl.textContent = '◌ Probando conexión...';
+    setStatusIndicator(statusEl, 'pending', 'Probando conexión...');
 
     const prevMode = aiConfig.mode;
     aiConfig.mode = editingModeTab;
@@ -1348,11 +1380,9 @@
       await callExternalAI('Responde únicamente con la palabra OK.', ctrl.signal);
       clearTimeout(timer);
       const ms = Math.round(performance.now() - t0);
-      statusEl.className = 'ai-test-status is-ok';
-      statusEl.textContent = `✓ Conexión exitosa (${ms} ms)`;
+      setStatusIndicator(statusEl, 'ok', `Conexión exitosa (${ms} ms)`);
     } catch (err) {
-      statusEl.className = 'ai-test-status is-err';
-      statusEl.textContent = '✕ ' + (err.message || 'Error al conectar').split('\n')[0];
+      setStatusIndicator(statusEl, 'err', (err.message || 'Error al conectar').split('\n')[0]);
     } finally {
       aiConfig.mode = prevMode;
     }
@@ -1420,7 +1450,7 @@
         const sn = byId(STATE.sel.id);
         if (sn) {
           const shortTxt = sn.text.split('\n')[0].slice(0, 18);
-          selBadge.textContent = `🎯 ${shortTxt}`;
+          selBadge.innerHTML = `${AI_SVG.target}<span>${escapeHTML(shortTxt)}</span>`;
           selBadge.title = `Nodo en foco: ${sn.text.replace(/\n/g, ' ')}`;
           selBadge.hidden = false;
           return;
@@ -1446,24 +1476,24 @@
     if (messages.length === 0) {
       container.innerHTML = `
         <div class="ai-welcome">
-          <div class="ai-welcome-badge">✦ copiloto del lienzo</div>
+          <div class="ai-welcome-badge">${AI_SVG.spark}<span>copiloto del lienzo</span></div>
           <h4>Habla con tu flujo y crea nodos</h4>
           <p>Tengo contexto en vivo del proyecto abierto. Conecta <b>Ollama / LM Studio</b> en tu PC, una <b>API Key</b> o una <b>URL</b>, o usa las acciones rápidas:</p>
           <div class="ai-quick-grid">
             <button type="button" class="ai-quick-btn" data-prompt="Analiza el flujo actual, resume su arquitectura y dime si hay bloqueos o mejoras.">
-              <span class="ai-quick-icon">🔍</span>
+              <span class="ai-quick-icon">${AI_SVG.search}</span>
               <span>Analizar este archivo</span>
             </button>
             <button type="button" class="ai-quick-btn" data-prompt="Crea un flujo de autenticación con recepción de credenciales, base de datos, decisión y emisión de token.">
-              <span class="ai-quick-icon">➕</span>
+              <span class="ai-quick-icon">${AI_SVG.plusSquare}</span>
               <span>Crear flujo de login</span>
             </button>
             <button type="button" class="ai-quick-btn" data-prompt="Expande el nodo seleccionado con una decisión Sí y No conectada.">
-              <span class="ai-quick-icon">🌿</span>
+              <span class="ai-quick-icon">${AI_SVG.branch}</span>
               <span>Expandir con Sí / No</span>
             </button>
             <button type="button" class="ai-quick-btn" data-prompt="Agrega un nodo de métricas KPI conectado al flujo.">
-              <span class="ai-quick-icon">📊</span>
+              <span class="ai-quick-icon">${AI_SVG.chart}</span>
               <span>Añadir nodo de métricas</span>
             </button>
           </div>
@@ -1503,16 +1533,16 @@
             actionCardHtml = `
               <div class="ai-action-card is-applied">
                 <div class="ai-action-head">
-                  <span class="ai-action-title">✓ ${escapeHTML(msg.appliedSummary || msg.actions.summary || 'Aplicado al lienzo')}</span>
+                  <span class="ai-action-title">${AI_SVG.check}<span>${escapeHTML(msg.appliedSummary || msg.actions.summary || 'Aplicado al lienzo')}</span></span>
                 </div>
                 ${previewOps ? `<div class="ai-op-list">${previewOps}</div>` : ''}
                 <div class="ai-action-btns">
                   ${
                     msg.createdNodeIds && msg.createdNodeIds.length
-                      ? `<button type="button" class="ai-card-btn" data-focus-idx="${idx}">⌖ enfocar</button>`
+                      ? `<button type="button" class="ai-card-btn" data-focus-idx="${idx}">${AI_SVG.target}<span>enfocar</span></button>`
                       : ''
                   }
-                  <button type="button" class="ai-card-btn" data-undo-idx="${idx}">↶ deshacer</button>
+                  <button type="button" class="ai-card-btn" data-undo-idx="${idx}">${AI_SVG.undo}<span>deshacer</span></button>
                 </div>
               </div>
             `;
@@ -1520,11 +1550,11 @@
             actionCardHtml = `
               <div class="ai-action-card">
                 <div class="ai-action-head">
-                  <span class="ai-action-title">✦ ${escapeHTML(msg.actions.summary || 'Propuesta de nodos')}</span>
+                  <span class="ai-action-title">${AI_SVG.spark}<span>${escapeHTML(msg.actions.summary || 'Propuesta de nodos')}</span></span>
                 </div>
                 ${previewOps ? `<div class="ai-op-list">${previewOps}</div>` : ''}
                 <div class="ai-action-btns">
-                  <button type="button" class="ai-card-btn is-primary" data-apply-idx="${idx}">+ crear en el lienzo</button>
+                  <button type="button" class="ai-card-btn is-primary" data-apply-idx="${idx}">${AI_SVG.plus}<span>crear en el lienzo</span></button>
                 </div>
               </div>
             `;
@@ -1821,11 +1851,14 @@
       if (keyEl) keyEl.placeholder = p.placeholderKey;
     });
 
-    // Mostrar/ocultar API Key
-    document.getElementById('btnToggleKeyVis')?.addEventListener('click', () => {
+    // Mostrar/ocultar API Key con icono vectorial
+    document.getElementById('btnToggleKeyVis')?.addEventListener('click', e => {
       const keyEl = document.getElementById('aiCloudKey');
+      const eyeBtn = e.currentTarget;
       if (!keyEl) return;
-      keyEl.type = keyEl.type === 'password' ? 'text' : 'password';
+      const isHidden = keyEl.type === 'password';
+      keyEl.type = isHidden ? 'text' : 'password';
+      if (eyeBtn) eyeBtn.innerHTML = isHidden ? AI_SVG.eyeOff : AI_SVG.eye;
     });
 
     document.getElementById('btnDetectLocalModels')?.addEventListener('click', detectLocalModels);

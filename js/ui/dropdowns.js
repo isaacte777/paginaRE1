@@ -7,13 +7,34 @@
   );
 
   const TEMPLATE_META = {
-    comparacion_precios: { tag: 'comercial', icon: '◈' },
-    orquestador: { tag: 'agentes ia', icon: '✦' },
-    web: { tag: 'arquitectura', icon: '⬡' },
-    contratacion: { tag: 'rrhh', icon: '◎' },
-    personal: { tag: 'productividad', icon: '◇' },
-    complex: { tag: 'pipeline', icon: '❖' },
-    blank: { tag: 'desde cero', icon: '□' }
+    comparacion_precios: {
+      tag: 'comercial',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>'
+    },
+    orquestador: {
+      tag: 'agentes ia',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>'
+    },
+    web: {
+      tag: 'arquitectura',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>'
+    },
+    contratacion: {
+      tag: 'rrhh',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+    },
+    personal: {
+      tag: 'productividad',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>'
+    },
+    complex: {
+      tag: 'pipeline',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>'
+    },
+    blank: {
+      tag: 'desde cero',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="4 3"/></svg>'
+    }
   };
 
   const SPEED_META = {
@@ -23,12 +44,16 @@
     '4': 'turbo'
   };
 
-  const STATUS_COLORS = {
-    pending: '#60a5fa',
-    progress: '#facc15',
-    done: '#4ade80',
-    error: '#f87171'
+  const STATUS_SVGS = {
+    all: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>',
+    pending: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>',
+    progress: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><polyline points="12 7 12 12 15 14"/></svg>',
+    done: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+    error: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
   };
+
+  const ENTER_SVG =
+    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/></svg>';
 
   let activeDropdown = null;
   let observer = null;
@@ -54,9 +79,9 @@
     const rawText = (optionEl.textContent || '').trim();
     const val = optionEl.value;
 
-    let dotColor = STATUS_COLORS[val] || null;
+    let statusSvg = STATUS_SVGS[val] || null;
     if (selectEl.id === 'filterStatus' && val === '') {
-      dotColor = '#8b9095';
+      statusSvg = STATUS_SVGS.all;
     }
 
     // Separar prefijo tipo [✓], [~], [ ], [!] si existe
@@ -69,15 +94,15 @@
     }
 
     let tag = '';
-    let glyph = '';
+    let iconSvg = statusSvg || '';
     if (selectEl.id === 'templateSelect' && TEMPLATE_META[val]) {
       tag = TEMPLATE_META[val].tag;
-      glyph = TEMPLATE_META[val].icon;
+      iconSvg = TEMPLATE_META[val].svg;
     } else if (selectEl.id === 'speedSel' && SPEED_META[val]) {
       tag = SPEED_META[val];
     }
 
-    return { rawText, cleanLabel, codeBadge, dotColor, tag, glyph };
+    return { rawText, cleanLabel, codeBadge, hasStatusIcon: Boolean(statusSvg), tag, iconSvg };
   }
 
   function createChevronSvg() {
@@ -110,21 +135,21 @@
     if (!selectedOpt) return;
 
     const parts = parseOptionParts(selectEl, selectedOpt);
-    const dotEl = trigger.querySelector('.fl-trigger-dot');
+    const iconEl = trigger.querySelector('.fl-trigger-icon');
     const labelEl = trigger.querySelector('.fl-select-label');
 
-    if (dotEl) {
-      if (parts.dotColor && !isActionLauncher(selectEl)) {
-        dotEl.style.background = parts.dotColor;
-        dotEl.style.boxShadow = `0 0 8px ${parts.dotColor}66`;
-        dotEl.hidden = false;
+    if (iconEl) {
+      if (parts.hasStatusIcon && parts.iconSvg && !isActionLauncher(selectEl)) {
+        iconEl.innerHTML = parts.iconSvg;
+        iconEl.hidden = false;
       } else {
-        dotEl.hidden = true;
+        iconEl.innerHTML = '';
+        iconEl.hidden = true;
       }
     }
 
     if (labelEl) {
-      labelEl.textContent = parts.dotColor ? parts.cleanLabel : parts.rawText;
+      labelEl.textContent = parts.hasStatusIcon ? parts.cleanLabel : parts.rawText;
     }
   }
 
@@ -285,21 +310,18 @@
       itemBtn.style.setProperty('--item-idx', String(Math.min(idx, 8)));
 
       let leftVisual = '';
-      if (parts.dotColor) {
-        leftVisual =
-          `<span class="fl-item-dot" style="background:${parts.dotColor};box-shadow:0 0 8px ${parts.dotColor}66" aria-hidden="true"></span>`;
-      } else if (parts.glyph) {
-        leftVisual = `<span class="fl-item-glyph" aria-hidden="true">${parts.glyph}</span>`;
+      if (parts.iconSvg) {
+        leftVisual = `<span class="fl-item-glyph" aria-hidden="true">${parts.iconSvg}</span>`;
       }
 
       const labelHtml =
-        `<span class="fl-item-label">${escapeDropdownHtml(parts.dotColor ? parts.cleanLabel : parts.rawText)}</span>`;
+        `<span class="fl-item-label">${escapeDropdownHtml(parts.hasStatusIcon ? parts.cleanLabel : parts.rawText)}</span>`;
 
       let rightVisual = '';
       if (launcher) {
         rightVisual =
           (parts.tag ? `<span class="fl-item-tag">${escapeDropdownHtml(parts.tag)}</span>` : '') +
-          '<span class="fl-item-enter" aria-hidden="true">↵</span>';
+          `<span class="fl-item-enter" aria-hidden="true">${ENTER_SVG}</span>`;
       } else {
         rightVisual =
           (parts.tag ? `<span class="fl-item-tag">${escapeDropdownHtml(parts.tag)}</span>` : '') +
@@ -381,7 +403,7 @@
 
     trigger.innerHTML =
       '<span class="fl-trigger-main">' +
-      '<span class="fl-trigger-dot" hidden aria-hidden="true"></span>' +
+      '<span class="fl-trigger-icon" hidden aria-hidden="true"></span>' +
       '<span class="fl-select-label"></span>' +
       '</span>' +
       createChevronSvg();

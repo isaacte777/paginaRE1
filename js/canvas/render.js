@@ -5,10 +5,13 @@ function renderMetricsWidget(n) {
   const step = w / (points.length - 1);
   const pts = points.map((v, i) => `${i * step},${h - (v / max) * h}`).join(' ');
 
+  const trendSvg =
+    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
+
   return `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; width:100%">
-      <span style="font-weight:700; font-size:11px; color:var(--tx0); letter-spacing:0.02em">📈 ${escapeHTML(n.text || 'Métrica de Rendimiento')}</span>
-      <span style="font-size:9px; background:rgba(56,189,248,0.15); color:#38bdf8; padding:2px 5px; border-radius:3px; font-weight:700">● LIVE</span>
+      <span style="display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:11px; color:var(--tx0); letter-spacing:0.02em">${trendSvg}<span>${escapeHTML(n.text || 'Métrica de Rendimiento')}</span></span>
+      <span style="font-size:9px; background:rgba(74,222,128,0.12); color:var(--green); padding:2px 5px; border-radius:3px; font-weight:700">LIVE</span>
     </div>
     <svg width="${w}" height="${h}" style="overflow:visible; display:block; margin-bottom:8px">
       <defs>
