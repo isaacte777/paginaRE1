@@ -350,8 +350,82 @@ function terminalApiPlugin() {
   }
 }
 
+function aiProxyPlugin() {
+  return {
+    name: 'flowlab-ai-proxy',
+    configureServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url || '').split('?')[0]
+        if (!url.endsWith('/api/ai-proxy')) return next()
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-store')
+
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204
+          res.end()
+          return
+        }
+
+        if (req.method !== 'POST') {
+          res.statusCode = 405
+          res.end(JSON.stringify({ ok: false, error: 'Método no permitido.' }))
+          return
+        }
+
+        let raw = ''
+        req.on('data', (chunk) => {
+          raw += chunk
+        })
+        req.on('end', async () => {
+          try {
+            const payload = JSON.parse(raw || '{}')
+            const targetUrl = typeof payload.targetUrl === 'string' ? payload.targetUrl.trim() : ''
+            const method = typeof payload.method === 'string' ? payload.method.toUpperCase() : 'POST'
+            const fwdHeaders = payload.headers && typeof payload.headers === 'object' ? payload.headers : {}
+            const fwdBody = payload.body !== undefined ? payload.body : undefined
+
+            const parsed = new URL(targetUrl)
+            if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+              res.statusCode = 400
+              res.end(JSON.stringify({ ok: false, error: 'Protocolo no soportado.' }))
+              return
+            }
+
+            const upstream = await fetch(targetUrl, {
+              method,
+              headers: fwdHeaders,
+              body: method === 'GET' || method === 'HEAD' ? undefined : typeof fwdBody === 'string' ? fwdBody : JSON.stringify(fwdBody),
+            })
+
+            const upstreamText = await upstream.text()
+            res.statusCode = 200
+            res.end(
+              JSON.stringify({
+                ok: true,
+                upstreamStatus: upstream.status,
+                contentType: upstream.headers.get('content-type') || '',
+                body: upstreamText,
+              })
+            )
+          } catch (err) {
+            res.statusCode = 502
+            res.end(
+              JSON.stringify({
+                ok: false,
+                code: err?.cause?.code || err?.code || 'NETWORK_ERROR',
+                error: err?.cause?.message || err?.message || 'No se pudo conectar al destino.',
+              })
+            )
+          }
+        })
+      })
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [react(), flowStateApiPlugin(), terminalApiPlugin()],
+  plugins: [react(), flowStateApiPlugin(), terminalApiPlugin(), aiProxyPlugin()],
   server: {
     host: '0.0.0.0',
     port: 5173,
