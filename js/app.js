@@ -36,6 +36,7 @@ function initApp() {
   initPanelTabs();
   initChat();
   if (typeof initAIAssistant === 'function') initAIAssistant();
+  if (typeof initProjectManager === 'function') initProjectManager();
   initHeaderTooltips();
   if (typeof initCustomDropdowns === 'function') initCustomDropdowns();
   initConsoleResize();
@@ -62,6 +63,77 @@ function isMobileLayout() {
   return window.matchMedia('(max-width: 768px)').matches;
 }
 
+function isCompactSidebarLayout() {
+  return window.matchMedia('(max-width: 980px)').matches;
+}
+
+function syncMobileScrim() {
+  const scrim = document.getElementById('mobileScrim');
+  if (!scrim) return;
+  const paletteOpen = Boolean(document.getElementById('palette')?.classList.contains('mobile-open'));
+  const rightOpen = Boolean(document.getElementById('rightPanel')?.classList.contains('mobile-open'));
+  scrim.hidden = !(paletteOpen || rightOpen);
+}
+
+function openMobileRightPanel(tabName) {
+  const rightPanel = document.getElementById('rightPanel');
+  if (!rightPanel) return;
+
+  if (tabName && typeof switchRightPanelTab === 'function') {
+    switchRightPanelTab(tabName);
+  }
+
+  if (isCompactSidebarLayout()) {
+    closeMobilePalette();
+    rightPanel.classList.add('mobile-open');
+    syncMobileScrim();
+  }
+}
+
+function closeMobileRightPanel() {
+  const rightPanel = document.getElementById('rightPanel');
+  if (rightPanel) rightPanel.classList.remove('mobile-open');
+  syncMobileScrim();
+}
+
+function toggleMobileRightPanel() {
+  const rightPanel = document.getElementById('rightPanel');
+  if (!rightPanel) return;
+  if (rightPanel.classList.contains('mobile-open')) {
+    closeMobileRightPanel();
+    return;
+  }
+  const preferredTab = STATE.sel ? 'props' : 'ai';
+  openMobileRightPanel(preferredTab);
+}
+
+function updateMobileNodeBar() {
+  const bar = document.getElementById('mobileNodeBar');
+  if (!bar) return;
+
+  if (!STATE.sel || !isCompactSidebarLayout()) {
+    bar.hidden = true;
+    return;
+  }
+
+  bar.hidden = false;
+  const isNode = STATE.sel.kind === 'node';
+  const editBtn = document.getElementById('mnbEdit');
+  const aiBtn = document.getElementById('mnbAI');
+  const stateBtn = document.getElementById('mnbState');
+  const stateLbl = document.getElementById('mnbStateLbl');
+
+  if (editBtn) editBtn.hidden = !isNode;
+  if (aiBtn) aiBtn.hidden = !isNode;
+  if (stateBtn) stateBtn.hidden = !isNode;
+
+  if (isNode && stateLbl) {
+    const n = byId(STATE.sel.id);
+    const st = n?.status || 'pending';
+    stateLbl.textContent = st === 'done' ? 'hecho' : st === 'progress' ? 'en curso' : 'pend.';
+  }
+}
+
 function setMobilePalette(open) {
   if (!open) {
     closeMobilePalette();
@@ -69,13 +141,15 @@ function setMobilePalette(open) {
   }
 
   const palette = document.getElementById('palette');
-  const scrim = document.getElementById('mobileScrim');
   const menuButton = document.getElementById('btnMenu');
   const shouldOpen = isMobileLayout();
 
+  if (shouldOpen) {
+    closeMobileRightPanel();
+  }
   if (palette) palette.classList.toggle('mobile-open', shouldOpen);
-  if (scrim) scrim.hidden = !shouldOpen;
   if (menuButton) menuButton.setAttribute('aria-expanded', String(shouldOpen));
+  syncMobileScrim();
   if (shouldOpen) dismissMobilePaletteHint();
 }
 
@@ -92,15 +166,19 @@ function dismissMobilePaletteHint() {
 }
 
 function closeMobilePalette() {
-  // El cierre no depende del media query: tambi\u00e9n funciona si el tel\u00e9fono
-  // rota mientras la bandeja est\u00e1 abierta.
+  // El cierre no depende del media query: también funciona si el teléfono
+  // rota mientras la bandeja está abierta.
   const palette = document.getElementById('palette');
-  const scrim = document.getElementById('mobileScrim');
   const menuButton = document.getElementById('btnMenu');
 
   if (palette) palette.classList.remove('mobile-open');
-  if (scrim) scrim.hidden = true;
   if (menuButton) menuButton.setAttribute('aria-expanded', 'false');
+  syncMobileScrim();
+}
+
+function closeAllMobileDrawers() {
+  closeMobilePalette();
+  closeMobileRightPanel();
 }
 
 function initMobileUI() {
@@ -117,8 +195,44 @@ function initMobileUI() {
     menuButton.setAttribute('aria-expanded', 'false');
     menuButton.addEventListener('click', toggleMobilePalette);
   }
-  if (scrim) scrim.addEventListener('click', closeMobilePalette);
+  if (scrim) scrim.addEventListener('click', closeAllMobileDrawers);
   if (closeButton) closeButton.addEventListener('click', closeMobilePalette);
+
+  document.getElementById('btnMobilePanel')?.addEventListener('click', toggleMobileRightPanel);
+
+  // Acciones rápidas táctiles de selección (#mobileNodeBar)
+  document.getElementById('mnbEdit')?.addEventListener('click', () => {
+    if (!STATE.sel || STATE.sel.kind !== 'node') return;
+    const el = nodeEl(STATE.sel.id);
+    if (el) startEdit(el);
+  });
+
+  document.getElementById('mnbProps')?.addEventListener('click', () => {
+    openMobileRightPanel('props');
+  });
+
+  document.getElementById('mnbAI')?.addEventListener('click', () => {
+    openMobileRightPanel('ai');
+  });
+
+  document.getElementById('mnbState')?.addEventListener('click', () => {
+    if (!STATE.sel || STATE.sel.kind !== 'node') return;
+    const n = byId(STATE.sel.id);
+    if (!n) return;
+    const order = ['pending', 'progress', 'done'];
+    const idx = order.indexOf(n.status || 'pending');
+    const next = order[(idx + 1) % order.length];
+    n.status = next;
+    n.progress = next === 'done' ? 100 : next === 'progress' ? 50 : 0;
+    commitHistory();
+    renderAll();
+    updateMobileNodeBar();
+  });
+
+  document.getElementById('mnbDelete')?.addEventListener('click', () => {
+    deleteSel();
+  });
+
   if (hint) {
     hint.addEventListener('click', () => {
       dismissMobilePaletteHint();
@@ -140,7 +254,13 @@ function initMobileUI() {
       if (isMobileLayout()) closeMobilePalette();
     });
   });
+
+  updateMobileNodeBar();
 }
+
+window.openMobileRightPanel = openMobileRightPanel;
+window.closeMobileRightPanel = closeMobileRightPanel;
+window.updateMobileNodeBar = updateMobileNodeBar;
 
 function registerEventListeners() {
   // Seguimiento exclusivo para gestos táctiles dentro del lienzo. Mantenerlo
@@ -353,21 +473,41 @@ function registerEventListeners() {
 
   // Plantillas
   document.getElementById('templateSelect').addEventListener('change', e => {
-    if (!e.target.value) return;
-    const tmpl = getTemplate(e.target.value);
+    const chosen = e.target.value;
+    if (!chosen) return;
+    e.target.value = '';
+
+    if (chosen === 'blank') {
+      if (typeof promptNewBlankCanvas === 'function') {
+        promptNewBlankCanvas();
+        return;
+      }
+    }
+
+    const tmpl = getTemplate(chosen);
     STATE.nodes = tmpl.nodes;
     STATE.edges = tmpl.edges;
-    STATE.isBlankCanvas = false;
+    STATE.isBlankCanvas = STATE.nodes.length === 0 && STATE.edges.length === 0;
+    STATE.activeProjectId = null;
+    STATE.sel = null;
+    STATE.circuit = null;
     STATE.hPtr = -1;
     STATE.history = [];
+
+    const pTitle = document.getElementById('projTitle');
+    const pTitleMob = document.getElementById('projTitleMobile');
+    if (pTitle) pTitle.value = chosen;
+    if (pTitleMob) pTitleMob.value = chosen;
+
     commitHistory();
-    log('ok', 'plantilla: ' + e.target.value);
+    if (typeof markBaselineAsClean === 'function') markBaselineAsClean();
+    if (typeof refreshProjectsUI === 'function') refreshProjectsUI();
+    log('ok', 'plantilla: ' + chosen);
     renderAll();
     // Defer fitView to ensure DOM elements are fully rendered with correct dimensions
     requestAnimationFrame(() => {
       fitView();
     });
-    e.target.value = '';
   });
 
   // Export/Import
@@ -376,9 +516,16 @@ function registerEventListeners() {
     document.getElementById('fileInput').click();
   });
   document.getElementById('fileInput').addEventListener('change', e => {
-    if (e.target.files[0]) importProjectFile(e.target.files[0]);
+    if (e.target.files[0]) {
+      importProjectFile(e.target.files[0]);
+      e.target.value = '';
+    }
   });
   document.getElementById('btnNew').addEventListener('click', () => {
+    if (typeof promptNewBlankCanvas === 'function') {
+      promptNewBlankCanvas();
+      return;
+    }
     resetState();
     commitHistory();
     log('warn', 'lienzo nuevo');
@@ -398,14 +545,34 @@ function registerEventListeners() {
   document.getElementById('btnToggleCon').addEventListener('click', () => {
     const wrap = document.getElementById('consoleWrap');
     const showBtn = document.getElementById('btnShowConsole');
-    if (wrap) wrap.style.display = 'none';
+    const toggleBtn = document.getElementById('btnToggleCon');
+    if (!wrap) return;
+
+    if (isCompactSidebarLayout()) {
+      const nextMin = !wrap.classList.contains('is-minimized');
+      wrap.classList.toggle('is-minimized', nextMin);
+      wrap.style.display = 'flex';
+      if (showBtn) showBtn.style.display = 'none';
+      if (toggleBtn) {
+        toggleBtn.innerHTML = nextMin
+          ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>'
+          : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        toggleBtn.title = nextMin ? 'Expandir terminal' : 'Contraer terminal';
+      }
+      return;
+    }
+
+    wrap.style.display = 'none';
     if (showBtn) showBtn.style.display = 'inline-block';
   });
 
   document.getElementById('btnShowConsole')?.addEventListener('click', () => {
     const wrap = document.getElementById('consoleWrap');
     const showBtn = document.getElementById('btnShowConsole');
-    if (wrap) wrap.style.display = 'flex';
+    if (wrap) {
+      wrap.classList.remove('is-minimized');
+      wrap.style.display = 'flex';
+    }
     if (showBtn) showBtn.style.display = 'none';
   });
 
@@ -492,7 +659,10 @@ function registerEventListeners() {
     if (e.key === 'Escape') {
       setSel(null);
       toggleExportPopover(false);
-      closeMobilePalette();
+      if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
+      const projModal = document.getElementById('projectActionModal');
+      if (projModal && !projModal.hidden) projModal.hidden = true;
+      closeAllMobileDrawers();
     }
   });
 
@@ -510,14 +680,34 @@ function registerEventListeners() {
     applyTransform();
   });
 
+  // Seguimiento táctil de doble toque y pulsación larga en nodos
+  let lastNodeTouchTap = { id: null, time: 0, x: 0, y: 0 };
+  let longPressTimer = null;
+  let longPressStart = null;
+
+  const clearLongPress = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = null;
+    }
+    longPressStart = null;
+  };
+
   // Viewport interactions (pan, drag, connect)
   DOM.vp.addEventListener('pointerdown', e => {
-    if (e.target.closest('.zoombar') || e.target.closest('#minimap')) return;
+    if (
+      e.target.closest('.zoombar') ||
+      e.target.closest('#minimap') ||
+      e.target.closest('#mobileNodeBar')
+    ) {
+      return;
+    }
 
     if (e.pointerType === 'touch') {
       touchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try { DOM.vp.setPointerCapture(e.pointerId); } catch {}
       if (touchPointers.size >= 2) {
+        clearLongPress();
         beginPinchGesture();
         e.preventDefault();
         return;
@@ -558,9 +748,25 @@ function registerEventListeners() {
 
     const nEl = e.target.closest('.node');
     if (nEl && !STATE.editing) {
-      setSel({ kind: 'node', id: nEl.dataset.id });
-      const n = byId(nEl.dataset.id);
+      const nodeId = nEl.dataset.id;
+      setSel({ kind: 'node', id: nodeId });
+      const n = byId(nodeId);
       STATE.dragging = { id: n.id, sx: e.clientX, sy: e.clientY, ox: n.x, oy: n.y, moved: false };
+
+      if (e.pointerType === 'touch') {
+        const cx = e.clientX;
+        const cy = e.clientY;
+        clearLongPress();
+        longPressStart = { x: cx, y: cy, id: nodeId };
+        longPressTimer = setTimeout(() => {
+          longPressTimer = null;
+          if (STATE.dragging && !STATE.dragging.moved && touchPointers.size === 1) {
+            STATE.dragging = null;
+            showNodeContextMenu({ clientX: cx, clientY: cy, preventDefault() {}, stopPropagation() {} }, nodeId);
+          }
+        }, 480);
+      }
+
       e.preventDefault();
       return;
     }
@@ -580,6 +786,10 @@ function registerEventListeners() {
   window.addEventListener('pointermove', e => {
     STATE.mouse.x = e.clientX;
     STATE.mouse.y = e.clientY;
+
+    if (longPressStart && Math.hypot(e.clientX - longPressStart.x, e.clientY - longPressStart.y) > 8) {
+      clearLongPress();
+    }
 
     if (e.pointerType === 'touch' && touchPointers.has(e.pointerId)) {
       touchPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -606,6 +816,10 @@ function registerEventListeners() {
     }
 
     if (STATE.dragging) {
+      const distance = Math.hypot(e.clientX - STATE.dragging.sx, e.clientY - STATE.dragging.sy);
+      if (e.pointerType === 'touch' && distance < 5 && !STATE.dragging.moved) {
+        return;
+      }
       const n = byId(STATE.dragging.id);
       if (!n || n.locked) return;
       let nx = STATE.dragging.ox + (e.clientX - STATE.dragging.sx) / STATE.zoom;
@@ -628,6 +842,8 @@ function registerEventListeners() {
   });
 
   window.addEventListener('pointerup', e => {
+    clearLongPress();
+
     if (e.pointerType === 'touch' && touchPointers.has(e.pointerId)) {
       const wasPinching = !!pinchGesture;
       touchPointers.delete(e.pointerId);
@@ -655,9 +871,27 @@ function registerEventListeners() {
       drawEdges();
     }
     if (STATE.dragging) {
-      if (STATE.dragging.moved) commitHistory();
+      const draggedId = STATE.dragging.id;
+      const didMove = STATE.dragging.moved;
+      if (didMove) commitHistory();
       STATE.dragging = null;
       saveState();
+
+      // Doble toque táctil sobre el mismo nodo para editar su texto rápidamente
+      if (e.pointerType === 'touch' && !didMove) {
+        const now = Date.now();
+        if (
+          lastNodeTouchTap.id === draggedId &&
+          now - lastNodeTouchTap.time < 320 &&
+          Math.hypot(e.clientX - lastNodeTouchTap.x, e.clientY - lastNodeTouchTap.y) < 24
+        ) {
+          lastNodeTouchTap = { id: null, time: 0, x: 0, y: 0 };
+          const targetNodeEl = nodeEl(draggedId);
+          if (targetNodeEl) startEdit(targetNodeEl);
+        } else {
+          lastNodeTouchTap = { id: draggedId, time: now, x: e.clientX, y: e.clientY };
+        }
+      }
     }
     if (STATE.panning) {
       STATE.panning = null;
@@ -667,6 +901,7 @@ function registerEventListeners() {
   });
 
   window.addEventListener('pointercancel', e => {
+    clearLongPress();
     if (e.pointerType !== 'touch' || !touchPointers.has(e.pointerId)) return;
     const wasPinching = !!pinchGesture;
     touchPointers.delete(e.pointerId);
@@ -686,7 +921,14 @@ function registerEventListeners() {
       startEdit(nEl);
       return;
     }
-    if (e.target.closest('.edge-hit') || e.target.closest('.zoombar') || e.target.closest('#minimap')) return;
+    if (
+      e.target.closest('.edge-hit') ||
+      e.target.closest('.zoombar') ||
+      e.target.closest('#minimap') ||
+      e.target.closest('#mobileNodeBar')
+    ) {
+      return;
+    }
     const p = screenToWorld(e.clientX, e.clientY);
     const n = createNode('process', 'paso', Math.round(p.x - 85), Math.round(p.y - 29));
     STATE.nodes.push(n);
@@ -695,12 +937,27 @@ function registerEventListeners() {
     setSel({ kind: 'node', id: n.id });
   });
 
-  // Auto-fit on window resize
+  // Ajustar vista al rotar pantalla o redimensionar el ancho real (sin reencuadrar cuando se abre el teclado virtual móvil)
+  let lastViewportWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     if (!isMobileLayout()) closeMobilePalette();
-    requestAnimationFrame(() => {
-      fitView();
-    });
+    if (!isCompactSidebarLayout()) closeMobileRightPanel();
+    updateMobileNodeBar();
+
+    const widthChanged = Math.abs(window.innerWidth - lastViewportWidth) > 24;
+    const activeEl = document.activeElement;
+    const typingInField =
+      activeEl &&
+      (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+
+    if (widthChanged) {
+      lastViewportWidth = window.innerWidth;
+      if (!typingInField) {
+        requestAnimationFrame(() => {
+          fitView();
+        });
+      }
+    }
   });
 }
 

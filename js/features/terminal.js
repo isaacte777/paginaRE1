@@ -666,7 +666,20 @@
   // =========================================================================
   // PESTAÑAS, GAVETA DE PUENTE Y CONTROLES ESTILO VS CODE
   // =========================================================================
-  function switchTerminalTab(tab) {
+  function restoreConsoleIfMinimized() {
+    const wrap = document.getElementById('consoleWrap');
+    const toggleBtn = document.getElementById('btnToggleCon');
+    if (wrap && wrap.classList.contains('is-minimized')) {
+      wrap.classList.remove('is-minimized');
+      if (toggleBtn) {
+        toggleBtn.innerHTML =
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+        toggleBtn.title = 'Contraer terminal';
+      }
+    }
+  }
+
+  function switchTerminalTab(tab, shouldFocus = true) {
     activeTab = tab === 'log' ? 'log' : 'ps';
 
     const tabPS = document.getElementById('tabTermPS');
@@ -686,7 +699,7 @@
     if (activeTab === 'log') {
       unreadLogs = 0;
       if (badgeEl) badgeEl.hidden = true;
-    } else {
+    } else if (shouldFocus && !window.matchMedia('(pointer: coarse)').matches) {
       focusTerminalInput();
     }
   }
@@ -723,6 +736,7 @@
     if (btn) btn.classList.toggle('is-active', nextOpen);
 
     if (nextOpen) {
+      restoreConsoleIfMinimized();
       const urlInput = document.getElementById('termBridgeUrl');
       if (urlInput) urlInput.value = termConfig.bridgeUrl || 'http://127.0.0.1:8765';
       updateConnectionUI();
@@ -734,12 +748,14 @@
     const maxBtn = document.getElementById('btnMaxCon');
     if (!wrap) return;
 
+    restoreConsoleIfMinimized();
+
     if (!isMaximized) {
       savedHeightPx = wrap.offsetHeight || 185;
       wrap.style.height = Math.round(window.innerHeight * 0.56) + 'px';
       isMaximized = true;
     } else {
-      wrap.style.height = Math.max(140, savedHeightPx) + 'px';
+      wrap.style.height = Math.max(132, savedHeightPx) + 'px';
       isMaximized = false;
     }
 
@@ -750,6 +766,46 @@
         : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>';
     }
     scrollTerminalToBottom();
+  }
+
+  function initConsoleResizeHandle() {
+    const handle = document.getElementById('consoleResizeHandle');
+    const wrap = document.getElementById('consoleWrap');
+    if (!handle || !wrap) return;
+
+    let dragging = null;
+
+    handle.addEventListener('pointerdown', e => {
+      if (e.button && e.button !== 0) return;
+      restoreConsoleIfMinimized();
+      dragging = {
+        pointerId: e.pointerId,
+        startY: e.clientY,
+        startH: wrap.offsetHeight || 170
+      };
+      try { handle.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    });
+
+    handle.addEventListener('pointermove', e => {
+      if (!dragging || e.pointerId !== dragging.pointerId) return;
+      const deltaY = dragging.startY - e.clientY;
+      const minH = window.innerWidth <= 768 ? 116 : 130;
+      const maxH = Math.round(window.innerHeight * 0.68);
+      const nextH = Math.min(maxH, Math.max(minH, dragging.startH + deltaY));
+      wrap.style.height = Math.round(nextH) + 'px';
+      isMaximized = false;
+      e.preventDefault();
+    });
+
+    const stopResize = e => {
+      if (!dragging || (e && e.pointerId !== dragging.pointerId)) return;
+      try { handle.releasePointerCapture(dragging.pointerId); } catch {}
+      dragging = null;
+    };
+
+    handle.addEventListener('pointerup', stopResize);
+    handle.addEventListener('pointercancel', stopResize);
   }
 
   function focusTerminalInput() {
@@ -867,8 +923,14 @@
     });
 
     // Listeners de barra superior de terminal
-    document.getElementById('tabTermPS')?.addEventListener('click', () => switchTerminalTab('ps'));
-    document.getElementById('tabTermLog')?.addEventListener('click', () => switchTerminalTab('log'));
+    document.getElementById('tabTermPS')?.addEventListener('click', () => {
+      restoreConsoleIfMinimized();
+      switchTerminalTab('ps', true);
+    });
+    document.getElementById('tabTermLog')?.addEventListener('click', () => {
+      restoreConsoleIfMinimized();
+      switchTerminalTab('log', false);
+    });
 
     document.getElementById('btnTermNewSession')?.addEventListener('click', async () => {
       switchTerminalTab('ps');
@@ -905,7 +967,8 @@
     document.getElementById('btnTermKill')?.addEventListener('click', killRunningCommand);
     document.getElementById('btnMaxCon')?.addEventListener('click', toggleMaximizeConsole);
 
-    switchTerminalTab('ps');
+    initConsoleResizeHandle();
+    switchTerminalTab('ps', false);
     await autoDetectTerminalBackend(true);
   }
 

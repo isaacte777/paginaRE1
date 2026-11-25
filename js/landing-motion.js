@@ -34,4 +34,35 @@
     if (event.matches) document.documentElement.classList.remove('motion-ready');
     else startMotion();
   });
+
+  // Menú móvil desplegable en la cabecera de la portada
+  const navToggle = document.getElementById('navToggle');
+  const navLinks = document.getElementById('navLinks');
+  if (navToggle && navLinks) {
+    const closeNav = () => {
+      navLinks.classList.remove('is-open');
+      navToggle.setAttribute('aria-expanded', 'false');
+    };
+
+    navToggle.addEventListener('click', () => {
+      const next = !navLinks.classList.contains('is-open');
+      navLinks.classList.toggle('is-open', next);
+      navToggle.setAttribute('aria-expanded', String(next));
+    });
+
+    navLinks.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', closeNav);
+    });
+
+    document.addEventListener('pointerdown', e => {
+      if (!navLinks.classList.contains('is-open')) return;
+      if (!navLinks.contains(e.target) && !navToggle.contains(e.target)) {
+        closeNav();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 860) closeNav();
+    });
+  }
 })();

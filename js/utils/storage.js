@@ -9,7 +9,8 @@ function storagePayload() {
     snapOn: STATE.snapOn !== false,
     speed: Number(STATE.speed) || 1,
     title: document.getElementById('projTitle')?.value || '',
-    isBlankCanvas: STATE.isBlankCanvas === true
+    isBlankCanvas: STATE.isBlankCanvas === true,
+    activeProjectId: STATE.activeProjectId || null
   };
 }
 
@@ -59,9 +60,15 @@ function loadState() {
         STATE.snapOn = data.snapOn !== false;
         STATE.speed = Number(data.speed) || 1;
         STATE.isBlankCanvas = data.isBlankCanvas === true;
+        STATE.activeProjectId = typeof data.activeProjectId === 'string' ? data.activeProjectId : null;
         STATE.localSavedAt = Number(data.savedAt) || 0;
         STATE.persistenceFingerprint = data.fingerprint || storageFingerprint(data);
-        if (typeof data.title === 'string') document.getElementById('projTitle').value = data.title;
+        if (typeof data.title === 'string') {
+          const tEl = document.getElementById('projTitle');
+          const tMobEl = document.getElementById('projTitleMobile');
+          if (tEl) tEl.value = data.title;
+          if (tMobEl) tMobEl.value = data.title;
+        }
         restoredProject = true;
       }
     }
@@ -81,17 +88,22 @@ function loadState() {
 }
 
 function exportJSON() {
+  const titleVal = (document.getElementById('projTitle')?.value || '').trim() || 'proyecto';
+  const safeSlug = titleVal
+    .toLowerCase()
+    .replace(/[^a-z0-9áéíóúñ_-]+/gi, '_')
+    .replace(/^_+|_+$/g, '') || 'proyecto';
   const data = {
     nodes: STATE.nodes,
     edges: STATE.edges,
-    title: document.getElementById('projTitle').value,
+    title: titleVal,
     exported: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'flowlab-' + (+new Date()) + '.json';
+  a.download = `flowlab-${safeSlug}.json`;
   a.click();
   URL.revokeObjectURL(url);
   log('ok', 'JSON exportado');
@@ -107,11 +119,19 @@ function importProjectFile(file) {
         STATE.nodes = data.nodes || [];
         STATE.edges = data.edges || [];
         STATE.isBlankCanvas = STATE.nodes.length === 0;
-        if (data.title) document.getElementById('projTitle').value = data.title;
+        STATE.activeProjectId = null;
+        if (data.title) {
+          const pTitle = document.getElementById('projTitle');
+          const pTitleMob = document.getElementById('projTitleMobile');
+          if (pTitle) pTitle.value = data.title;
+          if (pTitleMob) pTitleMob.value = data.title;
+        }
         STATE.history = [];
         STATE.hPtr = -1;
         commitHistory();
         renderAll();
+        requestAnimationFrame(() => fitView());
+        if (typeof refreshProjectsUI === 'function') refreshProjectsUI();
         showToast('Proyecto JSON importado con éxito', 'ok');
         log('ok', 'Archivo JSON importado correctamente');
       } catch (e) {

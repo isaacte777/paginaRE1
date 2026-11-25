@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>FlowLab Modules Dashboard</title>
 <style>
 :root {
@@ -318,6 +318,56 @@ footer {
   margin-top: 40px;
   padding-top: 20px;
   border-top: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 22px 14px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  h1 {
+    font-size: 20px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .modules-container,
+  .architecture-grid,
+  .links-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .structure-section,
+  .architecture,
+  .quick-links {
+    padding: 16px 14px;
+  }
+
+  .structure-box {
+    overflow-x: auto;
+    white-space: pre;
+    font-size: 10.5px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 </head>

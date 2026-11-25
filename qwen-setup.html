@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Qwen Coder Setup</title>
 
 <style>
@@ -342,20 +347,54 @@ button.primary:hover {
   font-size: 12px;
 }
 
+@media (hover: none), (max-width: 768px) {
+  .copy-btn {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 600px) {
+  body {
+    padding: 16px 12px calc(24px + env(safe-area-inset-bottom));
+  }
+
   h1 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .step {
-    padding: 16px;
+    padding: 15px 14px;
+  }
+
+  .step-header {
+    align-items: flex-start;
+  }
+
+  .code-block {
+    padding: 36px 12px 12px;
+    font-size: 12px;
+  }
+
+  .model-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 6px 0;
   }
 
   .button-group {
     flex-direction: column;
   }
+
+  .button-group button,
+  .button-group .link-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>
+</head>
+<body>
 
 <div class="container">
   <div class="header">
@@ -580,7 +619,7 @@ button.primary:hover {
         <div style="padding: 8px 0; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 8px;">Modelos de Codificación</div>
         <div class="model-item">
           <span class="model-name">qwen2.5-coder-32b-instruct</span>
-          <span class="model-desc">⭐ MEJOR para desarrollo</span>
+          <span class="model-desc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-1px;display:inline-block" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> MEJOR para desarrollo</span>
         </div>
         <div class="model-item" style="margin-bottom: 12px;">
           <span class="model-name">qwen-coder-plus</span>
@@ -694,3 +733,5 @@ function copyCode(button) {
 // Inicializar
 updateProgress();
 </script>
+</body>
+</html>
