@@ -303,6 +303,7 @@
     if (tooltipEl) tooltipEl.hidden = true;
     if (typeof toggleExportPopover === 'function') toggleExportPopover(false);
     if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
+    if (typeof toggleUserWorkspacePopover === 'function') toggleUserWorkspacePopover(false);
     if (typeof hideNodeContextMenu === 'function') hideNodeContextMenu();
 
     const trigger = selectEl._flTrigger;

@@ -67,6 +67,10 @@ function applySharedProject(project) {
 }
 
 async function fetchSharedProject() {
+  if (typeof getActiveUser === 'function' && !getActiveUser().isGuest) {
+    setLiveSyncStatus('live', '● espacio privado');
+    return null;
+  }
   try {
     const response = await fetch(LIVE_SYNC.endpoint, { cache: 'no-store' });
     if (!response.ok) throw new Error('Respuesta ' + response.status);
@@ -93,6 +97,10 @@ async function fetchSharedProject() {
 
 async function publishSharedProject() {
   LIVE_SYNC.timer = null;
+  if (typeof getActiveUser === 'function' && !getActiveUser().isGuest) {
+    setLiveSyncStatus('live', '● espacio privado');
+    return;
+  }
   if (!LIVE_SYNC.ready || LIVE_SYNC.applying || LIVE_SYNC.publishing) return;
 
   const state = sharedProjectState();

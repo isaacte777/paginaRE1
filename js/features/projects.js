@@ -70,9 +70,15 @@
     return computeProjectContentFingerprint() !== STATE.savedBaselineFingerprint;
   }
 
+  function activeProjectsStorageKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('projects')
+      : CONFIG.PROJECTS_KEY;
+  }
+
   function getSavedProjects() {
     try {
-      const raw = localStorage.getItem(CONFIG.PROJECTS_KEY);
+      const raw = localStorage.getItem(activeProjectsStorageKey());
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
@@ -86,7 +92,7 @@
 
   function persistSavedProjects(list) {
     try {
-      localStorage.setItem(CONFIG.PROJECTS_KEY, JSON.stringify(list));
+      localStorage.setItem(activeProjectsStorageKey(), JSON.stringify(list));
       updateSavedProjectsBadge(list.length);
       return true;
     } catch (e) {
@@ -667,6 +673,7 @@
 
     if (typeof closeActiveDropdown === 'function') closeActiveDropdown(true);
     if (typeof toggleExportPopover === 'function') toggleExportPopover(false);
+    if (typeof toggleUserWorkspacePopover === 'function') toggleUserWorkspacePopover(false);
     if (typeof hideNodeContextMenu === 'function') hideNodeContextMenu();
 
     const quickInput = document.getElementById('quickSaveProjInput');

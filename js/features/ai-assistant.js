@@ -225,8 +225,20 @@
     }
   };
 
+  function activeAIConfigKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('ai-config')
+      : STORAGE_KEY;
+  }
+
+  function activeAIChatKey() {
+    return typeof getUserStorageKey === 'function'
+      ? getUserStorageKey('ai-chat')
+      : 'flowlab-ai-chat-v1';
+  }
+
   let aiConfig = loadAIConfig();
-  let messages = [];
+  let messages = loadAIChatHistory();
   let isGenerating = false;
   let currentAbort = null;
   let editingModeTab = aiConfig.mode === 'builtin' ? 'local' : aiConfig.mode;
@@ -241,7 +253,7 @@
 
   function loadAIConfig() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(activeAIConfigKey());
       if (!raw) return structuredCloneFallback(DEFAULT_CONFIG);
       const parsed = JSON.parse(raw);
       return {
@@ -256,13 +268,30 @@
     }
   }
 
+  function loadAIChatHistory() {
+    try {
+      const raw = localStorage.getItem(activeAIChatKey());
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.slice(-40) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveAIChatHistory() {
+    try {
+      localStorage.setItem(activeAIChatKey(), JSON.stringify((messages || []).slice(-40)));
+    } catch {}
+  }
+
   function structuredCloneFallback(obj) {
     return JSON.parse(JSON.stringify(obj));
   }
 
   function saveAIConfig() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(aiConfig));
+      localStorage.setItem(activeAIConfigKey(), JSON.stringify(aiConfig));
     } catch {}
     updateProviderHeaderUI();
   }
@@ -2208,7 +2237,8 @@
       .replace(/\n/g, '<br>');
   }
 
-  function renderAIMessages() {
+  function renderAIMessages(skipPersist = false) {
+    if (!skipPersist) saveAIChatHistory();
     const container = document.getElementById('aiMessages');
     if (!container) return;
 
@@ -2619,7 +2649,7 @@
   function initAIAssistant() {
     updateProviderHeaderUI();
     updateAIChatContextUI();
-    renderAIMessages();
+    renderAIMessages(true);
 
     document.getElementById('btnAiConfig')?.addEventListener('click', () => toggleConfigDrawer());
     document.getElementById('btnAiProviderPill')?.addEventListener('click', () => toggleConfigDrawer());
@@ -2725,8 +2755,25 @@
     });
   }
 
+  function reloadAIAssistantForActiveUser() {
+    if (currentAbort) {
+      try { currentAbort.abort(); } catch {}
+      currentAbort = null;
+    }
+    isGenerating = false;
+    aiConfig = loadAIConfig();
+    messages = loadAIChatHistory();
+    editingModeTab = aiConfig.mode === 'builtin' ? 'local' : aiConfig.mode;
+    connectionHealth = { state: 'idle', title: '', detail: '', resolvedEndpoint: '' };
+    toggleConfigDrawer(false);
+    updateProviderHeaderUI();
+    updateAIChatContextUI();
+    renderAIMessages(true);
+  }
+
   window.initAIAssistant = initAIAssistant;
   window.openAISidebarTab = openAISidebarTab;
   window.updateAIChatContextUI = updateAIChatContextUI;
   window.sendAIChatMessage = sendAIChatMessage;
+  window.reloadAIAssistantForActiveUser = reloadAIAssistantForActiveUser;
 })();
