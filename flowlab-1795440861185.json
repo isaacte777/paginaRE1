@@ -1,0 +1,386 @@
+{
+  "nodes": [
+    {
+      "id": "nrb9m9s",
+      "type": "start",
+      "text": "Comparación Precios\nINICIO",
+      "x": 400,
+      "y": 30,
+      "w": 158,
+      "h": 52,
+      "status": "done",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "nv2etyo",
+      "type": "process",
+      "text": "Obj. Técnicos:\n• Carga < 2s\n• Búsqueda < 500ms\n• Uptime 95%+\n• Tests 80%+",
+      "x": 80,
+      "y": 150,
+      "w": 170,
+      "h": 99,
+      "status": "done",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "n4g18ny",
+      "type": "process",
+      "text": "Obj. UX:\n• Comparar < 30s\n• Mobile 95+\n• WCAG AA\n• Rating 4.5/5",
+      "x": 300,
+      "y": 150,
+      "w": 170,
+      "h": 99,
+      "status": "done",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "n1bvqa7",
+      "type": "process",
+      "text": "Obj. Negocio:\n• 10K usuarios\n• 100K productos\n• 50 vendors\n• Retención 70%",
+      "x": 520,
+      "y": 150,
+      "w": 170,
+      "h": 99,
+      "status": "done",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "n3ubi8c",
+      "type": "process",
+      "text": "Obj. Integración:\n• FlowLab sync\n• Auth compartida\n• Design unificado\n• Estado central",
+      "x": 740,
+      "y": 150,
+      "w": 170,
+      "h": 99,
+      "status": "done",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "nhxaxgp",
+      "type": "process",
+      "text": "FASE 1: MVP\nSem 1-2 | 60h\n• Búsqueda básica\n• Tabla comparativa\n• API scaffold",
+      "x": 80,
+      "y": 320,
+      "w": 170,
+      "h": 99,
+      "status": "progress",
+      "progress": 60,
+      "current": true,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "n00it0x",
+      "type": "process",
+      "text": "FASE 2: Core\nSem 3-4 | 80h\n• Filtros avanzados\n• Gráficos precio\n• Persistencia",
+      "x": 300,
+      "y": 320,
+      "w": 170,
+      "h": 99,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "ngw4rp1",
+      "type": "process",
+      "text": "FASE 3: Advanced\nSem 5-6 | 100h\n• Alertas de precio\n• WebSocket live\n• Analytics",
+      "x": 520,
+      "y": 320,
+      "w": 170,
+      "h": 99,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "na0tb31",
+      "type": "process",
+      "text": "FASE 4: Polish\nSem 7-8 | 60h\n• Performance\n• Mobile polish\n• Tests > 80%",
+      "x": 740,
+      "y": 320,
+      "w": 170,
+      "h": 99,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "nmvnrgo",
+      "type": "parallel",
+      "text": "FEATURES:\nBúsqueda | Comparar\nAlertas | Live Prices\nVendors | Historial",
+      "x": 400,
+      "y": 480,
+      "w": 150,
+      "h": 81,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "nb9ywrx",
+      "type": "db",
+      "text": "ARQUITECTURA:\nFrontend: Vanilla+Chart\nBackend: Express+PG\nCache: Redis\nRealtime: WS",
+      "x": 180,
+      "y": 620,
+      "w": 160,
+      "h": 103,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "nbneors",
+      "type": "api",
+      "text": "INTEGRACIÓN FlowLab:\njs/features/price-comp/\nExtender STATE\nCSS: theme.css\nUI: FlowLab patterns",
+      "x": 620,
+      "y": 620,
+      "w": 176,
+      "h": 99,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "no19kb6",
+      "type": "decision",
+      "text": "¿Tests > 80%\ny Perf < 2s?",
+      "x": 400,
+      "y": 750,
+      "w": 172,
+      "h": 114,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "n93c78u",
+      "type": "hook",
+      "text": "DEPLOY:\nDocker container\nCI/CD GitHub Actions\nSentry monitoring",
+      "x": 400,
+      "y": 890,
+      "w": 170,
+      "h": 83,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "nbsdk28",
+      "type": "end",
+      "text": "Página Comparación\nPUBLICADA ✓",
+      "x": 400,
+      "y": 1020,
+      "w": 158,
+      "h": 52,
+      "status": "pending",
+      "progress": 0,
+      "current": false,
+      "state": "idle",
+      "params": []
+    },
+    {
+      "id": "n7a8r0b",
+      "type": "metrics",
+      "text": "Métrica Eficiencia:\n• ROI: +34.2%\n• Throughput: 140 op/s\n• Latencia: 42ms\n• Uptime: 99.98%",
+      "x": 400,
+      "y": 1160,
+      "w": 320,
+      "h": 180,
+      "status": "done",
+      "progress": 100,
+      "current": false,
+      "state": "idle",
+      "params": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "ejajqda",
+      "from": "nrb9m9s",
+      "to": "nv2etyo",
+      "label": "Técnico",
+      "kind": "normal"
+    },
+    {
+      "id": "e7ibi58",
+      "from": "nrb9m9s",
+      "to": "n4g18ny",
+      "label": "UX",
+      "kind": "normal"
+    },
+    {
+      "id": "ei4jt7b",
+      "from": "nrb9m9s",
+      "to": "n1bvqa7",
+      "label": "Negocio",
+      "kind": "normal"
+    },
+    {
+      "id": "e8t2g47",
+      "from": "nrb9m9s",
+      "to": "n3ubi8c",
+      "label": "Sync",
+      "kind": "normal"
+    },
+    {
+      "id": "eg30ycd",
+      "from": "nv2etyo",
+      "to": "nhxaxgp",
+      "label": "Reqs",
+      "kind": "normal"
+    },
+    {
+      "id": "e0ztj4b",
+      "from": "n4g18ny",
+      "to": "nhxaxgp",
+      "label": "UX spec",
+      "kind": "normal"
+    },
+    {
+      "id": "exivj91",
+      "from": "n1bvqa7",
+      "to": "nhxaxgp",
+      "label": "Scope",
+      "kind": "normal"
+    },
+    {
+      "id": "epkwi01",
+      "from": "n3ubi8c",
+      "to": "nhxaxgp",
+      "label": "Arch",
+      "kind": "normal"
+    },
+    {
+      "id": "edwhfnb",
+      "from": "nhxaxgp",
+      "to": "n00it0x",
+      "label": "MVP listo",
+      "kind": "normal"
+    },
+    {
+      "id": "e9cq9j3",
+      "from": "n00it0x",
+      "to": "ngw4rp1",
+      "label": "Core listo",
+      "kind": "normal"
+    },
+    {
+      "id": "ei3qikf",
+      "from": "ngw4rp1",
+      "to": "na0tb31",
+      "label": "Adv listo",
+      "kind": "normal"
+    },
+    {
+      "id": "ecmizi5",
+      "from": "nhxaxgp",
+      "to": "nmvnrgo",
+      "label": "Entrega",
+      "kind": "normal"
+    },
+    {
+      "id": "e8e9h13",
+      "from": "n00it0x",
+      "to": "nmvnrgo",
+      "label": "Expande",
+      "kind": "normal"
+    },
+    {
+      "id": "efupfjw",
+      "from": "ngw4rp1",
+      "to": "nmvnrgo",
+      "label": "Completa",
+      "kind": "normal"
+    },
+    {
+      "id": "eth40ld",
+      "from": "nmvnrgo",
+      "to": "nb9ywrx",
+      "label": "Tech",
+      "kind": "normal"
+    },
+    {
+      "id": "e1lhv0w",
+      "from": "nmvnrgo",
+      "to": "nbneors",
+      "label": "Sync",
+      "kind": "normal"
+    },
+    {
+      "id": "el9peys",
+      "from": "nb9ywrx",
+      "to": "no19kb6",
+      "label": "Build",
+      "kind": "normal"
+    },
+    {
+      "id": "ea1q3m3",
+      "from": "nbneors",
+      "to": "no19kb6",
+      "label": "Integ",
+      "kind": "normal"
+    },
+    {
+      "id": "e4m160w",
+      "from": "na0tb31",
+      "to": "no19kb6",
+      "label": "Audit",
+      "kind": "normal"
+    },
+    {
+      "id": "eh23s87",
+      "from": "no19kb6",
+      "to": "n93c78u",
+      "label": "Sí (Aprobado)",
+      "kind": "normal"
+    },
+    {
+      "id": "e7jyelc",
+      "from": "n93c78u",
+      "to": "nbsdk28",
+      "label": "En producción",
+      "kind": "normal"
+    },
+    {
+      "id": "e378cvk",
+      "from": "nbsdk28",
+      "to": "n7a8r0b",
+      "label": "Performance",
+      "kind": "normal"
+    }
+  ],
+  "title": "Pruebas...",
+  "exported": "2026-11-23T13:34:21.184Z"
+}

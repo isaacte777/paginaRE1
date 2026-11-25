@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="FlowLab convierte procesos complejos en flujos visuales claros, editables y accionables.">
+  <title>FlowLab · flujos de trabajo visuales</title>
+  <link rel="icon" type="image/jpeg" href="isologo_1.jpg">
+  <link rel="apple-touch-icon" href="isologo_1.jpg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/latin-400.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/latin-500.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/fontsource/css/jetbrains-mono@latest/latin-700.css">
+  <link rel="stylesheet" href="css/landing.css">
+  <script src="js/landing-motion.js" defer></script>
+  <script src="js/landing-flow-demo.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav" aria-label="Navegación principal">
+      <a class="brand" href="#inicio" aria-label="FlowLab, inicio">
+        <span class="brand-mark" aria-hidden="true"><img src="20261123_154131_0_UTC_0.png" alt=""></span>
+        <span>flowlab</span><span class="brand-sub">--paginaRE</span>
+      </a>
+      <div class="nav-links">
+        <a href="#capacidades">capacidades</a>
+        <a href="#demo">demo</a>
+        <a href="#como-funciona">cómo funciona</a>
+        <a href="#empezar">empezar</a>
+      </div>
+      <a class="button small" href="coordination.html">Abrir espacio de trabajo <span aria-hidden="true">↗</span></a>
+    </nav>
+
+    <main id="inicio">
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <div class="eyebrow" data-reveal><span class="status-dot" aria-hidden="true"></span>Sistema visual de operaciones</div>
+          <h1 id="hero-title" data-reveal data-reveal-delay="1">Convierte tus procesos<br><span class="muted">en un plan</span> <span class="accent">claro.</span></h1>
+          <p class="hero-copy" data-reveal data-reveal-delay="2">FlowLab es un espacio visual para diseñar, entender y seguir procesos. Organiza tareas, decisiones, automatizaciones y métricas en un solo flujo que todo tu equipo puede leer.</p>
+          <div class="hero-actions" data-reveal data-reveal-delay="3">
+            <a class="button primary" href="coordination.html">Entrar al espacio de trabajo <span aria-hidden="true">→</span></a>
+            <a class="button" href="#demo">Ver demostración <span aria-hidden="true">↓</span></a>
+          </div>
+          <p class="hero-note" data-reveal data-reveal-delay="4">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            Sin instalación · abre, edita y exporta tu flujo
+          </p>
+        </div>
+
+        <div class="workspace-preview flow-demo" id="flowDemo" data-reveal="right" data-reveal-delay="2" aria-label="Mini demostración interactiva de FlowLab">
+          <div class="preview-topbar">
+            <span class="traffic" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="preview-title">orquestador_paginaRE</span>
+            <span class="preview-live">● activo</span>
+          </div>
+          <div class="preview-body">
+            <aside class="preview-toolbox" aria-label="Añadir nodos a la demostración">
+              <div class="preview-label">// flujo</div>
+              <button class="preview-tool" type="button" data-demo-add="start"><i class="demo-tool-icon start"></i><span>inicio</span></button>
+              <button class="preview-tool" type="button" data-demo-add="process"><i class="demo-tool-icon process"></i><span>proceso</span></button>
+              <button class="preview-tool" type="button" data-demo-add="decision"><i class="demo-tool-icon decision"></i><span>decisión</span></button>
+              <button class="preview-tool" type="button" data-demo-add="end"><i class="demo-tool-icon end"></i><span>fin</span></button>
+              <div class="preview-label" style="margin-top:15px">// datos</div>
+              <button class="preview-tool" type="button" data-demo-add="data"><i class="demo-tool-icon data"></i><span>dato</span></button>
+            </aside>
+            <div class="preview-canvas demo-canvas" id="demoCanvas" role="application" aria-label="Lienzo de demostración. Selecciona, mueve o añade nodos.">
+              <svg class="demo-edges" id="demoEdges" aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+            </div>
+            <aside class="preview-panel demo-panel" id="demoPanel" aria-live="polite"><strong>props</strong><p>Selecciona un nodo para ver sus propiedades, nombre y posición.</p></aside>
+          </div>
+          <div class="preview-footer"><button class="demo-run" id="demoRun" type="button">▶ ejecutar</button><span class="terminal" id="demoTerminal">PS C:\paginaRE&gt; listo</span><button class="demo-reset" id="demoReset" type="button" title="Restablecer demostración">↺</button></div>
+        </div>
+      </section>
+
+      <section id="demo" class="demo-section" data-reveal aria-labelledby="demo-title">
+        <div class="demo-head">
+          <div>
+            <p class="section-kicker">Míralo en acción</p>
+            <h2 id="demo-title">Así se construye un flujo<br>en FlowLab.</h2>
+          </div>
+          <p>Una demostración rápida para ver cómo abrir las herramientas, añadir nodos, conectarlos y organizar el trabajo en el lienzo.</p>
+        </div>
+        <div class="demo-frame">
+          <div class="demo-bar">
+            <span><i class="demo-live-dot" aria-hidden="true"></i>demostración de uso</span>
+            <span>FlowLab workspace</span>
+          </div>
+          <video class="demo-video" autoplay muted loop playsinline preload="auto" aria-describedby="demo-caption">
+            <source src="Recording_23_11_2026_11_54_36.mp4" type="video/mp4">
+            Tu navegador no puede reproducir este video. Puedes <a href="Recording_23_11_2026_11_54_36.mp4">abrir la demostración</a> directamente.
+          </video>
+        </div>
+        <p id="demo-caption" class="demo-caption">Reprodutor automatico</p>
+      </section>
+
+      <section id="capacidades" class="section" data-reveal aria-labelledby="capabilities-title">
+        <div class="section-head">
+          <p class="section-kicker">Todo en un solo lienzo</p>
+          <h2 id="capabilities-title">Menos incertidumbre.<br>Más visibilidad.</h2>
+          <p class="section-intro">De una idea inicial a una operación que puedes seguir: FlowLab reúne los elementos que necesitas para convertir trabajo complejo en pasos concretos.</p>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card" data-reveal data-reveal-delay="1">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><path d="M10 6.5h4M17.5 10v4"/></svg></div>
+            <h3>Flujos visuales</h3><p>Diseña procesos con nodos para tareas, decisiones, datos, sistemas y personas. Todo se entiende de un vistazo.</p>
+          </article>
+          <article class="feature-card" data-reveal data-reveal-delay="2">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5M4 19h16"/><path d="m7 15 4-4 3 2 5-6"/></svg></div>
+            <h3>Estado en tiempo real</h3><p>Marca avances, detecta bloqueos y conserva el contexto de cada paso para saber qué necesita atención.</p>
+          </article>
+          <article class="feature-card" data-reveal data-reveal-delay="3">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M3 12h18"/><circle cx="12" cy="12" r="9"/></svg></div>
+            <h3>De simple a completo</h3><p>Comienza con un flujo pequeño y extiéndelo con ramas, validaciones, métricas y conectores cuando lo necesites.</p>
+          </article>
+          <article class="feature-card" data-reveal data-reveal-delay="1">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 17 17 7M7 7h10v10"/><path d="M4 4h7M4 4v7M20 20h-7m7 0v-7"/></svg></div>
+            <h3>Control total del lienzo</h3><p>Arrastra, conecta, edita, filtra y ajusta la vista. El diagrama responde a tu manera de trabajar.</p>
+          </article>
+          <article class="feature-card" data-reveal data-reveal-delay="2">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg></div>
+            <h3>Exporta y comparte</h3><p>Guarda el proyecto en JSON o lleva tu flujo a Markdown, PNG y SVG para documentarlo donde haga falta.</p>
+          </article>
+          <article class="feature-card" data-reveal data-reveal-delay="3">
+            <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z"/><path d="M12 6v6l4 2"/></svg></div>
+            <h3>Hecho para avanzar</h3><p>Una interfaz enfocada y sin ruido para pasar de la planificación a la ejecución con claridad.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="como-funciona" class="how" data-reveal aria-labelledby="how-title">
+        <div class="how-inner">
+          <div class="section-head">
+            <p class="section-kicker">Una forma simple de empezar</p>
+            <h2 id="how-title">De idea a flujo<br>en minutos.</h2>
+            <p class="section-intro">No necesitas cambiar tu forma de pensar: solo ponla en el lienzo, conecta los pasos y úsala para orientar el siguiente movimiento.</p>
+          </div>
+          <div class="steps">
+            <article class="step"><span class="step-number">01</span><h3>Elige un punto de partida</h3><p>Abre un lienzo nuevo o carga una plantilla para un proyecto, una automatización o un proceso financiero.</p></article>
+            <article class="step"><span class="step-number">02</span><h3>Conecta el trabajo</h3><p>Agrega nodos, relaciona dependencias y deja visibles las bifurcaciones importantes de tu proceso.</p></article>
+            <article class="step"><span class="step-number">03</span><h3>Ejecuta con contexto</h3><p>Actualiza los estados, revisa bloqueos y exporta una vista compartible cuando el flujo esté listo.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="empezar" class="cta" data-reveal aria-labelledby="cta-title">
+        <div class="cta-box">
+          <p class="section-kicker">Tu espacio está listo</p>
+          <h2 id="cta-title">Dale estructura a lo que sigue.</h2>
+          <p>Entra al área de trabajo y convierte tu primer proceso en un flujo que puedas entender, mejorar y compartir.</p>
+          <a class="button primary" href="coordination.html">Abrir FlowLab <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span><span class="brand-prompt">&gt;</span> flowlab <span class="brand-sub">· paginaRE</span></span>
+      <span class="footer-status"><span class="status-dot" aria-hidden="true"></span>espacio de trabajo disponible</span>
+    </footer>
+  </div>
+</body>
+</html>
