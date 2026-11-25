@@ -12,6 +12,230 @@ header {
   box-shadow: inset 0 1px 0 rgba(134, 239, 172, 0.05), 0 1px 0 rgba(74, 222, 128, 0.05);
 }
 
+header.app-header {
+  flex-direction: column;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  gap: 0;
+  padding: 0;
+  background: linear-gradient(180deg, #15171a 0%, var(--bg1) 100%);
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.header-top {
+  padding: 8px 16px;
+}
+
+.header-bar {
+  padding: 6px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(11, 13, 15, 0.45);
+}
+
+.header-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.header-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  flex: 0 0 1px;
+}
+
+.header-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 10px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  min-width: 0;
+}
+
+.header-field:hover {
+  border-color: var(--line2);
+}
+
+.header-field:focus-within {
+  border-color: var(--green-strong);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.header-title-field {
+  flex: 0 1 250px;
+  min-width: 145px;
+}
+
+.header-search-field {
+  flex: 0 1 195px;
+  min-width: 120px;
+  background: rgba(26, 28, 30, 0.72);
+}
+
+.field-prefix {
+  font: 500 10px 'JetBrains Mono', monospace;
+  color: var(--tx3);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.field-icon {
+  color: var(--tx3);
+  flex: 0 0 auto;
+}
+
+.header-status-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.bridge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(74, 222, 128, 0.06);
+  border: 1px solid rgba(74, 222, 128, 0.22);
+  font-size: 10px;
+  color: var(--tx1);
+  white-space: nowrap;
+}
+
+.template-module {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 8px 0 10px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  flex: 0 0 auto;
+  width: auto;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+
+.template-module:hover {
+  border-color: rgba(134, 239, 172, 0.55);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.template-module:focus-within {
+  border-color: var(--green-strong);
+  box-shadow: 0 0 0 3px var(--green-soft);
+}
+
+.template-module__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green-strong);
+  flex: 0 0 auto;
+  pointer-events: none;
+}
+
+.app-header #templateSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  width: auto;
+  min-width: 150px;
+  max-width: 195px;
+  height: 100%;
+  padding: 0 22px 0 2px;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b9095' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 2px center;
+  font: 500 11px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+  cursor: pointer;
+  box-shadow: none;
+  outline: none;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.action-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  height: 32px;
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.cluster-sep {
+  width: 1px;
+  height: 16px;
+  margin: 0 2px;
+  background: var(--line);
+  flex: 0 0 1px;
+}
+
+.action-cluster .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.action-cluster .btn:hover {
+  border-color: rgba(134, 239, 172, 0.38);
+  background: rgba(74, 222, 128, 0.09);
+  color: var(--green);
+}
+
+.action-cluster .btn.btn-icon {
+  width: 28px;
+  padding: 0;
+}
+
+.app-header #btnNew {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+
 .dots {
   display: flex;
   gap: 5px;
@@ -56,9 +280,9 @@ header {
 .app-logo-mark {
   position: relative;
   display: block;
-  width: 46px;
-  height: 36px;
-  flex: 0 0 46px;
+  width: 44px;
+  height: 34px;
+  flex: 0 0 44px;
   overflow: hidden;
   border: 1px solid rgba(134, 239, 172, .2);
   border-radius: 9px;
@@ -70,25 +294,31 @@ header {
   position: absolute;
   /* Solo se muestra el isologo central del PNG; el texto queda por debajo
      del área recortada del marco. */
-  width: 120px;
+  width: 116px;
   max-width: none;
   height: auto;
-  transform: translate(-37px, -34px);
+  transform: translate(-36px, -33px);
 }
 
 #projTitle, #searchBox {
-  flex: 0 1 auto;
-  min-width: 110px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 6px 9px;
-  font: 400 11.5px 'JetBrains Mono';
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font: 500 11.5px 'JetBrains Mono', monospace;
   color: var(--tx0);
-  background: var(--bg2);
+  background: transparent;
   outline: none;
+  box-shadow: none;
 }
 
-#projTitle:focus, #searchBox:focus, #consoleInput:focus {
+#searchBox {
+  font-weight: 400;
+}
+
+#consoleInput:focus {
   border-color: var(--green-strong);
   box-shadow: 0 0 0 3px var(--green-soft);
 }
@@ -137,23 +367,26 @@ select option {
 }
 
 #bridgeDot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--green-strong);
-  box-shadow: 0 0 0 3px rgba(74, 222, 128, .1);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, .12);
   display: inline-block;
-  margin-right: 5px;
+  margin-right: 0;
   animation: blink 1.2s steps(1) infinite;
 }
 
 .live-sync-status {
-  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--bg2);
   color: var(--tx3);
-  font-size: 9px;
+  font-size: 9.5px;
   white-space: nowrap;
 }
 
