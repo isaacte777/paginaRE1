@@ -36,6 +36,7 @@ function initApp() {
   initPanelTabs();
   initChat();
   initHeaderTooltips();
+  if (typeof initCustomDropdowns === 'function') initCustomDropdowns();
   initConsoleResize();
   initConsoleInput();
   initDraggableExportPopover();
