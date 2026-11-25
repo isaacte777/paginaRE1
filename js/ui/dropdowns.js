@@ -185,39 +185,53 @@
       return;
     }
 
+    const vv = window.visualViewport;
+    const vpWidth = vv ? vv.width : window.innerWidth;
+    const vpHeight = vv ? vv.height : window.innerHeight;
+    const vpTop = vv ? vv.offsetTop : 0;
+    const vpLeft = vv ? vv.offsetLeft : 0;
+
     const rect = anchor.getBoundingClientRect();
     let minWidth = rect.width;
     if (selectEl.id === 'templateSelect') {
-      minWidth = Math.max(rect.width, 248);
+      minWidth = Math.max(rect.width, 236);
     } else if (selectEl.id === 'speedSel') {
-      minWidth = Math.max(rect.width, 136);
+      minWidth = Math.max(rect.width, 132);
     } else {
-      minWidth = Math.max(rect.width, 168);
+      minWidth = Math.max(rect.width, 164);
     }
 
+    const maxAllowedW = Math.max(140, vpWidth - 16);
+    minWidth = Math.min(minWidth, maxAllowedW);
+
     menu.style.minWidth = Math.round(minWidth) + 'px';
-    menu.style.maxWidth = Math.min(340, window.innerWidth - 16) + 'px';
+    menu.style.maxWidth = Math.round(Math.min(340, maxAllowedW)) + 'px';
+
+    const listEl = menu.querySelector('.fl-dropdown-list');
+    if (listEl) {
+      listEl.style.maxHeight = Math.round(Math.min(280, Math.max(140, vpHeight - 80))) + 'px';
+    }
 
     const menuRect = menu.getBoundingClientRect();
     const mW = menuRect.width || minWidth;
     const mH = menuRect.height || 180;
 
-    const spaceBelow = window.innerHeight - rect.bottom - 10;
-    const spaceAbove = rect.top - 10;
+    const spaceBelow = vpTop + vpHeight - rect.bottom - 10;
+    const spaceAbove = rect.top - vpTop - 10;
     const openUpward = spaceBelow < mH && spaceAbove > spaceBelow;
 
     menu.dataset.side = openUpward ? 'top' : 'bottom';
 
     const top = openUpward
-      ? Math.max(8, rect.top - mH - 6)
-      : Math.min(window.innerHeight - mH - 8, rect.bottom + 6);
+      ? Math.max(vpTop + 8, rect.top - mH - 6)
+      : Math.min(vpTop + vpHeight - mH - 8, rect.bottom + 6);
 
     let left = rect.left;
     if (selectEl.id === 'speedSel') {
       // Alinear al borde derecho en controles inferiores derechos
       left = rect.right - mW;
     }
-    left = Math.min(Math.max(8, left), Math.max(8, window.innerWidth - mW - 8));
+    left = Math.min(Math.max(vpLeft + 8, left), Math.max(vpLeft + 8, vpLeft + vpWidth - mW - 8));
 
     menu.style.top = Math.round(top) + 'px';
     menu.style.left = Math.round(left) + 'px';
@@ -555,6 +569,12 @@
     window.addEventListener('resize', () => {
       if (activeDropdown) positionDropdownMenu(activeDropdown);
     });
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => {
+        if (activeDropdown) positionDropdownMenu(activeDropdown);
+      });
+    }
 
     window.addEventListener(
       'scroll',

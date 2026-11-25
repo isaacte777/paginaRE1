@@ -664,3 +664,56 @@ body.palette-drag-active * {
   paint-order: stroke;
   text-anchor: middle;
 }
+
+/* Optimización táctil para teléfonos y tablets (puertos y líneas cómodos al dedo) */
+@media (pointer: coarse), (max-width: 768px) {
+  .port {
+    width: 16px;
+    height: 16px;
+    border-width: 2.2px;
+  }
+
+  /* Área táctil ampliada a 32x32 px sin engrosar visualmente el diagrama */
+  .port::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+  }
+
+  .port[data-side="top"] {
+    top: -9px;
+    margin-left: -8px;
+  }
+
+  .port[data-side="bottom"] {
+    bottom: -9px;
+    margin-left: -8px;
+  }
+
+  .port[data-side="left"] {
+    left: -9px;
+    margin-top: -8px;
+  }
+
+  .port[data-side="right"] {
+    right: -9px;
+    margin-top: -8px;
+  }
+
+  .node.selected .port {
+    opacity: 1;
+    background: #0f2417;
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.22);
+  }
+
+  .lock-badge {
+    padding: 4px;
+    top: 3px;
+    right: 4px;
+  }
+
+  .edge-hit {
+    stroke-width: 26;
+  }
+}

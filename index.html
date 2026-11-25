@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="FlowLab convierte procesos complejos en flujos visuales claros, editables y accionables.">
   <title>FlowLab · flujos de trabajo visuales</title>
   <link rel="icon" type="image/jpeg" href="isologo_1.jpg">
@@ -21,13 +21,18 @@
         <span class="brand-mark" aria-hidden="true"><img src="20261123_154131_0_UTC_0.png" alt=""></span>
         <span>flowlab</span><span class="brand-sub">--paginaRE</span>
       </a>
-      <div class="nav-links">
+      <div class="nav-links" id="navLinks">
         <a href="#capacidades">capacidades</a>
         <a href="#demo">demo</a>
         <a href="#como-funciona">cómo funciona</a>
         <a href="#empezar">empezar</a>
       </div>
-      <a class="button small" href="coordination.html">Abrir espacio de trabajo <span aria-hidden="true">↗</span></a>
+      <div class="nav-actions">
+        <a class="button small" href="coordination.html">Abrir espacio <span class="nav-cta-extra">de trabajo </span><span aria-hidden="true">↗</span></a>
+        <button type="button" class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="navLinks" aria-label="Abrir menú de navegación">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
     </nav>
 
     <main id="inicio">
