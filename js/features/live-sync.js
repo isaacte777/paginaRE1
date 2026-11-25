@@ -6,6 +6,7 @@ const LIVE_SYNC = {
   // El equipo que ejecuta XAMPP publica el primer estado. Los visitantes no
   // pueden reemplazar accidentalmente un proyecto a\u00fan sin inicializar.
   isHost: ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+    || window.location.hostname.endsWith('.e2b.app')
     || new URLSearchParams(window.location.search).has('host'),
   revision: 0,
   ready: false,
@@ -160,6 +161,10 @@ function localProjectIsNewerThan(project) {
 
 async function initLiveSync() {
   LIVE_SYNC.status = document.getElementById('liveSyncStatus');
+  if (window.location.hostname.endsWith('.github.io')) {
+    setLiveSyncStatus('live', '● guardado local');
+    return;
+  }
   setLiveSyncStatus('syncing', '◌ conectando');
 
   const remoteProject = await fetchSharedProject();

@@ -45,7 +45,7 @@ select, .btn {
 input[type="number"],
 input[type="text"],
 textarea,
-select {
+select:not(#templateSelect):not(#speedSel) {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -55,10 +55,15 @@ select {
   background: var(--bg2);
 }
 
+#speedSel {
+  width: auto;
+  padding: 3px 6px;
+}
+
 input[type="number"]:focus,
 input[type="text"]:focus,
 textarea:focus,
-select:focus {
+select:not(#templateSelect):focus {
   border-color: var(--green-strong);
   box-shadow: 0 0 0 3px var(--green-soft);
   outline: none;
@@ -789,6 +794,12 @@ input[type="checkbox"] {
   .toolbox {
     width: 170px;
   }
+
+  .app-header .dots,
+  .app-header .header-divider,
+  .app-header .field-prefix {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
@@ -865,20 +876,36 @@ input[type="checkbox"] {
     min-height: 100dvh;
   }
 
-  header {
+  header,
+  header.app-header {
     flex: 0 0 var(--mobile-header-height);
     height: var(--mobile-header-height);
     min-height: var(--mobile-header-height);
     padding: 7px 8px;
     gap: 5px;
     flex-direction: row;
+    align-items: center;
     flex-wrap: nowrap;
     overflow: hidden;
+  }
+
+  .app-header .header-row,
+  .app-header .header-brand-group,
+  .app-header .template-module,
+  .app-header .header-actions,
+  .app-header .action-cluster {
+    display: contents;
   }
 
   header > .dots,
   header > .spacer,
   header > span:not(.logo),
+  .app-header .dots,
+  .app-header .header-divider,
+  .app-header .header-field,
+  .app-header .header-status-group,
+  .app-header .template-module__icon,
+  .app-header .cluster-sep,
   #projTitle,
   #searchBox,
   #btnJson,
@@ -900,6 +927,12 @@ input[type="checkbox"] {
     height: 30px;
     min-width: 30px;
     padding: 4px 7px;
+  }
+
+  .app-header .action-cluster .btn {
+    border: 1px solid var(--line);
+    background: var(--bg2);
+    border-radius: 6px;
   }
 
   #btnMenu {
@@ -932,14 +965,19 @@ input[type="checkbox"] {
     display: none;
   }
 
-  #templateSelect {
+  #templateSelect,
+  .app-header #templateSelect {
     flex: 1 1 76px;
     width: auto;
     min-width: 68px;
-    max-width: 112px;
+    max-width: 120px;
     height: 30px;
     margin: 0;
-    padding: 4px 6px;
+    padding: 4px 20px 4px 7px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background-color: var(--bg2);
+    background-position: right 6px center;
     font-size: 10px;
   }
 
@@ -1192,7 +1230,8 @@ input[type="checkbox"] {
     max-width: 44px;
   }
 
-  #templateSelect {
+  #templateSelect,
+  .app-header #templateSelect {
     min-width: 62px;
     max-width: 82px;
   }

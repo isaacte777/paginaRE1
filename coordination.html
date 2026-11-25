@@ -17,33 +17,73 @@
 </head>
 <body>
 
-<header>
-  <div class="dots"><span></span><span></span><span></span></div>
-  <button class="btn" id="btnMenu" title="Menú de herramientas" onclick="document.getElementById('palette').classList.toggle('mobile-open')" style="display:none">☰</button>
-  <a class="logo" href="index.html" title="Volver a la portada" aria-label="FlowLab: volver a la portada"><span class="app-logo-mark" aria-hidden="true"><img src="20261123_154131_0_UTC_0.png" alt=""></span></a>
-  <input id="projTitle" placeholder="título_proyecto" value="orquestador_paginaRE">
-  <input id="searchBox" placeholder="/buscar">
-  <span style="font-size:10px;color:var(--tx2)"><span id="bridgeDot"></span>Claude+Qwen activo</span>
-  <span id="liveSyncStatus" class="live-sync-status" data-state="syncing" aria-live="polite">◌ conectando</span>
-  <div class="spacer"></div>
-  <select id="templateSelect">
-    <option value="">plantillas::</option>
-    <option value="comparacion_precios">comparacion_precios</option>
-    <option value="orquestador">orquestador_ia</option>
-    <option value="web">proyecto_web</option>
-    <option value="contratacion">contratacion_personal</option>
-    <option value="personal">plan_personal</option>
-    <option value="complex">pipeline_complejo</option>
-    <option value="blank">lienzo_blanco</option>
-  </select>
-  <button class="btn" id="btnJson">.json</button>
-  <button class="btn" id="btnLoad">abrir</button>
-  <button class="btn" id="btnMermaid">.md</button>
-  <button class="btn" id="btnPng">.png</button>
-  <button class="btn" id="btnChat" title="panel de chat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
-  <button class="btn" id="btnInsp" title="inspector"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-  <button class="btn" id="btnExp" title="exportar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
-  <button class="btn primary" id="btnNew">nuevo</button>
+<header class="app-header">
+  <div class="header-row header-top">
+    <div class="header-brand-group">
+      <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      <button class="btn" id="btnMenu" title="Menú de herramientas" onclick="document.getElementById('palette').classList.toggle('mobile-open')" style="display:none">☰</button>
+      <a class="logo" href="index.html" title="Volver a la portada" aria-label="FlowLab: volver a la portada"><span class="app-logo-mark" aria-hidden="true"><img src="20261123_154131_0_UTC_0.png" alt=""></span></a>
+      <span class="header-divider" aria-hidden="true"></span>
+      <label class="header-field header-title-field" for="projTitle">
+        <span class="field-prefix" aria-hidden="true">proyecto::</span>
+        <input id="projTitle" placeholder="título_proyecto" value="orquestador_paginaRE">
+      </label>
+      <label class="header-field header-search-field" for="searchBox">
+        <svg class="field-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="searchBox" placeholder="/buscar">
+      </label>
+    </div>
+
+    <div class="header-status-group">
+      <span class="bridge-pill"><span id="bridgeDot"></span>Claude+Qwen activo</span>
+      <span id="liveSyncStatus" class="live-sync-status" data-state="syncing" aria-live="polite">◌ conectando</span>
+    </div>
+  </div>
+
+  <div class="header-row header-bar">
+    <div class="template-module">
+      <span class="template-module__icon" aria-hidden="true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
+      </span>
+      <select id="templateSelect" aria-label="Seleccionar plantilla">
+        <option value="">plantillas::</option>
+        <option value="comparacion_precios">comparacion_precios</option>
+        <option value="orquestador">orquestador_ia</option>
+        <option value="web">proyecto_web</option>
+        <option value="contratacion">contratacion_personal</option>
+        <option value="personal">plan_personal</option>
+        <option value="complex">pipeline_complejo</option>
+        <option value="blank">lienzo_blanco</option>
+      </select>
+    </div>
+
+    <div class="header-actions">
+      <div class="action-cluster" role="group" aria-label="Archivo y exportación">
+        <button class="btn" id="btnLoad">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>abrir</span>
+        </button>
+        <span class="cluster-sep" aria-hidden="true"></span>
+        <button class="btn" id="btnJson">.json</button>
+        <button class="btn" id="btnMermaid">.md</button>
+        <button class="btn" id="btnPng">.png</button>
+        <button class="btn btn-icon" id="btnExp" aria-label="Exportar diagrama">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </button>
+      </div>
+
+      <div class="action-cluster" role="group" aria-label="Herramientas del espacio">
+        <button class="btn btn-icon" id="btnChat" aria-label="Panel de chat">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
+        <button class="btn btn-icon" id="btnInsp" aria-label="Inspector">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+      </div>
+
+      <button class="btn primary" id="btnNew">+ nuevo</button>
+    </div>
+  </div>
 </header>
 <button id="mobilePaletteHint" class="mobile-palette-hint" type="button" hidden aria-label="Abrir herramientas para añadir nodos">
   <span class="mobile-palette-hint__dot" aria-hidden="true">+</span>
