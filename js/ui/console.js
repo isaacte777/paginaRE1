@@ -86,6 +86,7 @@ function executeConsoleCommand(cmd) {
   }
 }
 function log(type, msg) {
+  if (!DOM.console) return;
   const l = document.createElement('div');
   l.className = 'ln ' + type;
   const ts = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -96,6 +97,10 @@ function log(type, msg) {
   // Limitar líneas del console
   while (DOM.console.children.length > CONFIG.CONSOLE_MAX_LINES) {
     DOM.console.children[0].remove();
+  }
+
+  if (typeof notifyFlowConsoleLog === 'function') {
+    notifyFlowConsoleLog();
   }
 }
 
@@ -122,7 +127,8 @@ function initConsoleResize() {
   handle.addEventListener('pointermove', e => {
     if (!dragging) return;
     const dy = startY - e.clientY;
-    const newHeight = Math.max(45, Math.min(500, startHeight + dy));
+    const maxH = Math.round(window.innerHeight * 0.78);
+    const newHeight = Math.max(76, Math.min(maxH, startHeight + dy));
     wrap.style.height = newHeight + 'px';
   });
 
@@ -133,6 +139,9 @@ function initConsoleResize() {
 }
 
 function simulateExecution() {
+  if (typeof switchTerminalTab === 'function') {
+    switchTerminalTab('log');
+  }
   log('run', 'iniciando ejecución...');
   const start = STATE.nodes.find(n => n.type === 'start');
   if (!start) {
