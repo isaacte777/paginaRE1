@@ -35,6 +35,7 @@ function initApp() {
   // Inicializar pestañas de panel e inspector v4
   initPanelTabs();
   initChat();
+  if (typeof initUserWorkspaceUI === 'function') initUserWorkspaceUI();
   if (typeof initAIAssistant === 'function') initAIAssistant();
   if (typeof initProjectManager === 'function') initProjectManager();
   initHeaderTooltips();
@@ -660,6 +661,8 @@ function registerEventListeners() {
       setSel(null);
       toggleExportPopover(false);
       if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
+      if (typeof toggleUserWorkspacePopover === 'function') toggleUserWorkspacePopover(false);
+      if (typeof closeUserAuthModal === 'function') closeUserAuthModal();
       const projModal = document.getElementById('projectActionModal');
       if (projModal && !projModal.hidden) projModal.hidden = true;
       closeAllMobileDrawers();

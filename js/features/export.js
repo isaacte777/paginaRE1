@@ -12,6 +12,7 @@ function toggleExportPopover(force) {
 
   if (willShow) {
     if (typeof toggleProjectsPopover === 'function') toggleProjectsPopover(false);
+    if (typeof toggleUserWorkspacePopover === 'function') toggleUserWorkspacePopover(false);
     popover.style.transform = 'translate(-50%, -50%)';
     popover.style.top = '50%';
     popover.style.left = '50%';
@@ -492,6 +493,7 @@ function escapeMermaidLabel(text) {
 function initHeaderTooltips() {
   const tooltips = {
     'templateSelect': { title: 'plantillas', desc: 'Carga arquitecturas y flujos prediseñados (menú desplazable).' },
+    'btnUserWorkspace': { title: 'espacio de usuario', desc: 'Inicia sesión, cambia de cuenta o crea espacios de trabajo independientes.' },
     'btnSaveProj': { title: 'guardar proyecto (ctrl+s)', desc: 'Guarda el flujo actual con un nombre personalizado en el navegador (localStorage).' },
     'btnSavedProjects': { title: 'proyectos guardados', desc: 'Abre el gestor local para elegir, abrir, renombrar o eliminar proyectos guardados.' },
     'btnJson': { title: 'exportar json', desc: 'Descarga el proyecto completo y su estado en un archivo JSON local.' },

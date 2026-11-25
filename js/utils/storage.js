@@ -27,6 +27,12 @@ function storageFingerprint(data) {
   });
 }
 
+function activeCanvasStorageKey() {
+  return typeof getUserStorageKey === 'function'
+    ? getUserStorageKey('canvas')
+    : CONFIG.KEY;
+}
+
 function saveState() {
   try {
     const data = storagePayload();
@@ -38,8 +44,9 @@ function saveState() {
     data.savedAt = STATE.localSavedAt;
     data.fingerprint = STATE.persistenceFingerprint;
 
-    localStorage.setItem(CONFIG.KEY, JSON.stringify(data));
-    document.getElementById('stSave').textContent = 'auto-guardado';
+    localStorage.setItem(activeCanvasStorageKey(), JSON.stringify(data));
+    const stSave = document.getElementById('stSave');
+    if (stSave) stSave.textContent = 'auto-guardado';
     if (typeof queueLiveSync === 'function') queueLiveSync();
   } catch (e) {
     log('warn', 'no se pudo guardar');
@@ -49,7 +56,7 @@ function saveState() {
 function loadState() {
   let restoredProject = false;
   try {
-    const saved = localStorage.getItem(CONFIG.KEY);
+    const saved = localStorage.getItem(activeCanvasStorageKey());
     if (saved) {
       const data = JSON.parse(saved);
       if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
