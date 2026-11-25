@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "terminal": "node tools/flowlab-terminal-bridge.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
