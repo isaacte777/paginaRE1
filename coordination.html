@@ -208,6 +208,18 @@
         </div>
       </div>
 
+      <!-- Aviso visual persistente cuando falla la conexión con el proveedor / gateway -->
+      <div class="ai-conn-banner" id="aiConnBanner" role="alert" hidden>
+        <div class="ai-conn-banner__icon" aria-hidden="true">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="ai-conn-banner__body">
+          <strong id="aiConnBannerTitle">Error de conexión</strong>
+          <span id="aiConnBannerText"></span>
+        </div>
+        <button type="button" class="ai-conn-banner__btn" id="btnAiFixConn">revisar</button>
+      </div>
+
       <div class="ai-config-drawer" id="aiConfigDrawer" hidden>
         <div class="ai-mode-tabs" role="tablist">
           <button type="button" class="ai-mode-tab is-active" data-ai-mode-tab="local">
@@ -230,17 +242,26 @@
 
         <!-- Modo 1: IA Local en PC / Laptop -->
         <div class="ai-mode-pane" data-ai-mode-pane="local">
-          <label class="ai-cfg-label">motor en tu pc / laptop</label>
+          <label class="ai-cfg-label">motor o pasarela en tu pc</label>
           <select id="aiLocalPreset" aria-label="Motor local">
             <option value="ollama">Ollama (localhost:11434)</option>
             <option value="lmstudio">LM Studio (localhost:1234)</option>
+            <option value="omniroute">Omniroute / Gateway (:20128)</option>
             <option value="jan">Jan AI (localhost:1337)</option>
             <option value="llamacpp">llama.cpp / LocalAI (:8080)</option>
             <option value="textgen">TextGen WebUI (:5000)</option>
           </select>
 
-          <label class="ai-cfg-label">url local</label>
+          <label class="ai-cfg-label">url local (admite URL base o /v1/chat/completions)</label>
           <input type="text" id="aiLocalUrl" placeholder="http://localhost:11434/v1/chat/completions">
+
+          <label class="ai-cfg-label">token / api key local (opcional, ej. Omniroute)</label>
+          <div class="ai-key-wrap">
+            <input type="password" id="aiLocalKey" placeholder="Opcional (vacío para Ollama/LM Studio)" autocomplete="off">
+            <button type="button" class="ai-key-eye" id="btnToggleLocalKeyVis" title="Mostrar u ocultar clave" aria-label="Mostrar u ocultar clave">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
 
           <div class="ai-cfg-row-head">
             <label class="ai-cfg-label">modelo instalado</label>
@@ -251,7 +272,7 @@
           </div>
           <input type="text" id="aiLocalModel" placeholder="qwen2.5-coder:7b, llama3.2...">
           <div class="ai-detected-models" id="aiDetectedModels"></div>
-          <p class="ai-cfg-note">En Ollama, si abres desde web externa activa CORS con: <code>OLLAMA_ORIGINS="*" ollama serve</code></p>
+          <p class="ai-cfg-note">En Ollama activa CORS con: <code>OLLAMA_ORIGINS="*" ollama serve</code> · En LM Studio activa <code>Enable CORS</code>.</p>
         </div>
 
         <!-- Modo 2: Cloud API Key -->
@@ -280,20 +301,34 @@
 
         <!-- Modo 3: URL / Endpoint Personalizado -->
         <div class="ai-mode-pane" data-ai-mode-pane="url" hidden>
-          <label class="ai-cfg-label">endpoint url (http / https)</label>
-          <input type="text" id="aiCustomUrl" placeholder="https://tu-api.com/v1/chat/completions">
+          <label class="ai-cfg-label">endpoint url (base o ruta completa)</label>
+          <input type="text" id="aiCustomUrl" placeholder="http://localhost:20128 o https://api.../v1/chat/completions">
+          <p class="ai-cfg-note" style="margin-top:4px;margin-bottom:2px">Si ingresas solo <code>http://host:puerto</code> en modo OpenAI, se resuelve automáticamente <code>/v1/chat/completions</code>.</p>
 
           <label class="ai-cfg-label">formato de petición</label>
           <select id="aiCustomFormat" aria-label="Formato de endpoint">
-            <option value="openai">Compatible con OpenAI (/chat/completions)</option>
-            <option value="webhook">Webhook JSON ({ message, context })</option>
+            <option value="openai">Compatible con OpenAI (/v1/chat/completions)</option>
+            <option value="openai_exact">OpenAI en URL exacta (sin autocompletar ruta)</option>
+            <option value="webhook">Endpoint / Webhook JSON ({ message, context })</option>
           </select>
 
           <label class="ai-cfg-label">token bearer / api key (opcional)</label>
-          <input type="password" id="aiCustomKey" placeholder="Bearer token opcional" autocomplete="off">
+          <div class="ai-key-wrap">
+            <input type="password" id="aiCustomKey" placeholder="Opcional: se envía Authorization: Bearer ..." autocomplete="off">
+            <button type="button" class="ai-key-eye" id="btnToggleCustomKeyVis" title="Mostrar u ocultar token" aria-label="Mostrar u ocultar token">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
 
-          <label class="ai-cfg-label">nombre del modelo (opcional)</label>
-          <input type="text" id="aiCustomModel" placeholder="default">
+          <div class="ai-cfg-row-head">
+            <label class="ai-cfg-label">nombre del modelo (opcional)</label>
+            <button type="button" class="ai-mini-link" id="btnDetectCustomModels">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>consultar modelos</span>
+            </button>
+          </div>
+          <input type="text" id="aiCustomModel" placeholder="default, gpt-4o-mini, qwen...">
+          <div class="ai-detected-models" id="aiCustomDetectedModels"></div>
         </div>
 
         <!-- Modo 4: Asistente integrado sin conexión -->
@@ -351,15 +386,94 @@
 <div id="consoleWrap">
   <div id="consoleResizeHandle" title="Arrastrar para redimensionar"></div>
   <div id="consoleBar">
-    <div class="console-actions">
+    <div class="console-left-group">
       <button class="btn primary" id="btnRun"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-1px;margin-right:3px" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>ejecutar</button>
-      <button class="btn" id="btnClearLog">limpiar</button>
-      <button class="btn" id="btnToggleCon">—</button>
+      <span class="term-bar-sep" aria-hidden="true"></span>
+      <div class="term-tabs" role="tablist" aria-label="Vistas de consola y terminal">
+        <button type="button" class="term-tab is-active" id="tabTermPS">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+          <span>powershell</span>
+        </button>
+        <button type="button" class="term-tab" id="tabTermLog">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span>salida flujo</span>
+          <span class="term-log-badge" id="termLogBadge" hidden>0</span>
+        </button>
+        <button type="button" class="term-new-btn" id="btnTermNewSession" title="Nueva sesión PowerShell" aria-label="Nueva sesión PowerShell">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
     </div>
-    <span class="t">PS C:\paginaRE&gt;</span>
-    <input type="text" id="consoleInput" placeholder="Comando (help, run...)" autocomplete="off" spellcheck="false">
+
+    <div class="console-flow-input-wrap" id="consoleFlowInputWrap" hidden>
+      <span class="t">PS C:\paginaRE&gt;</span>
+      <input type="text" id="consoleInput" placeholder="Comando FlowLab (help, run, nodes...)" autocomplete="off" spellcheck="false">
+    </div>
+
+    <div class="console-right-actions">
+      <button type="button" class="term-conn-pill" id="btnTermConnect" title="Configurar conexión a PowerShell de tu PC">
+        <span class="term-conn-dot" id="termConnDot" aria-hidden="true"></span>
+        <span id="termConnLabel">conectar powershell pc</span>
+      </button>
+      <button type="button" class="btn term-kill-btn" id="btnTermKill" hidden title="Cancelar proceso en curso (Ctrl+C)">
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+        <span>detener</span>
+      </button>
+      <button class="btn" id="btnClearLog" title="Limpiar pantalla (Ctrl+L)">limpiar</button>
+      <button class="btn btn-term-icon" id="btnMaxCon" title="Maximizar o restaurar altura de terminal" aria-label="Maximizar terminal">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <button class="btn btn-term-icon" id="btnToggleCon" title="Ocultar consola" aria-label="Ocultar consola">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
   </div>
-  <div id="console"></div>
+
+  <!-- Gaveta rápida para enlazar con el PowerShell real de la PC del usuario -->
+  <div class="term-bridge-drawer" id="termBridgeDrawer" hidden>
+    <div class="term-bridge-info">
+      <div class="term-bridge-status" id="termBridgeStatus">Conecta esta terminal al PowerShell real de tu computadora:</div>
+      <div class="term-bridge-steps">
+        <span>1. Abre <b>Windows PowerShell</b> en tu PC, pega el comando de 1 línea (o ejecuta el script <code>.ps1</code>) · 2. Pulsa <b>conectar</b>.</span>
+      </div>
+    </div>
+    <div class="term-bridge-controls">
+      <button type="button" class="btn" id="btnTermCopyCmd">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        <span>copiar comando ps</span>
+      </button>
+      <button type="button" class="btn" id="btnTermDownloadPs1">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>descargar .ps1</span>
+      </button>
+      <input type="text" id="termBridgeUrl" class="term-bridge-url" value="http://127.0.0.1:8765" placeholder="http://127.0.0.1:8765" aria-label="URL del puente local PowerShell">
+      <button type="button" class="btn primary" id="btnTermProbeNow">conectar</button>
+      <button type="button" class="btn btn-term-icon" id="btnTermCloseDrawer" aria-label="Cerrar configuración">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Vista 1: Terminal PowerShell literal interactiva (estilo VS Code) -->
+  <div class="ps-terminal-view" id="psTerminalView">
+    <div class="ps-history" id="psHistory"></div>
+    <div class="ps-prompt-row" id="psPromptRow">
+      <span class="ps-prompt-label" id="psPromptLabel">PS C:\paginaRE&gt;</span>
+      <input
+        type="text"
+        id="psInlineInput"
+        class="ps-inline-input"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="Entrada de comando PowerShell"
+      >
+    </div>
+  </div>
+
+  <!-- Vista 2: Salida de registros de FlowLab -->
+  <div id="console" hidden></div>
 </div>
 
 <!-- Chat Panel -->
@@ -508,6 +622,7 @@
 <script src="js/features/charts.js"></script>
 <script src="js/features/live-sync.js"></script>
 <script src="js/features/ai-assistant.js"></script>
+<script src="js/features/terminal.js"></script>
 <script src="js/ui/dropdowns.js"></script>
 <script src="js/app.js"></script>
 

@@ -52,6 +52,10 @@ function initApp() {
   log('ok', 'FlowLab v3 - paginaRE iniciado');
   log('sync', 'Claude Code ↔ Qwen Coder');
   log('agent', 'orquestador de agentes IA activo');
+
+  if (typeof initPowerShellTerminal === 'function') {
+    initPowerShellTerminal();
+  }
 }
 
 function isMobileLayout() {
@@ -381,9 +385,13 @@ function registerEventListeners() {
     renderAll();
   });
 
-  // Consola
+  // Consola y Terminal PowerShell
   document.getElementById('btnRun').addEventListener('click', () => simulateExecution());
   document.getElementById('btnClearLog').addEventListener('click', () => {
+    if (typeof clearActiveTerminal === 'function') {
+      clearActiveTerminal();
+      return;
+    }
     DOM.console.innerHTML = '';
     log('ok', 'log limpiado');
   });

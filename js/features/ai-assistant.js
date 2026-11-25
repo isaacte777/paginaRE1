@@ -30,19 +30,40 @@
     eye:
       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
     eyeOff:
-      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>',
+    alert:
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    settings:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'
   };
 
-  function setStatusIndicator(el, kind, msg) {
+  class AIConnectionError extends Error {
+    constructor(title, details = '', code = 'CONNECTION_ERROR') {
+      const fullMessage = details ? `${title}\n${details}` : title;
+      super(fullMessage);
+      this.name = 'AIConnectionError';
+      this.title = title;
+      this.details = details;
+      this.code = code;
+    }
+  }
+
+  function setStatusIndicator(el, kind, title, details = '') {
     if (!el) return;
     if (!kind) {
       el.className = 'ai-test-status';
       el.innerHTML = '';
       return;
     }
-    const icon = kind === 'ok' ? AI_SVG.check : kind === 'err' ? AI_SVG.cross : AI_SVG.loader;
+    const icon = kind === 'ok' ? AI_SVG.check : kind === 'err' ? AI_SVG.alert : AI_SVG.loader;
     el.className = `ai-test-status is-${kind}`;
-    el.innerHTML = `${icon}<span>${escapeHTML(msg)}</span>`;
+    el.innerHTML =
+      `<div class="ai-status-head">${icon}<span>${escapeHTML(title)}</span></div>` +
+      (details ? `<div class="ai-status-detail">${escapeHTML(details)}</div>` : '');
+
+    try {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch {}
   }
 
   const LOCAL_PRESETS = {
@@ -57,6 +78,12 @@
       url: 'http://localhost:1234/v1/chat/completions',
       baseUrl: 'http://localhost:1234',
       defaultModel: 'local-model'
+    },
+    omniroute: {
+      name: 'Omniroute (Local)',
+      url: 'http://localhost:20128/v1/chat/completions',
+      baseUrl: 'http://localhost:20128',
+      defaultModel: 'default'
     },
     jan: {
       name: 'Jan AI (Local)',
@@ -182,6 +209,7 @@
     local: {
       preset: 'ollama',
       url: LOCAL_PRESETS.ollama.url,
+      apiKey: '',
       model: LOCAL_PRESETS.ollama.defaultModel
     },
     api: {
@@ -191,7 +219,7 @@
     },
     url: {
       endpoint: '',
-      format: 'openai', // 'openai' | 'webhook'
+      format: 'openai', // 'openai' | 'openai_exact' | 'webhook'
       apiKey: '',
       model: ''
     }
@@ -202,6 +230,14 @@
   let isGenerating = false;
   let currentAbort = null;
   let editingModeTab = aiConfig.mode === 'builtin' ? 'local' : aiConfig.mode;
+
+  // Estado visual en vivo de la conexión actual ('idle' | 'ok' | 'error')
+  let connectionHealth = {
+    state: 'idle',
+    title: '',
+    detail: '',
+    resolvedEndpoint: ''
+  };
 
   function loadAIConfig() {
     try {
@@ -1009,7 +1045,557 @@
   }
 
   // =========================================================================
-  // CLIENTES HTTP: LOCAL (OLLAMA / LM STUDIO) · CLOUD API · CUSTOM URL
+  // NORMALIZACIÓN DE URL, ENCABEZADOS HTTP, PARSER UNIVERSAL Y DIAGNÓSTICO DE RED
+  // =========================================================================
+  function isLocalOrPrivateHost(hostname) {
+    const h = String(hostname || '').toLowerCase();
+    return (
+      h === 'localhost' ||
+      h === '127.0.0.1' ||
+      h === '[::1]' ||
+      h === '0.0.0.0' ||
+      h.endsWith('.local') ||
+      /^10\.\d+\.\d+\.\d+$/.test(h) ||
+      /^192\.168\.\d+\.\d+$/.test(h) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/.test(h)
+    );
+  }
+
+  function sanitizeApiKey(rawKey) {
+    if (rawKey === null || rawKey === undefined) return '';
+    let cleaned = String(rawKey)
+      .replace(/[\u200B-\u200D\uFEFF\r\n]/g, '')
+      .trim()
+      .replace(/^["']+|["']+$/g, '')
+      .trim();
+
+    // Evitar "Bearer Bearer ..." si el usuario pegó el prefijo completo
+    cleaned = cleaned.replace(/^Bearer\s+/i, '').trim();
+    if (!cleaned) return '';
+
+    for (let i = 0; i < cleaned.length; i++) {
+      if (cleaned.charCodeAt(i) > 255) {
+        throw new AIConnectionError(
+          'Formato de clave o token inválido',
+          'El Token / API Key contiene caracteres no permitidos en cabeceras HTTP (ej. comillas tipográficas o símbolos especiales). Vuelve a copiarlo sin espacios extra.',
+          'INVALID_HEADER'
+        );
+      }
+    }
+    return cleaned;
+  }
+
+  function buildRequestHeaders({ apiKey = '', extraHeaders = {} } = {}) {
+    const headers = {
+      Accept: 'application/json, text/event-stream, text/plain, */*',
+      'Content-Type': 'application/json',
+      ...extraHeaders
+    };
+    const cleanKey = sanitizeApiKey(apiKey);
+    if (cleanKey.length > 0) {
+      headers.Authorization = `Bearer ${cleanKey}`;
+    }
+    return headers;
+  }
+
+  function normalizeGatewayUrl(rawInput, labelContext = 'endpoint') {
+    let raw = String(rawInput || '')
+      .trim()
+      .replace(/^["']+|["']+$/g, '')
+      .trim();
+
+    if (!raw) {
+      throw new AIConnectionError(
+        `Falta configurar la URL (${labelContext})`,
+        'Ingresa una dirección válida, por ejemplo: http://localhost:20128 o http://localhost:11434/v1/chat/completions.',
+        'EMPTY_URL'
+      );
+    }
+
+    // Autocompletar http:// o https:// si el usuario escribió ej. "localhost:20128"
+    if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw)) {
+      const hostCandidate = raw.split('/')[0].split(':')[0];
+      const useHttp =
+        isLocalOrPrivateHost(hostCandidate) || !hostCandidate.includes('.');
+      raw = (useHttp ? 'http://' : 'https://') + raw;
+    }
+
+    let parsed;
+    try {
+      parsed = new URL(raw);
+    } catch {
+      throw new AIConnectionError(
+        'URL con formato inválido',
+        `No se pudo interpretar "${rawInput}". Verifica el protocolo (http:// o https://), host y puerto (ej. http://localhost:20128).`,
+        'INVALID_URL'
+      );
+    }
+
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      throw new AIConnectionError(
+        `Protocolo no soportado (${parsed.protocol})`,
+        'La URL debe comenzar con http:// o https://.',
+        'INVALID_PROTOCOL'
+      );
+    }
+
+    return parsed.toString();
+  }
+
+  function buildCandidateEndpoints(normalizedUrl, formatMode = 'openai') {
+    const parsed = new URL(normalizedUrl);
+    const cleanPath = parsed.pathname.replace(/\/+$/, '');
+    const search = parsed.search || '';
+    const candidates = [];
+
+    const addUnique = u => {
+      if (u && !candidates.includes(u)) candidates.push(u);
+    };
+
+    if (formatMode === 'webhook' || formatMode === 'openai_exact') {
+      addUnique(normalizedUrl);
+      return candidates;
+    }
+
+    // Modo compatible con OpenAI (Ollama, LM Studio, Omniroute, LiteLLM, vLLM, OpenRouter...)
+    if (cleanPath === '') {
+      // El usuario ingresó solo el origen base, ej. http://localhost:20128
+      addUnique(`${parsed.origin}/v1/chat/completions${search}`);
+      addUnique(`${parsed.origin}/api/v1/chat/completions${search}`);
+      addUnique(`${parsed.origin}/chat/completions${search}`);
+      addUnique(`${parsed.origin}/api/chat${search}`);
+      addUnique(normalizedUrl);
+    } else if (/\/v\d+$/i.test(cleanPath)) {
+      // Ej. http://localhost:20128/v1 o .../api/v1
+      addUnique(`${parsed.origin}${cleanPath}/chat/completions${search}`);
+      addUnique(normalizedUrl);
+    } else {
+      // Ruta explícita provista por el usuario
+      addUnique(normalizedUrl);
+      if (!/\/(chat\/completions|completions|chat|messages|generate|responses)$/i.test(cleanPath)) {
+        addUnique(`${parsed.origin}${cleanPath}/v1/chat/completions${search}`);
+        addUnique(`${parsed.origin}${cleanPath}/chat/completions${search}`);
+      }
+      if (parsed.port === '11434' || cleanPath.includes('/v1/chat/completions')) {
+        addUnique(`${parsed.origin}/api/chat`);
+      }
+    }
+
+    return candidates;
+  }
+
+  async function probeOriginReachability(targetUrl) {
+    let timer = null;
+    try {
+      const origin = new URL(targetUrl).origin;
+      const ctrl = new AbortController();
+      timer = setTimeout(() => ctrl.abort(), 1600);
+      const res = await fetch(origin + '/', {
+        method: 'GET',
+        mode: 'no-cors',
+        cache: 'no-store',
+        signal: ctrl.signal
+      });
+      return res ? 'reachable' : 'unknown';
+    } catch {
+      return 'unreachable';
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  async function tryLocalSameOriginProxy(targetUrl, method, headers, bodyObj, signal) {
+    let targetParsed;
+    try {
+      targetParsed = new URL(targetUrl);
+    } catch {
+      return null;
+    }
+
+    const pageHost = window.location.hostname;
+    const pageIsLocal = isLocalOrPrivateHost(pageHost);
+    const targetIsLocal = isLocalOrPrivateHost(targetParsed.hostname);
+
+    // Si la página está en un servidor remoto en la nube y el destino es localhost del usuario,
+    // el proxy del servidor remoto NO apunta a la PC del usuario. Solo usar proxy para localhost
+    // cuando FlowLab corre localmente (Vite / XAMPP en la misma máquina) o para URLs públicas.
+    if (targetIsLocal && !pageIsLocal) {
+      return null;
+    }
+
+    const proxyEndpoints = ['api/ai-proxy', 'api/ai-proxy.php'];
+    for (const proxyUrl of proxyEndpoints) {
+      try {
+        const res = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            targetUrl,
+            method,
+            headers,
+            body: bodyObj
+          }),
+          signal
+        });
+
+        if (!res.ok) continue;
+        const ctype = res.headers.get('content-type') || '';
+        if (!ctype.includes('application/json')) continue;
+
+        const wrapper = await res.json();
+        if (!wrapper || wrapper.ok !== true || typeof wrapper.upstreamStatus !== 'number') {
+          continue;
+        }
+
+        return {
+          status: wrapper.upstreamStatus,
+          ok: wrapper.upstreamStatus >= 200 && wrapper.upstreamStatus < 300,
+          contentType: wrapper.contentType || 'application/json',
+          rawText: typeof wrapper.body === 'string' ? wrapper.body : JSON.stringify(wrapper.body ?? '')
+        };
+      } catch (e) {
+        if (e && e.name === 'AbortError') throw e;
+      }
+    }
+    return null;
+  }
+
+  async function diagnoseNetworkFailure(err, targetUrl, modeLabel) {
+    if (err instanceof AIConnectionError) return err;
+
+    let parsed;
+    try {
+      parsed = new URL(targetUrl);
+    } catch {
+      return new AIConnectionError(
+        'URL inválida',
+        `Revisa el formato de la dirección "${targetUrl}".`,
+        'INVALID_URL'
+      );
+    }
+
+    const hostPort = parsed.host;
+    const portInfo = parsed.port ? ` (puerto ${parsed.port})` : '';
+    const isHttpsPage = window.location.protocol === 'https:';
+    const isHttpTarget = parsed.protocol === 'http:';
+    const isLocalTarget = isLocalOrPrivateHost(parsed.hostname);
+
+    // Caso contenido mixto bloqueado por navegador (HTTPS -> HTTP público)
+    if (isHttpsPage && isHttpTarget && !isLocalTarget) {
+      return new AIConnectionError(
+        `Contenido mixto bloqueado (${hostPort})`,
+        `El navegador bloquea peticiones HTTP inseguras (${targetUrl}) desde una página HTTPS (${window.location.origin}).\n` +
+          `• Usa un endpoint con https:// o ejecuta FlowLab localmente en http://localhost.`,
+        'MIXED_CONTENT'
+      );
+    }
+
+    // Sondear si el puerto/servidor responde en modo no-cors para distinguir CORS vs Puerto Cerrado
+    const reachability = await probeOriginReachability(targetUrl);
+
+    if (reachability === 'reachable') {
+      return new AIConnectionError(
+        `Bloqueo de CORS en ${hostPort}`,
+        `El servicio en ${parsed.origin} SÍ está encendido y responde, pero bloqueó la petición del navegador por política CORS.\n` +
+          `• En gateways locales (Omniroute, LiteLLM, vLLM): habilita CORS permitiendo el origen "${window.location.origin}" y las cabeceras "Content-Type, Authorization".\n` +
+          `• En Ollama: ejecuta OLLAMA_ORIGINS="*" ollama serve.\n` +
+          `• En LM Studio: activa "Enable CORS" en Local Server.\n` +
+          `• Alternativa sin CORS: abre FlowLab con "npm run dev" o XAMPP en tu PC.`,
+        'CORS_BLOCKED'
+      );
+    }
+
+    if (isHttpsPage && isHttpTarget && isLocalTarget) {
+      return new AIConnectionError(
+        `No se pudo conectar a ${hostPort} (CORS / Red Privada o puerto inactivo)`,
+        `Falló la conexión desde HTTPS (${window.location.origin}) hacia tu servidor local (${targetUrl}). Verifica:\n` +
+          `1. Servicio activo: confirma que tu pasarela (${modeLabel}) esté ejecutándose en ${parsed.origin}${portInfo}.\n` +
+          `2. Permiso CORS + Red Privada: Chrome/Edge exigen que el gateway local devuelva "Access-Control-Allow-Origin: *" y "Access-Control-Allow-Private-Network: true".\n` +
+          `3. Ruta correcta: en pasarelas OpenAI suele ser ${parsed.origin}/v1/chat/completions.`,
+        'HTTPS_LOCAL_BLOCKED'
+      );
+    }
+
+    return new AIConnectionError(
+      `Sin conexión con ${hostPort}${portInfo}`,
+      `La petición a ${targetUrl} falló (Failed to fetch). Causas probables:\n` +
+        `1. Puerto no disponible o servicio apagado: verifica que el servidor (${modeLabel}) esté iniciado y escuchando en ${parsed.origin}.\n` +
+        `2. URL o puerto incorrecto: revisa que la dirección y el puerto${portInfo} coincidan con tu pasarela.\n` +
+        `3. Bloqueo CORS: si el servidor sí responde en terminal/Postman, habilita CORS para permitir "Content-Type" y "Authorization".`,
+      'NETWORK_UNREACHABLE'
+    );
+  }
+
+  function extractProviderErrorDetail(rawText) {
+    if (!rawText) return '';
+    try {
+      const j = JSON.parse(rawText);
+      const msg =
+        (typeof j?.error === 'string' ? j.error : j?.error?.message) ||
+        j?.message ||
+        j?.detail ||
+        (Array.isArray(j?.detail) ? j.detail.map(d => d.msg || JSON.stringify(d)).join('; ') : '');
+      if (msg) return String(msg).trim().slice(0, 240);
+    } catch {}
+    return String(rawText).replace(/\s+/g, ' ').trim().slice(0, 200);
+  }
+
+  function buildHttpStatusError(status, finalUrl, rawErrText, modelName) {
+    const detailMsg = extractProviderErrorDetail(rawErrText);
+    const suffix = detailMsg ? `\nDetalle del servidor: ${detailMsg}` : '';
+
+    if (status === 401 || status === 403) {
+      return new AIConnectionError(
+        `Autenticación rechazada (HTTP ${status})`,
+        `El servidor en ${finalUrl} rechazó las credenciales. Verifica que tu API Key o Token Bearer sea válido y tenga permisos.${suffix}`,
+        'HTTP_AUTH'
+      );
+    }
+    if (status === 404) {
+      return new AIConnectionError(
+        `Endpoint o modelo no encontrado (HTTP 404)`,
+        `No se encontró la ruta ${finalUrl} o el modelo "${modelName || 'default'}" no existe en el servidor.\n` +
+          `• Verifica la URL del endpoint (ej. /v1/chat/completions) y el nombre exacto del modelo.${suffix}`,
+        'HTTP_404'
+      );
+    }
+    if (status === 405) {
+      return new AIConnectionError(
+        `Método HTTP no permitido (HTTP 405)`,
+        `La URL ${finalUrl} no acepta peticiones POST de chat. Asegúrate de apuntar a la ruta correcta (ej. /v1/chat/completions).${suffix}`,
+        'HTTP_405'
+      );
+    }
+    if (status === 400 || status === 422) {
+      return new AIConnectionError(
+        `Solicitud rechazada por la pasarela (HTTP ${status})`,
+        `Revisa que el nombre del modelo ("${modelName || 'default'}") sea válido en tu proveedor y que el formato de petición coincida.${suffix}`,
+        'HTTP_400'
+      );
+    }
+    if (status === 429) {
+      return new AIConnectionError(
+        'Límite de peticiones o cuota excedida (HTTP 429)',
+        `El proveedor limitó temporalmente las solicitudes o tu cuenta agotó saldo/cuota.${suffix}`,
+        'HTTP_429'
+      );
+    }
+    return new AIConnectionError(
+      `Error del servidor de IA (HTTP ${status})`,
+      `El endpoint ${finalUrl} devolvió un fallo interno.${suffix}`,
+      'HTTP_' + status
+    );
+  }
+
+  function normalizeContentField(content) {
+    if (typeof content === 'string') return content;
+    if (Array.isArray(content)) {
+      return content
+        .map(part => {
+          if (typeof part === 'string') return part;
+          if (part && typeof part.text === 'string') return part.text;
+          if (part && typeof part.content === 'string') return part.content;
+          return '';
+        })
+        .join('');
+    }
+    return '';
+  }
+
+  function parseUniversalAIResponse(rawText, contentType = '') {
+    const trimmed = String(rawText || '').trim();
+    if (!trimmed) {
+      return { replyText: '', parsedJson: null };
+    }
+
+    // 1. Soporte automático para respuestas SSE (text/event-stream: "data: {...}")
+    // Muchos gateways locales como Omniroute o LiteLLM envían SSE incluso con stream: false
+    if (
+      contentType.includes('text/event-stream') ||
+      /^data:\s*\{/m.test(trimmed)
+    ) {
+      const lines = trimmed.split(/\r?\n/);
+      let acc = '';
+      for (const line of lines) {
+        const clean = line.trim();
+        if (!clean.startsWith('data:')) continue;
+        const payloadStr = clean.slice(5).trim();
+        if (!payloadStr || payloadStr === '[DONE]') continue;
+        try {
+          const chunk = JSON.parse(payloadStr);
+          if (chunk?.error) {
+            const errMsg = typeof chunk.error === 'string' ? chunk.error : chunk.error.message;
+            throw new AIConnectionError('Error reportado por el stream de IA', errMsg || JSON.stringify(chunk.error));
+          }
+          const delta =
+            normalizeContentField(chunk?.choices?.[0]?.delta?.content) ||
+            normalizeContentField(chunk?.choices?.[0]?.message?.content) ||
+            chunk?.choices?.[0]?.text ||
+            chunk?.message?.content ||
+            chunk?.response ||
+            chunk?.token ||
+            '';
+          acc += delta;
+        } catch (e) {
+          if (e instanceof AIConnectionError) throw e;
+        }
+      }
+      if (acc) return { replyText: acc, parsedJson: null };
+    }
+
+    // 2. JSON estándar (OpenAI, Ollama, Anthropic, Gemini, Webhooks personalizados)
+    try {
+      const data = JSON.parse(trimmed);
+      if (data && data.error && !data.choices && !data.message && !data.reply) {
+        const errMsg =
+          typeof data.error === 'string'
+            ? data.error
+            : data.error.message || JSON.stringify(data.error);
+        throw new AIConnectionError('El proveedor devolvió un error', String(errMsg), 'PROVIDER_ERROR');
+      }
+
+      const replyText =
+        normalizeContentField(data?.choices?.[0]?.message?.content) ||
+        (typeof data?.choices?.[0]?.text === 'string' ? data.choices[0].text : '') ||
+        normalizeContentField(data?.message?.content) ||
+        (typeof data?.response === 'string' ? data.response : '') ||
+        (typeof data?.reply === 'string' ? data.reply : '') ||
+        (typeof data?.output === 'string' ? data.output : '') ||
+        (typeof data?.answer === 'string' ? data.answer : '') ||
+        (typeof data?.result === 'string' ? data.result : '') ||
+        (typeof data?.text === 'string' ? data.text : '') ||
+        (typeof data?.data?.reply === 'string' ? data.data.reply : '') ||
+        (typeof data?.data?.content === 'string' ? data.data.content : '') ||
+        (Array.isArray(data?.content) ? data.content.map(c => c?.text || '').join('') : '') ||
+        (typeof data?.content === 'string' ? data.content : '') ||
+        (data?.candidates?.[0]?.content?.parts?.map(p => p?.text || '').join('') || '');
+
+      return { replyText, parsedJson: data };
+    } catch (e) {
+      if (e instanceof AIConnectionError) throw e;
+    }
+
+    // 3. NDJSON línea por línea (ej. Ollama nativo con stream)
+    const ndLines = trimmed.split(/\r?\n/).filter(Boolean);
+    if (ndLines.length > 1 && ndLines[0].startsWith('{')) {
+      let ndAcc = '';
+      let parsedAny = false;
+      for (const ln of ndLines) {
+        try {
+          const obj = JSON.parse(ln);
+          parsedAny = true;
+          ndAcc += obj?.message?.content || obj?.response || obj?.choices?.[0]?.delta?.content || '';
+        } catch {}
+      }
+      if (parsedAny && ndAcc) {
+        return { replyText: ndAcc, parsedJson: null };
+      }
+    }
+
+    // 4. Respuesta en texto plano (webhooks simples) si no es una página HTML de error
+    if (!/^<!DOCTYPE\s+html/i.test(trimmed) && !/^<html/i.test(trimmed)) {
+      return { replyText: trimmed, parsedJson: null };
+    }
+
+    throw new AIConnectionError(
+      'Respuesta inesperada del servidor (HTML en vez de JSON)',
+      'La URL devolvió una página web HTML en lugar de una respuesta de API JSON. Verifica que la URL incluya la ruta de API correcta (ej. /v1/chat/completions).',
+      'INVALID_RESPONSE_HTML'
+    );
+  }
+
+  async function executeHttpRequestWithFallback({
+    candidates,
+    headers,
+    buildBodyForUrl,
+    signal,
+    modeLabel,
+    modelName
+  }) {
+    let lastHttpError = null;
+    let lastNetworkErr = null;
+    let lastAttemptedUrl = candidates[0];
+
+    for (let i = 0; i < candidates.length; i++) {
+      const candidateUrl = candidates[i];
+      lastAttemptedUrl = candidateUrl;
+      const bodyObj = buildBodyForUrl(candidateUrl);
+      const bodyJson = JSON.stringify(bodyObj);
+
+      let responseInfo = null;
+
+      try {
+        const res = await fetch(candidateUrl, {
+          method: 'POST',
+          headers,
+          body: bodyJson,
+          signal
+        });
+        const rawText = await res.text().catch(() => '');
+        responseInfo = {
+          status: res.status,
+          ok: res.ok,
+          contentType: res.headers.get('content-type') || '',
+          rawText
+        };
+      } catch (fetchErr) {
+        if (fetchErr && fetchErr.name === 'AbortError') throw fetchErr;
+
+        // Intentar rescate automático vía proxy local (Vite / XAMPP) si hubo bloqueo CORS
+        const proxied = await tryLocalSameOriginProxy(
+          candidateUrl,
+          'POST',
+          headers,
+          bodyObj,
+          signal
+        );
+        if (proxied) {
+          responseInfo = proxied;
+        } else {
+          lastNetworkErr = fetchErr;
+          // Si falla la red/CORS en este origen, probar otro path en el mismo origen fallará igual
+          break;
+        }
+      }
+
+      if (responseInfo.ok) {
+        const parsed = parseUniversalAIResponse(responseInfo.rawText, responseInfo.contentType);
+        return {
+          ...parsed,
+          endpointUsed: candidateUrl
+        };
+      }
+
+      // Si dio 404 o 405 y quedan rutas candidatas (ej. base URL -> /v1/chat/completions -> /api/chat), probar la siguiente
+      if ((responseInfo.status === 404 || responseInfo.status === 405) && i < candidates.length - 1) {
+        lastHttpError = buildHttpStatusError(
+          responseInfo.status,
+          candidateUrl,
+          responseInfo.rawText,
+          modelName
+        );
+        continue;
+      }
+
+      throw buildHttpStatusError(
+        responseInfo.status,
+        candidateUrl,
+        responseInfo.rawText,
+        modelName
+      );
+    }
+
+    if (lastNetworkErr) {
+      throw await diagnoseNetworkFailure(lastNetworkErr, lastAttemptedUrl, modeLabel);
+    }
+    if (lastHttpError) {
+      throw lastHttpError;
+    }
+    throw new AIConnectionError('Error de conexión desconocido', `No se obtuvo respuesta de ${lastAttemptedUrl}.`);
+  }
+
+  // =========================================================================
+  // CLIENTES HTTP: LOCAL (OLLAMA / LM STUDIO / OMNIROUTE) · CLOUD API · CUSTOM URL
   // =========================================================================
   function buildConversationMessages(userText) {
     const sysPrompt = buildSystemPrompt();
@@ -1031,7 +1617,7 @@
   async function callExternalAI(userText, signal) {
     const mode = aiConfig.mode;
     if (mode === 'builtin') {
-      await new Promise(r => setTimeout(r, 260));
+      await new Promise(r => setTimeout(r, 240));
       return runBuiltinAssistant(userText);
     }
 
@@ -1053,74 +1639,51 @@
   }
 
   async function callLocalProvider(chatMsgs, signal) {
-    const endpoint = (aiConfig.local.url || LOCAL_PRESETS.ollama.url).trim();
-    const model = (aiConfig.local.model || 'qwen2.5-coder:7b').trim();
+    const rawUrl = aiConfig.local.url || LOCAL_PRESETS.ollama.url;
+    const normalizedUrl = normalizeGatewayUrl(rawUrl, 'IA Local');
+    const candidates = buildCandidateEndpoints(normalizedUrl, 'openai');
+    const model = (aiConfig.local.model || 'default').trim() || 'default';
+    const headers = buildRequestHeaders({ apiKey: aiConfig.local.apiKey || '' });
+    const presetName = LOCAL_PRESETS[aiConfig.local.preset]?.name || 'IA Local';
 
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+    const { replyText, endpointUsed } = await executeHttpRequestWithFallback({
+      candidates,
+      headers,
+      signal,
+      modeLabel: presetName,
+      modelName: model,
+      buildBodyForUrl: targetUrl => {
+        if (targetUrl.endsWith('/api/chat')) {
+          return { model, messages: chatMsgs, stream: false };
+        }
+        return {
           model,
           messages: chatMsgs,
           temperature: 0.35,
           stream: false
-        }),
-        signal
-      });
-
-      // Fallback automático al endpoint nativo de Ollama (/api/chat) si /v1/chat/completions da 404
-      if (res.status === 404 && endpoint.includes('11434')) {
-        const origin = new URL(endpoint).origin;
-        const nativeRes = await fetch(origin + '/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model, messages: chatMsgs, stream: false }),
-          signal
-        });
-        if (!nativeRes.ok) {
-          throw new Error(`Ollama respondió HTTP ${nativeRes.status}`);
-        }
-        const nativeJson = await nativeRes.json();
-        return extractActionsFromReply(nativeJson?.message?.content || '');
+        };
       }
+    });
 
-      if (!res.ok) {
-        const errBody = await res.text().catch(() => '');
-        throw new Error(`Servidor local respondió HTTP ${res.status}${errBody ? ': ' + errBody.slice(0, 140) : ''}`);
-      }
-
-      const data = await res.json();
-      const text =
-        data?.choices?.[0]?.message?.content ||
-        data?.message?.content ||
-        data?.response ||
-        '';
-      return extractActionsFromReply(text);
-    } catch (err) {
-      if (err.name === 'AbortError') throw err;
-      const isHttpsPage = window.location.protocol === 'https:';
-      throw new Error(
-        `No se pudo conectar con tu IA local en ${endpoint}.\n` +
-          `• Verifica que el servidor local (Ollama / LM Studio) esté encendido y el modelo "${model}" descargado.\n` +
-          (isHttpsPage
-            ? `• Como abriste la web desde HTTPS, habilita CORS en tu IA local (en Ollama ejecuta: OLLAMA_ORIGINS="*" ollama serve; en LM Studio activa "Enable CORS" en Local Server).`
-            : `• En Ollama puedes permitir orígenes con: OLLAMA_ORIGINS="*" ollama serve.`)
-      );
-    }
+    connectionHealth.resolvedEndpoint = endpointUsed;
+    return extractActionsFromReply(replyText);
   }
 
   async function callCloudProvider(chatMsgs, signal) {
     const providerKey = aiConfig.api.provider || 'openai';
     const prov = CLOUD_PROVIDERS[providerKey] || CLOUD_PROVIDERS.openai;
-    const apiKey = (aiConfig.api.apiKey || '').trim();
+    const cleanKey = sanitizeApiKey(aiConfig.api.apiKey);
     const model = (aiConfig.api.model || prov.defaultModel).trim();
 
-    if (!apiKey) {
-      throw new Error(`Ingresa tu API Key de ${prov.name} en el panel "conectar".`);
+    if (!cleanKey) {
+      throw new AIConnectionError(
+        `Falta API Key de ${prov.name}`,
+        `Abre el panel "conectar", selecciona la pestaña API e introduce tu clave de ${prov.name}.`,
+        'MISSING_KEY'
+      );
     }
 
-    // Google Gemini REST API directa (compatible con CORS desde navegador)
+    // Google Gemini REST API directa
     if (providerKey === 'gemini') {
       const sysMsg = chatMsgs.find(m => m.role === 'system')?.content || '';
       const contents = chatMsgs
@@ -1130,231 +1693,314 @@
           parts: [{ text: m.content }]
         }));
 
-      const url = `${prov.url}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const url = `${prov.url}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(cleanKey)}`;
+      const { replyText } = await executeHttpRequestWithFallback({
+        candidates: [url],
+        headers: buildRequestHeaders(),
+        signal,
+        modeLabel: prov.name,
+        modelName: model,
+        buildBodyForUrl: () => ({
           systemInstruction: { parts: [{ text: sysMsg }] },
           contents,
           generationConfig: { temperature: 0.35 }
-        }),
-        signal
+        })
       });
-      if (!res.ok) {
-        const errTxt = await res.text().catch(() => '');
-        throw new Error(`Gemini API HTTP ${res.status}: ${errTxt.slice(0, 160)}`);
-      }
-      const data = await res.json();
-      const replyText =
-        data?.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '';
       return extractActionsFromReply(replyText);
     }
 
-    // Anthropic Claude Messages API (acceso directo desde navegador)
+    // Anthropic Claude Messages API
     if (providerKey === 'anthropic') {
       const sysMsg = chatMsgs.find(m => m.role === 'system')?.content || '';
       const userAssistantMsgs = chatMsgs
         .filter(m => m.role !== 'system')
         .map(m => ({ role: m.role, content: m.content }));
 
-      const res = await fetch(prov.url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
+      const { replyText } = await executeHttpRequestWithFallback({
+        candidates: [prov.url],
+        headers: buildRequestHeaders({
+          extraHeaders: {
+            'x-api-key': cleanKey,
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
+          }
+        }),
+        signal,
+        modeLabel: prov.name,
+        modelName: model,
+        buildBodyForUrl: () => ({
           model,
           max_tokens: 2048,
           system: sysMsg,
           messages: userAssistantMsgs
-        }),
-        signal
+        })
       });
-      if (!res.ok) {
-        const errTxt = await res.text().catch(() => '');
-        throw new Error(`Claude API HTTP ${res.status}: ${errTxt.slice(0, 160)}`);
-      }
-      const data = await res.json();
-      const replyText = (data?.content || []).map(c => c.text || '').join('');
       return extractActionsFromReply(replyText);
     }
 
     // Proveedores compatibles con OpenAI (OpenAI, OpenRouter, Groq, DeepSeek)
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`
-    };
+    const extraHeaders = {};
     if (providerKey === 'openrouter') {
-      headers['HTTP-Referer'] = window.location.origin;
-      headers['X-Title'] = 'FlowLab paginaRE';
+      extraHeaders['HTTP-Referer'] = window.location.origin;
+      extraHeaders['X-Title'] = 'FlowLab paginaRE';
     }
 
-    const res = await fetch(prov.url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
+    const { replyText } = await executeHttpRequestWithFallback({
+      candidates: [prov.url],
+      headers: buildRequestHeaders({ apiKey: cleanKey, extraHeaders }),
+      signal,
+      modeLabel: prov.name,
+      modelName: model,
+      buildBodyForUrl: () => ({
         model,
         messages: chatMsgs,
-        temperature: 0.35
-      }),
-      signal
+        temperature: 0.35,
+        stream: false
+      })
     });
 
-    if (!res.ok) {
-      const errTxt = await res.text().catch(() => '');
-      throw new Error(`${prov.name} HTTP ${res.status}: ${errTxt.slice(0, 160)}`);
-    }
-
-    const data = await res.json();
-    const replyText = data?.choices?.[0]?.message?.content || '';
     return extractActionsFromReply(replyText);
   }
 
   async function callCustomUrlProvider(userText, chatMsgs, signal) {
-    const endpoint = (aiConfig.url.endpoint || '').trim();
-    if (!endpoint) {
-      throw new Error('Ingresa la URL del endpoint o servidor en el panel "conectar".');
-    }
+    const normalizedUrl = normalizeGatewayUrl(aiConfig.url.endpoint, 'URL personalizada');
+    const formatMode = aiConfig.url.format || 'openai';
+    const candidates = buildCandidateEndpoints(normalizedUrl, formatMode);
+    const modelName = (aiConfig.url.model || '').trim();
+    const headers = buildRequestHeaders({ apiKey: aiConfig.url.apiKey || '' });
 
-    const headers = { 'Content-Type': 'application/json' };
-    if (aiConfig.url.apiKey && aiConfig.url.apiKey.trim()) {
-      headers.Authorization = `Bearer ${aiConfig.url.apiKey.trim()}`;
-    }
-
-    let bodyPayload;
-    if (aiConfig.url.format === 'webhook') {
-      bodyPayload = {
-        message: userText,
-        systemPrompt: buildSystemPrompt(),
-        context: aiConfig.includeContext ? buildWorkspaceContext() : null,
-        history: chatMsgs.filter(m => m.role !== 'system')
-      };
-    } else {
-      bodyPayload = {
-        model: (aiConfig.url.model || 'default').trim(),
-        messages: chatMsgs,
-        temperature: 0.35,
-        stream: false
-      };
-    }
-
-    const res = await fetch(endpoint, {
-      method: 'POST',
+    const { replyText, parsedJson, endpointUsed } = await executeHttpRequestWithFallback({
+      candidates,
       headers,
-      body: JSON.stringify(bodyPayload),
-      signal
+      signal,
+      modeLabel: 'Pasarela URL / Gateway',
+      modelName: modelName || 'default',
+      buildBodyForUrl: targetUrl => {
+        if (formatMode === 'webhook') {
+          const payload = {
+            message: userText,
+            prompt: userText,
+            messages: chatMsgs,
+            systemPrompt: buildSystemPrompt(),
+            context: aiConfig.includeContext ? buildWorkspaceContext() : null,
+            history: chatMsgs.filter(m => m.role !== 'system')
+          };
+          if (modelName) payload.model = modelName;
+          return payload;
+        }
+
+        if (targetUrl.endsWith('/api/chat')) {
+          return {
+            model: modelName || 'default',
+            messages: chatMsgs,
+            stream: false
+          };
+        }
+
+        const openAiBody = {
+          messages: chatMsgs,
+          temperature: 0.35,
+          stream: false
+        };
+        if (modelName) {
+          openAiBody.model = modelName;
+        } else {
+          openAiBody.model = 'default';
+        }
+        return openAiBody;
+      }
     });
 
-    if (!res.ok) {
-      const errTxt = await res.text().catch(() => '');
-      throw new Error(`Endpoint URL respondió HTTP ${res.status}: ${errTxt.slice(0, 150)}`);
-    }
+    connectionHealth.resolvedEndpoint = endpointUsed;
 
-    const data = await res.json();
-    const rawReply =
-      data?.choices?.[0]?.message?.content ||
-      data?.message?.content ||
-      data?.reply ||
-      data?.response ||
-      data?.output ||
-      data?.text ||
-      (typeof data?.content === 'string' ? data.content : '');
-
-    const extracted = extractActionsFromReply(rawReply);
-    if (!extracted.actions && (Array.isArray(data?.operations) || Array.isArray(data?.nodes))) {
-      extracted.actions = tryParseActionPayload(JSON.stringify(data));
+    const extracted = extractActionsFromReply(replyText);
+    if (
+      !extracted.actions &&
+      parsedJson &&
+      (Array.isArray(parsedJson?.operations) || Array.isArray(parsedJson?.nodes))
+    ) {
+      extracted.actions = tryParseActionPayload(JSON.stringify(parsedJson));
     }
     return extracted;
   }
 
   // =========================================================================
-  // DETECCIÓN DE MODELOS LOCALES Y TEST DE CONEXIÓN
+  // DETECCIÓN DE MODELOS (LOCAL Y GATEWAYS URL) Y TEST DE CONEXIÓN
   // =========================================================================
+  async function fetchGatewayModels(rawEndpoint, rawApiKey) {
+    const normalized = normalizeGatewayUrl(rawEndpoint, 'consulta de modelos');
+    const parsed = new URL(normalized);
+    const cleanPath = parsed.pathname.replace(/\/+$/, '');
+    const headers = buildRequestHeaders({ apiKey: rawApiKey || '' });
+    delete headers['Content-Type']; // GET no requiere Content-Type (evita preflight innecesario en servidores simples)
+
+    const modelUrls = [];
+    const addUrl = u => {
+      if (u && !modelUrls.includes(u)) modelUrls.push(u);
+    };
+
+    if (/\/v\d+\/chat\/completions$/i.test(cleanPath)) {
+      addUrl(parsed.origin + cleanPath.replace(/\/chat\/completions$/i, '/models'));
+    } else if (/\/v\d+$/i.test(cleanPath)) {
+      addUrl(`${parsed.origin}${cleanPath}/models`);
+    }
+    addUrl(`${parsed.origin}/v1/models`);
+    addUrl(`${parsed.origin}/api/v1/models`);
+    addUrl(`${parsed.origin}/api/tags`);
+
+    const foundModels = [];
+    let lastErr = null;
+    let anyResponded = false;
+
+    for (const mUrl of modelUrls) {
+      try {
+        let rawText = '';
+        let ok = false;
+
+        let mTimer = null;
+        try {
+          const ctrl = new AbortController();
+          mTimer = setTimeout(() => ctrl.abort(), 5000);
+          const r = await fetch(mUrl, { method: 'GET', headers, signal: ctrl.signal });
+          ok = r.ok;
+          if (ok) rawText = await r.text();
+        } catch (netErr) {
+          const proxied = await tryLocalSameOriginProxy(mUrl, 'GET', headers, undefined);
+          if (proxied) {
+            ok = proxied.ok;
+            rawText = proxied.rawText;
+          } else {
+            lastErr = netErr;
+          }
+        } finally {
+          if (mTimer) clearTimeout(mTimer);
+        }
+
+        if (ok && rawText) {
+          anyResponded = true;
+          const j = JSON.parse(rawText);
+          if (Array.isArray(j?.data)) {
+            j.data.forEach(m => {
+              const id = m?.id || m?.name;
+              if (id && !foundModels.includes(id)) foundModels.push(id);
+            });
+          }
+          if (Array.isArray(j?.models)) {
+            j.models.forEach(m => {
+              const id = typeof m === 'string' ? m : m?.name || m?.id || m?.model;
+              if (id && !foundModels.includes(id)) foundModels.push(id);
+            });
+          }
+        }
+      } catch {}
+    }
+
+    if (foundModels.length === 0 && !anyResponded && lastErr) {
+      throw await diagnoseNetworkFailure(lastErr, modelUrls[0], 'consulta de modelos');
+    }
+
+    return foundModels;
+  }
+
+  function renderModelChips(chipsWrap, modelInput, models) {
+    if (!chipsWrap) return;
+    if (!models.length) {
+      chipsWrap.innerHTML = '';
+      return;
+    }
+    if (modelInput && !modelInput.value.trim() && models[0]) {
+      modelInput.value = models[0];
+    }
+    chipsWrap.innerHTML = models
+      .slice(0, 14)
+      .map(
+        name =>
+          `<button type="button" class="ai-model-chip" data-model="${escapeHTML(name)}">${escapeHTML(name)}</button>`
+      )
+      .join('');
+
+    chipsWrap.querySelectorAll('.ai-model-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (modelInput) modelInput.value = btn.dataset.model;
+        chipsWrap.querySelectorAll('.ai-model-chip').forEach(b => b.classList.remove('is-selected'));
+        btn.classList.add('is-selected');
+      });
+    });
+  }
+
   async function detectLocalModels() {
     const statusEl = document.getElementById('aiTestStatus');
     const chipsWrap = document.getElementById('aiDetectedModels');
     const urlInput = document.getElementById('aiLocalUrl');
+    const keyInput = document.getElementById('aiLocalKey');
+    const modelInput = document.getElementById('aiLocalModel');
     const rawUrl = (urlInput?.value || aiConfig.local.url || LOCAL_PRESETS.ollama.url).trim();
+    const rawKey = keyInput?.value || aiConfig.local.apiKey || '';
 
-    if (statusEl) {
-      setStatusIndicator(statusEl, 'pending', 'Buscando modelos en tu PC...');
-    }
+    setStatusIndicator(statusEl, 'pending', 'Consultando modelos disponibles en tu PC...');
     if (chipsWrap) chipsWrap.innerHTML = '';
 
-    let origin;
     try {
-      origin = new URL(rawUrl).origin;
-    } catch {
-      setStatusIndicator(statusEl, 'err', 'URL local inválida.');
-      return;
-    }
-
-    const foundModels = [];
-
-    // 1. Intentar /api/tags (Ollama)
-    try {
-      const r1 = await fetch(origin + '/api/tags', { method: 'GET' });
-      if (r1.ok) {
-        const j1 = await r1.json();
-        if (Array.isArray(j1?.models)) {
-          j1.models.forEach(m => {
-            if (m?.name && !foundModels.includes(m.name)) foundModels.push(m.name);
-          });
-        }
+      const models = await fetchGatewayModels(rawUrl, rawKey);
+      if (models.length === 0) {
+        setStatusIndicator(
+          statusEl,
+          'err',
+          'El servidor respondió, pero no listó modelos en /v1/models ni /api/tags',
+          'Escribe manualmente el nombre del modelo instalado y pulsa "probar".'
+        );
+        return;
       }
-    } catch {}
-
-    // 2. Intentar /v1/models (LM Studio, Jan, llama.cpp, LocalAI, Ollama reciente)
-    try {
-      const r2 = await fetch(origin + '/v1/models', { method: 'GET' });
-      if (r2.ok) {
-        const j2 = await r2.json();
-        if (Array.isArray(j2?.data)) {
-          j2.data.forEach(m => {
-            if (m?.id && !foundModels.includes(m.id)) foundModels.push(m.id);
-          });
-        }
-      }
-    } catch {}
-
-    if (foundModels.length === 0) {
+      if (modelInput && models[0]) modelInput.value = models[0];
+      renderModelChips(chipsWrap, modelInput, models);
       setStatusIndicator(
         statusEl,
-        'err',
-        window.location.protocol === 'https:'
-          ? 'Sin respuesta local. Enciende Ollama/LM Studio y activa CORS (OLLAMA_ORIGINS="*").'
-          : 'No se detectó servidor activo en ' + origin
+        'ok',
+        `${models.length} modelo(s) detectado(s)`,
+        'Haz clic en un modelo para seleccionarlo y pulsa "guardar conexión".'
       );
-      return;
+    } catch (err) {
+      const title = err instanceof AIConnectionError ? err.title : 'Error al detectar modelos';
+      const details = err instanceof AIConnectionError ? err.details : err.message || '';
+      setStatusIndicator(statusEl, 'err', title, details);
     }
+  }
 
-    const modelInput = document.getElementById('aiLocalModel');
-    if (modelInput && foundModels[0]) {
-      modelInput.value = foundModels[0];
-    }
+  async function detectCustomUrlModels() {
+    const statusEl = document.getElementById('aiTestStatus');
+    const chipsWrap = document.getElementById('aiCustomDetectedModels');
+    const urlInput = document.getElementById('aiCustomUrl');
+    const keyInput = document.getElementById('aiCustomKey');
+    const modelInput = document.getElementById('aiCustomModel');
+    const rawUrl = (urlInput?.value || aiConfig.url.endpoint || '').trim();
+    const rawKey = keyInput?.value || aiConfig.url.apiKey || '';
 
-    setStatusIndicator(statusEl, 'ok', `${foundModels.length} modelo(s) detectado(s) en tu equipo`);
+    setStatusIndicator(statusEl, 'pending', 'Consultando modelos en el endpoint URL...');
+    if (chipsWrap) chipsWrap.innerHTML = '';
 
-    if (chipsWrap) {
-      chipsWrap.innerHTML = foundModels
-        .slice(0, 10)
-        .map(
-          name =>
-            `<button type="button" class="ai-model-chip" data-model="${escapeHTML(name)}">${escapeHTML(name)}</button>`
-        )
-        .join('');
-
-      chipsWrap.querySelectorAll('.ai-model-chip').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if (modelInput) modelInput.value = btn.dataset.model;
-          chipsWrap.querySelectorAll('.ai-model-chip').forEach(b => b.classList.remove('is-selected'));
-          btn.classList.add('is-selected');
-        });
-      });
+    try {
+      const models = await fetchGatewayModels(rawUrl, rawKey);
+      if (models.length === 0) {
+        setStatusIndicator(
+          statusEl,
+          'err',
+          'La pasarela no expone listado en /v1/models',
+          'Ingresa el nombre del modelo manualmente y pulsa "probar" para verificar el chat.'
+        );
+        return;
+      }
+      if (modelInput && models[0]) modelInput.value = models[0];
+      renderModelChips(chipsWrap, modelInput, models);
+      setStatusIndicator(
+        statusEl,
+        'ok',
+        `${models.length} modelo(s) disponibles en la pasarela`,
+        'Selecciona un chip abajo o pulsa "probar".'
+      );
+    } catch (err) {
+      const title = err instanceof AIConnectionError ? err.title : 'No se pudo consultar la pasarela';
+      const details = err instanceof AIConnectionError ? err.details : err.message || '';
+      setStatusIndicator(statusEl, 'err', title, details);
     }
   }
 
@@ -1364,27 +2010,77 @@
     if (!statusEl) return;
 
     if (editingModeTab === 'builtin') {
-      setStatusIndicator(statusEl, 'ok', 'Motor integrado listo (no requiere conexión externa)');
+      connectionHealth = { state: 'ok', title: '', detail: '', resolvedEndpoint: '' };
+      setStatusIndicator(
+        statusEl,
+        'ok',
+        'Motor integrado listo',
+        'No requiere servidor externo ni claves API.'
+      );
+      updateProviderHeaderUI();
       return;
     }
 
-    setStatusIndicator(statusEl, 'pending', 'Probando conexión...');
+    setStatusIndicator(statusEl, 'pending', 'Verificando conexión y respuesta del modelo...');
 
     const prevMode = aiConfig.mode;
     aiConfig.mode = editingModeTab;
     const t0 = performance.now();
+    let timedOut = false;
+    let timer = null;
 
     try {
       const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 12000);
+      timer = setTimeout(() => {
+        timedOut = true;
+        ctrl.abort();
+      }, 15000);
+
       await callExternalAI('Responde únicamente con la palabra OK.', ctrl.signal);
-      clearTimeout(timer);
+
       const ms = Math.round(performance.now() - t0);
-      setStatusIndicator(statusEl, 'ok', `Conexión exitosa (${ms} ms)`);
+      const resolvedNote = connectionHealth.resolvedEndpoint
+        ? `Endpoint activo: ${connectionHealth.resolvedEndpoint}`
+        : '';
+
+      if (prevMode === editingModeTab) {
+        connectionHealth = {
+          state: 'ok',
+          title: `Conexión verificada (${ms} ms)`,
+          detail: resolvedNote,
+          resolvedEndpoint: connectionHealth.resolvedEndpoint
+        };
+      }
+      setStatusIndicator(statusEl, 'ok', `Conexión exitosa (${ms} ms)`, resolvedNote);
     } catch (err) {
-      setStatusIndicator(statusEl, 'err', (err.message || 'Error al conectar').split('\n')[0]);
+      let title = 'Error al conectar con el proveedor';
+      let details = '';
+
+      if (timedOut || (err && err.name === 'AbortError')) {
+        title = 'Tiempo de espera agotado (15 s)';
+        details =
+          'El servidor aceptó o retuvo la solicitud pero no respondió a tiempo.\n' +
+          '• Si es un modelo local (Ollama / LM Studio / Omniroute), puede estar cargando el modelo en RAM/VRAM o el puerto está bloqueado.';
+      } else if (err instanceof AIConnectionError) {
+        title = err.title;
+        details = err.details;
+      } else if (err) {
+        title = err.message || title;
+      }
+
+      if (prevMode === editingModeTab) {
+        connectionHealth = {
+          state: 'error',
+          title,
+          detail: details,
+          resolvedEndpoint: ''
+        };
+      }
+      setStatusIndicator(statusEl, 'err', title, details);
     } finally {
+      if (timer) clearTimeout(timer);
       aiConfig.mode = prevMode;
+      updateProviderHeaderUI();
     }
   }
 
@@ -1396,36 +2092,78 @@
       const preset = LOCAL_PRESETS[aiConfig.local.preset];
       const label = preset ? preset.name.replace(' (Local)', '') : 'IA Local';
       const mod = aiConfig.local.model ? ` · ${aiConfig.local.model}` : '';
-      return { connected: true, text: `${label}${mod}` };
+      const hasUrl = Boolean(aiConfig.local.url && aiConfig.local.url.trim());
+      return { configured: hasUrl, text: `${label}${mod}` };
     }
     if (aiConfig.mode === 'api') {
       const prov = CLOUD_PROVIDERS[aiConfig.api.provider] || CLOUD_PROVIDERS.openai;
       const hasKey = Boolean(aiConfig.api.apiKey && aiConfig.api.apiKey.trim());
       return {
-        connected: hasKey,
+        configured: hasKey,
         text: hasKey ? `${prov.name} · ${aiConfig.api.model}` : `${prov.name} (falta key)`
       };
     }
     if (aiConfig.mode === 'url') {
-      const hasUrl = Boolean(aiConfig.url.endpoint && aiConfig.url.endpoint.trim());
+      const rawEndpoint = (aiConfig.url.endpoint || '').trim();
+      const hasUrl = Boolean(rawEndpoint);
       let host = 'URL personalizada';
-      try {
-        host = new URL(aiConfig.url.endpoint).host || host;
-      } catch {}
-      return { connected: hasUrl, text: hasUrl ? `URL · ${host}` : 'URL (sin configurar)' };
+      if (hasUrl) {
+        try {
+          const norm = normalizeGatewayUrl(rawEndpoint);
+          host = new URL(norm).host || host;
+        } catch {
+          host = rawEndpoint.slice(0, 24);
+        }
+      }
+      return { configured: hasUrl, text: hasUrl ? `URL · ${host}` : 'URL (sin configurar)' };
     }
-    return { connected: false, text: 'Asistente integrado' };
+    return { configured: false, text: 'Asistente integrado' };
   }
 
   function updateProviderHeaderUI() {
     const info = getActiveProviderSummary();
     const lbl = document.getElementById('aiProviderLabel');
+    const pill = document.getElementById('btnAiProviderPill');
     const dot = document.getElementById('aiProviderDot');
     const tabDot = document.getElementById('aiTabDot');
+    const banner = document.getElementById('aiConnBanner');
+    const bannerTitle = document.getElementById('aiConnBannerTitle');
+    const bannerText = document.getElementById('aiConnBannerText');
+    const drawer = document.getElementById('aiConfigDrawer');
 
     if (lbl) lbl.textContent = info.text;
-    if (dot) dot.classList.toggle('is-live', info.connected);
-    if (tabDot) tabDot.classList.toggle('is-live', info.connected);
+
+    const isErr = aiConfig.mode !== 'builtin' && connectionHealth.state === 'error';
+    const isLive = aiConfig.mode !== 'builtin' && connectionHealth.state === 'ok' && info.configured;
+    const isConfigured = aiConfig.mode !== 'builtin' && info.configured && !isErr && !isLive;
+
+    [dot, tabDot].forEach(el => {
+      if (!el) return;
+      el.classList.toggle('is-live', isLive);
+      el.classList.toggle('is-error', isErr);
+      el.classList.toggle('is-configured', isConfigured);
+    });
+
+    if (pill) {
+      pill.classList.toggle('is-error', isErr);
+      pill.title = isErr
+        ? `${connectionHealth.title} — Haz clic para revisar la conexión`
+        : 'Configurar conexión IA';
+    }
+
+    if (banner) {
+      const drawerClosed = !drawer || drawer.hidden;
+      if (isErr && drawerClosed) {
+        if (bannerTitle) bannerTitle.textContent = connectionHealth.title || 'Fallo de conexión IA';
+        if (bannerText) {
+          const firstLine = (connectionHealth.detail || '').split('\n')[0];
+          bannerText.textContent = firstLine || 'Revisa la URL, puerto o configuración CORS.';
+        }
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
+    }
   }
 
   function updateAIChatContextUI() {
@@ -1561,12 +2299,19 @@
           }
         }
 
+        const errorActionsHtml = msg.isError && msg.canOpenConfig
+          ? `<div class="ai-action-btns" style="margin-top:8px">
+               <button type="button" class="ai-card-btn" data-open-cfg="1">${AI_SVG.settings}<span>revisar conexión</span></button>
+             </div>`
+          : '';
+
         return `
           <div class="ai-msg ai-msg--assistant ${msg.isError ? 'is-error' : ''}">
             <div class="ai-msg-meta">${escapeHTML(msg.providerTag || 'IA')}</div>
             <div class="ai-bubble ai-bubble--assistant">
               <div class="ai-bubble-text">${formatAssistantMarkdown(msg.content)}</div>
               ${actionCardHtml}
+              ${errorActionsHtml}
             </div>
           </div>
         `;
@@ -1584,6 +2329,10 @@
       `;
       container.appendChild(thinkingEl);
     }
+
+    container.querySelectorAll('[data-open-cfg]').forEach(btn => {
+      btn.addEventListener('click', () => toggleConfigDrawer(true));
+    });
 
     // Bind botones de tarjetas de acción
     container.querySelectorAll('[data-apply-idx]').forEach(btn => {
@@ -1646,6 +2395,16 @@
 
     try {
       const result = await callExternalAI(text, currentAbort.signal);
+      if (aiConfig.mode !== 'builtin') {
+        connectionHealth = {
+          state: 'ok',
+          title: 'Conectado',
+          detail: '',
+          resolvedEndpoint: connectionHealth.resolvedEndpoint
+        };
+        updateProviderHeaderUI();
+      }
+
       const assistantMsg = {
         role: 'assistant',
         content: result.cleanReply,
@@ -1673,19 +2432,38 @@
 
       messages.push(assistantMsg);
     } catch (err) {
-      if (err.name === 'AbortError') {
+      if (err && err.name === 'AbortError') {
         messages.push({
           role: 'assistant',
-          content: 'Generación detenida.',
+          content: 'Generación detenida por el usuario.',
           isError: true,
           providerTag: provSummary.text,
           timestamp: Date.now()
         });
       } else {
+        const errTitle =
+          err instanceof AIConnectionError
+            ? err.title
+            : 'Error de conexión con el proveedor de IA';
+        const errDetail =
+          err instanceof AIConnectionError
+            ? err.details
+            : err?.message || 'No se pudo completar la solicitud.';
+
+        connectionHealth = {
+          state: 'error',
+          title: errTitle,
+          detail: errDetail,
+          resolvedEndpoint: ''
+        };
+        updateProviderHeaderUI();
+
+        const formattedErr = errDetail ? `**${errTitle}**\n\n${errDetail}` : `**${errTitle}**`;
         messages.push({
           role: 'assistant',
-          content: err.message || 'Ocurrió un error al consultar el proveedor de IA.',
+          content: formattedErr,
           isError: true,
+          canOpenConfig: true,
           providerTag: provSummary.text,
           timestamp: Date.now()
         });
@@ -1715,9 +2493,11 @@
 
     const localPreset = document.getElementById('aiLocalPreset');
     const localUrl = document.getElementById('aiLocalUrl');
+    const localKey = document.getElementById('aiLocalKey');
     const localModel = document.getElementById('aiLocalModel');
     if (localPreset) localPreset.value = aiConfig.local.preset || 'ollama';
     if (localUrl) localUrl.value = aiConfig.local.url || LOCAL_PRESETS.ollama.url;
+    if (localKey) localKey.value = aiConfig.local.apiKey || '';
     if (localModel) localModel.value = aiConfig.local.model || LOCAL_PRESETS.ollama.defaultModel;
 
     const cloudProv = document.getElementById('aiCloudProvider');
@@ -1735,6 +2515,12 @@
     if (customFmt) customFmt.value = aiConfig.url.format || 'openai';
     if (customKey) customKey.value = aiConfig.url.apiKey || '';
     if (customModel) customModel.value = aiConfig.url.model || '';
+
+    // Si había un error previo activo para este modo, mostrarlo de inmediato en la gaveta
+    const statusEl = document.getElementById('aiTestStatus');
+    if (statusEl && connectionHealth.state === 'error' && editingModeTab === aiConfig.mode) {
+      setStatusIndicator(statusEl, 'err', connectionHealth.title, connectionHealth.detail);
+    }
   }
 
   function readConfigFormIntoState(commitActiveMode = true) {
@@ -1744,9 +2530,11 @@
 
     const localPreset = document.getElementById('aiLocalPreset');
     const localUrl = document.getElementById('aiLocalUrl');
+    const localKey = document.getElementById('aiLocalKey');
     const localModel = document.getElementById('aiLocalModel');
     if (localPreset) aiConfig.local.preset = localPreset.value;
     if (localUrl) aiConfig.local.url = localUrl.value.trim();
+    if (localKey) aiConfig.local.apiKey = localKey.value.trim();
     if (localModel) aiConfig.local.model = localModel.value.trim();
 
     const cloudProv = document.getElementById('aiCloudProvider');
@@ -1776,8 +2564,7 @@
     });
     const statusEl = document.getElementById('aiTestStatus');
     if (statusEl) {
-      statusEl.textContent = '';
-      statusEl.className = 'ai-test-status';
+      setStatusIndicator(statusEl, null, '');
     }
   }
 
@@ -1792,6 +2579,18 @@
     if (nextOpen) {
       syncConfigFormFromState();
     }
+    updateProviderHeaderUI();
+  }
+
+  function bindPasswordToggle(btnId, inputId) {
+    document.getElementById(btnId)?.addEventListener('click', e => {
+      const keyEl = document.getElementById(inputId);
+      const eyeBtn = e.currentTarget;
+      if (!keyEl) return;
+      const isHidden = keyEl.type === 'password';
+      keyEl.type = isHidden ? 'text' : 'password';
+      if (eyeBtn) eyeBtn.innerHTML = isHidden ? AI_SVG.eyeOff : AI_SVG.eye;
+    });
   }
 
   function openAISidebarTab(openConfig = false) {
@@ -1820,6 +2619,7 @@
 
     document.getElementById('btnAiConfig')?.addEventListener('click', () => toggleConfigDrawer());
     document.getElementById('btnAiProviderPill')?.addEventListener('click', () => toggleConfigDrawer());
+    document.getElementById('btnAiFixConn')?.addEventListener('click', () => toggleConfigDrawer(true));
 
     document.getElementById('btnAiClear')?.addEventListener('click', () => {
       messages = [];
@@ -1851,24 +2651,34 @@
       if (keyEl) keyEl.placeholder = p.placeholderKey;
     });
 
-    // Mostrar/ocultar API Key con icono vectorial
-    document.getElementById('btnToggleKeyVis')?.addEventListener('click', e => {
-      const keyEl = document.getElementById('aiCloudKey');
-      const eyeBtn = e.currentTarget;
-      if (!keyEl) return;
-      const isHidden = keyEl.type === 'password';
-      keyEl.type = isHidden ? 'text' : 'password';
-      if (eyeBtn) eyeBtn.innerHTML = isHidden ? AI_SVG.eyeOff : AI_SVG.eye;
-    });
+    // Botones vectoriales mostrar/ocultar clave en los tres modos
+    bindPasswordToggle('btnToggleKeyVis', 'aiCloudKey');
+    bindPasswordToggle('btnToggleLocalKeyVis', 'aiLocalKey');
+    bindPasswordToggle('btnToggleCustomKeyVis', 'aiCustomKey');
 
     document.getElementById('btnDetectLocalModels')?.addEventListener('click', detectLocalModels);
+    document.getElementById('btnDetectCustomModels')?.addEventListener('click', detectCustomUrlModels);
     document.getElementById('btnAiTest')?.addEventListener('click', testCurrentConnection);
 
-    document.getElementById('btnAiSaveConfig')?.addEventListener('click', () => {
+    document.getElementById('btnAiSaveConfig')?.addEventListener('click', async () => {
       readConfigFormIntoState(true);
+      connectionHealth = { state: 'idle', title: '', detail: '', resolvedEndpoint: '' };
       saveAIConfig();
-      toggleConfigDrawer(false);
-      showToast('Conexión IA actualizada: ' + getActiveProviderSummary().text, 'ok', 2000);
+
+      if (aiConfig.mode === 'builtin') {
+        connectionHealth.state = 'ok';
+        updateProviderHeaderUI();
+        toggleConfigDrawer(false);
+        showToast('Conexión IA actualizada: Asistente integrado', 'ok', 2000);
+        return;
+      }
+
+      // Validar y probar al guardar para no cerrar en silencio si la conexión falla
+      await testCurrentConnection();
+      if (connectionHealth.state === 'ok') {
+        toggleConfigDrawer(false);
+        showToast('Conexión IA verificada: ' + getActiveProviderSummary().text, 'ok', 2200);
+      }
     });
 
     document.getElementById('btnAiToggleCtx')?.addEventListener('click', () => {
