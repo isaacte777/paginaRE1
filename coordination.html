@@ -242,14 +242,50 @@
           <span id="aiProviderLabel">Asistente integrado</span>
         </button>
         <div class="ai-topbar-actions">
-          <button type="button" class="ai-icon-btn" id="btnAiConfig" aria-label="Configurar conexión IA">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>conectar</span>
+          <button type="button" class="ai-icon-btn" id="btnAiNewChat" aria-label="Crear nuevo chat" title="Crear nuevo chat sin borrar los anteriores">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>nuevo</span>
           </button>
-          <button type="button" class="ai-icon-btn" id="btnAiClear" aria-label="Limpiar conversación" title="Limpiar chat">
+          <button type="button" class="ai-icon-btn" id="btnAiHistory" aria-label="Historial de chats guardados" aria-expanded="false" title="Ver todos los chats guardados">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>
+            <span>chats</span>
+            <span class="ai-sessions-badge" id="aiSessionsCount">1</span>
+          </button>
+          <button type="button" class="ai-icon-btn" id="btnAiConfig" aria-label="Configurar conexión IA" title="Configurar proveedor IA">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+          <button type="button" class="ai-icon-btn" id="btnAiClear" aria-label="Vaciar mensajes del chat actual" title="Vaciar mensajes del chat actual">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </button>
         </div>
+      </div>
+
+      <!-- Barra de sesión activa + registro persistente de todos los chats guardados -->
+      <div class="ai-session-bar" id="aiSessionBar">
+        <button type="button" class="ai-session-current" id="btnAiSessionCurrent" title="Cambiar de conversación o abrir un chat guardado">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <span class="ai-session-current__title" id="aiActiveSessionTitle">Nuevo chat FlowLab</span>
+          <span class="ai-session-current__meta" id="aiActiveSessionMeta">guardado</span>
+          <svg class="ai-session-current__chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <div class="ai-sessions-drawer" id="aiSessionsDrawer" hidden>
+        <div class="ai-sessions-head">
+          <div class="ai-sessions-head__title">
+            <span>:: registro de chats guardados</span>
+            <small id="aiSessionsSubtitle">persistente en localStorage</small>
+          </div>
+          <button type="button" class="ai-mini-btn ai-sessions-new-btn" id="btnAiDrawerNewChat">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>nuevo chat</span>
+          </button>
+        </div>
+        <div class="ai-sessions-search-wrap" id="aiSessionsSearchWrap" hidden>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="aiSessionSearchInput" placeholder="Buscar conversación guardada..." autocomplete="off">
+        </div>
+        <div class="ai-sessions-list" id="aiSessionsList" role="listbox" aria-label="Conversaciones guardadas"></div>
       </div>
 
       <!-- Aviso visual persistente cuando falla la conexión con el proveedor / gateway -->

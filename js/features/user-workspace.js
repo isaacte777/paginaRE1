@@ -463,7 +463,7 @@
     saveUsersList(remaining);
 
     // Limpiar claves asociadas al espacio eliminado
-    ['projects', 'canvas', 'ai-config', 'ai-chat'].forEach(res => {
+    ['projects', 'canvas', 'ai-config', 'ai-chat', 'ai-sessions', 'ai-active-session'].forEach(res => {
       try { localStorage.removeItem(buildScopedKey(targetId, res)); } catch {}
     });
 
