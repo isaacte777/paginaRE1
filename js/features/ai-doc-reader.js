@@ -175,15 +175,17 @@
       .forEach((sheetKey, sIdx) => {
         const xml = entries.get(sheetKey) || '';
         lines.push(`=== Hoja ${sIdx + 1} ===`);
-        const rowRe = /<row\b[^>]*>([\s\S]*?)<\/row>/gi;
+        const rowRe = /<row\b[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/gi;
         let rm;
         while ((rm = rowRe.exec(xml)) !== null) {
+          if (!rm[1]) continue;
           const cells = [];
-          const cellRe = /<c\b([^>]*)>([\s\S]*?)<\/c>/gi;
+          const cellRe = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/gi;
           let cm;
           while ((cm = cellRe.exec(rm[1])) !== null) {
             const attrs = cm[1] || '';
             const inner = cm[2] || '';
+            if (!inner) continue;
             const refMatch = attrs.match(/\br="([A-Z]+\d+)"/i);
             const typeMatch = attrs.match(/\bt="([^"]+)"/i);
             const fMatch = inner.match(/<f(?:\s[^>]*)?>([\s\S]*?)<\/f>/i);
@@ -506,6 +508,8 @@
     let docKindLabel = ext ? `.${ext}` : 'documento';
 
     // 2. Documentos PDF
+    let financialWorkbook = null;
+
     if (ext === 'pdf' || mime === 'application/pdf') {
       docKindLabel = 'PDF';
       extractedText = await parsePdfBuffer(buffer);
@@ -516,12 +520,20 @@
       docKindLabel = 'Word DOCX';
       extractedText = await parseDocxBuffer(buffer);
     }
-    // 4. Excel (.xlsx)
+    // 4. Excel (.xlsx) con motor estructural multi-hoja
     else if (ext === 'xlsx' || mime.includes('spreadsheetml')) {
       docKindLabel = 'Excel XLSX';
-      const parsedXls = await parseXlsxBuffer(buffer);
-      extractedText = parsedXls.text;
-      structuredRows = parsedXls.tableRows;
+      if (window.FlowLabWorkbookEngine && typeof window.FlowLabWorkbookEngine.parseWorkbookFromBuffer === 'function') {
+        financialWorkbook = await window.FlowLabWorkbookEngine.parseWorkbookFromBuffer(buffer, name);
+        const aiDigest = window.FlowLabWorkbookEngine.formatWorkbookDigestForAI(financialWorkbook);
+        const parsedXls = await parseXlsxBuffer(buffer);
+        extractedText = `${aiDigest}\n\n--- CELDAS DETALLADAS ---\n${parsedXls.text}`;
+        structuredRows = parsedXls.tableRows;
+      } else {
+        const parsedXls = await parseXlsxBuffer(buffer);
+        extractedText = parsedXls.text;
+        structuredRows = parsedXls.tableRows;
+      }
     }
     // 5. PowerPoint / OpenDocument (.pptx, .odt, .ods)
     else if (['pptx', 'odt', 'ods'].includes(ext) || mime.includes('presentationml') || mime.includes('opendocument')) {
@@ -542,11 +554,20 @@
       } else {
         docKindLabel = ext ? ext.toUpperCase() : 'Texto';
         extractedText = stripHtmlOrRtf(rawTxt, ext);
+        if ((ext === 'csv' || ext === 'tsv') && window.FlowLabWorkbookEngine?.parseCsvAsWorkbook) {
+          financialWorkbook = window.FlowLabWorkbookEngine.parseCsvAsWorkbook(rawTxt, name);
+        }
       }
     }
 
     const trimmed = String(extractedText || '').trim().slice(0, MAX_TEXT_CHARS_PER_FILE);
     const lineCount = trimmed ? trimmed.split(/\r?\n/).filter(Boolean).length : 0;
+    const wbBadge =
+      financialWorkbook && financialWorkbook.sheetCount
+        ? ` · ${financialWorkbook.sheetCount} hoja(s) · ${financialWorkbook.currency}`
+        : lineCount
+          ? ` · ${lineCount} línea(s) leídas`
+          : '';
 
     return {
       id: 'att_' + Math.random().toString(36).slice(2, 9),
@@ -561,8 +582,9 @@
       mimeType: mime || 'application/octet-stream',
       extractedText: trimmed,
       structuredRows,
-      summarySnippet: `${docKindLabel} (${sizeLabel})${lineCount ? ` · ${lineCount} línea(s) leídas` : ''}`,
-      visualSummary: `${docKindLabel} (${sizeLabel})${lineCount ? ` · ${lineCount} línea(s) leídas` : ''}`
+      financialWorkbook,
+      summarySnippet: `${docKindLabel} (${sizeLabel})${wbBadge}`,
+      visualSummary: `${docKindLabel} (${sizeLabel})${wbBadge}`
     };
   }
 
@@ -657,6 +679,24 @@
 
     const wantsClear = /\b(desde cero|reemplaza|limpia|nuevo lienzo)\b/.test(promptNorm);
     const prefixOps = wantsClear ? [{ op: 'clear_canvas' }] : [];
+
+    // 0. Si hay un libro Excel (.xlsx / .csv) con modelo estructural multi-hoja, construir el Árbol Financiero completo
+    const wbAtt = (attachments || []).find(a => a && a.financialWorkbook && a.financialWorkbook.sheetCount > 0);
+    if (wbAtt && window.FlowLabWorkbookEngine?.buildWorkbookTreeActions) {
+      const tree = window.FlowLabWorkbookEngine.buildWorkbookTreeActions(wbAtt.financialWorkbook, userPrompt);
+      if (tree && Array.isArray(tree.operations) && tree.operations.length > 0) {
+        window.FlowLabWorkbookEngine.setActiveWorkbook?.(wbAtt.financialWorkbook, tree.viewKey);
+        return {
+          summary: tree.summary,
+          operations: tree.operations,
+          actions: { summary: tree.summary, operations: tree.operations },
+          extractedCount: tree.operations.filter(o => o.op === 'add_node').length,
+          domain: 'finance',
+          workbookDigest: window.FlowLabWorkbookEngine.formatWorkbookDigestForAI(wbAtt.financialWorkbook),
+          viewLabel: tree.viewLabel
+        };
+      }
+    }
 
     // 1. Verificar si es un documento predominantemente financiero / Excel / CSV con montos
     const lines = combinedRaw

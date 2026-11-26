@@ -1551,6 +1551,10 @@
           sortBy: op.sortBy || 'topology',
           align: op.align || 'center'
         };
+      } else if (kind === 'set_currency' && op.currency) {
+        if (typeof window.setSheetCurrency === 'function') {
+          window.setSheetCurrency(String(op.currency).toUpperCase());
+        }
       } else if (kind === 'clear_canvas') {
         STATE.nodes = [];
         STATE.edges = [];
@@ -1591,12 +1595,14 @@
         const normStatus = normalizeNodeStatus(op.status);
         if (normStatus) nodeObj.status = normStatus;
         if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
+        if (typeof op.note === 'string' && op.note) nodeObj.note = op.note;
         if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
         if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type) && typeof ensureFinanceNodeDefaults === 'function') {
           ensureFinanceNodeDefaults(nodeObj);
           if (STATE.canvasDomain !== 'finance' && typeof setWorkspaceDomain === 'function') {
             setWorkspaceDomain('finance', { silent: true });
           }
+          window.FlowLabWorkbookEngine?.renderWorkbookSheetsBar?.();
         }
         if (cleanTxt.overflowNotes) {
           nodeObj.params = { ...(nodeObj.params || {}), notes: cleanTxt.overflowNotes };
@@ -2485,6 +2491,10 @@
             sortBy: op.sortBy || 'topology',
             align: op.align || 'center'
           };
+        } else if (kind === 'set_currency' && op.currency) {
+          if (typeof window.setSheetCurrency === 'function') {
+            window.setSheetCurrency(String(op.currency).toUpperCase());
+          }
         } else if (kind === 'clear_canvas') {
           hasClearCanvas = true;
           deleteIdsOrdered.length = 0;
@@ -2509,12 +2519,14 @@
           const normStatus = normalizeNodeStatus(op.status);
           if (normStatus) nodeObj.status = normStatus;
           if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
+          if (typeof op.note === 'string' && op.note) nodeObj.note = op.note;
           if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
           if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type) && typeof ensureFinanceNodeDefaults === 'function') {
             ensureFinanceNodeDefaults(nodeObj);
             if (STATE.canvasDomain !== 'finance' && typeof setWorkspaceDomain === 'function') {
               setWorkspaceDomain('finance', { silent: true });
             }
+            window.FlowLabWorkbookEngine?.renderWorkbookSheetsBar?.();
           }
           if (cleanTxt.overflowNotes) {
             nodeObj.params = { ...(nodeObj.params || {}), notes: cleanTxt.overflowNotes };
@@ -3066,6 +3078,20 @@
             `${attLines.join('\n')}\n\n` +
             `Si deseas llevar este contenido al lienzo, indícame por ejemplo: *«arma las tareas de este documento»* o *«construye la planilla financiera de este archivo»*.`,
           actions: null
+        };
+      }
+
+      const wbAttBuilt = attachmentsSnapshot.find(a => a && a.financialWorkbook);
+      if (wbAttBuilt && docSynth && docSynth.actions && !onlyQuestionNoBuild) {
+        const wb = wbAttBuilt.financialWorkbook;
+        const sheetNames = wb.sheets.map(s => `\`${s.name}\``).join(', ');
+        return {
+          cleanReply:
+            `He analizado la estructura completa de **\`${wb.fileName}\`** (**${wb.sheetCount} hojas**, moneda detectada **${wb.currency}**, **${wb.totalFormulas} fórmulas**) y construido en el lienzo el **${docSynth.viewLabel || 'Árbol Financiero Reactivo'}** con **${docSynth.extractedCount} nodos conectados**:\n\n` +
+            `• **Hojas procesadas (${wb.sheetCount})**: ${sheetNames}\n` +
+            `• **Árbol reactivo**: cada rama de ingresos, gastos, capital/efectivo, deudas en cuotas, tarjetas de crédito, calendario de pagos y equipamiento alimenta sumatorias (\`=SUMA\`), saldos insolutos (\`=Resta\`), balance neto y gráficas de diagnóstico.\n` +
+            `• **Selector de hojas activo arriba**: usa las pestañas superiores del apartado **Finanzas** para alternar entre el **Árbol Maestro (${wb.sheetCount} hojas)** o desglosar hoja por hoja (ej. *Octubre*, *Septiembre*, *Deudas*, *Fecha de Pagos*, *Herramientas*).`,
+          actions: docSynth.actions
         };
       }
 
@@ -4226,13 +4252,36 @@
 
   function enrichExternalReplyActions(extracted, userText, attachmentsSnapshot = []) {
     if (!extracted) return extracted;
+    const norm = normalizePlainSpanish(userText);
+    const onlySummarize = /\b(solo resume|solo explica|no crees|sin crear nodos)\b/i.test(norm);
+
+    // 0. Si hay un libro financiero Excel (.xlsx / .csv) adjunto o activo y el usuario pide nodos/árbol/finanzas, garantizar el Árbol Financiero completo y exacto
+    const wbAtt = (attachmentsSnapshot || []).find(a => a && a.financialWorkbook && a.financialWorkbook.sheetCount > 0);
+    if (wbAtt && !onlySummarize && window.FlowLabWorkbookEngine?.buildWorkbookTreeActions) {
+      const existingAddCount = Array.isArray(extracted.actions?.operations)
+        ? extracted.actions.operations.filter(o => o && o.op === 'add_node').length
+        : 0;
+      const tree = window.FlowLabWorkbookEngine.buildWorkbookTreeActions(wbAtt.financialWorkbook, userText);
+      if (tree) {
+        window.FlowLabWorkbookEngine.setActiveWorkbook?.(wbAtt.financialWorkbook, tree.viewKey);
+        if (existingAddCount < 10) {
+          extracted.actions = {
+            summary: tree.summary,
+            operations: tree.operations
+          };
+          return extracted;
+        }
+        // Si el LLM externo sí generó un árbol rico (>=10 nodos), asegurar la moneda detectada del libro
+        extracted.actions.operations.unshift({ op: 'set_currency', currency: wbAtt.financialWorkbook.currency });
+        return extracted;
+      }
+    }
+
     const hasOps =
       extracted.actions &&
       Array.isArray(extracted.actions.operations) &&
       extracted.actions.operations.length > 0;
     if (hasOps) return extracted;
-
-    const norm = normalizePlainSpanish(userText);
 
     // 1. Si el usuario pidió organizar nodos (ej. "ordenalo de forma vertical") y el modelo externo respondió en texto sin emitir JSON, inyectar la operación exacta
     if (
@@ -5951,7 +6000,52 @@
     if ((!text && attachmentsSnapshot.length === 0) || isGenerating) return;
     if (!text && attachmentsSnapshot.length > 0) {
       text =
-        'Lee los archivos adjuntos, resume sus puntos clave y construye en el lienzo las tareas o modelo correspondiente.';
+        'Analiza toda la información de este archivo y construye en el lienzo el árbol completo de nodos correspondiente.';
+    }
+
+    // Si no se adjuntó archivo manualmente pero ya hay un Excel activo en Finanzas o se menciona el Excel del repositorio, vincularlo automáticamente
+    if (attachmentsSnapshot.length === 0 && window.FlowLabWorkbookEngine) {
+      const normReq = normalizePlainSpanish(text);
+      const activeWb = window.FlowLabWorkbookEngine.getActiveWorkbook?.();
+      const mentionsRepoXlsx = /\b(gere|milki|sistema financiero familiar|archivo del repositorio|\.xlsx)\b/i.test(normReq);
+      const asksWorkbookSheet =
+        Boolean(activeWb) &&
+        /\b(hoja\w*|octubre|septiembre|setiembre|agosto|julio|junio|deuda\w*|tarjeta\w*|herramienta\w*|fecha\w*\s+de\s+pago\w*|calendario|arbol\s+maestro|todas\s+las\s+hojas|este\s+excel|este\s+archivo)\b/i.test(
+          normReq
+        );
+
+      if (asksWorkbookSheet && activeWb) {
+        attachmentsSnapshot.push({
+          id: 'att_active_wb',
+          kind: 'xlsx',
+          ext: 'xlsx',
+          isImage: false,
+          name: activeWb.fileName,
+          docKindLabel: 'Excel XLSX Activo',
+          sizeLabel: `${activeWb.sheetCount} hojas`,
+          extractedText: window.FlowLabWorkbookEngine.formatWorkbookDigestForAI(activeWb),
+          financialWorkbook: activeWb,
+          summarySnippet: `Excel activo (${activeWb.sheetCount} hojas · ${activeWb.currency})`
+        });
+      } else if (mentionsRepoXlsx && typeof window.FlowLabWorkbookEngine.loadRepositorySampleWorkbook === 'function') {
+        try {
+          const repoWb = await window.FlowLabWorkbookEngine.loadRepositorySampleWorkbook(false, text);
+          if (repoWb) {
+            attachmentsSnapshot.push({
+              id: 'att_repo_wb',
+              kind: 'xlsx',
+              ext: 'xlsx',
+              isImage: false,
+              name: repoWb.fileName,
+              docKindLabel: 'Excel XLSX',
+              sizeLabel: `${repoWb.sheetCount} hojas`,
+              extractedText: window.FlowLabWorkbookEngine.formatWorkbookDigestForAI(repoWb),
+              financialWorkbook: repoWb,
+              summarySnippet: `Excel repositorio (${repoWb.sheetCount} hojas · ${repoWb.currency})`
+            });
+          }
+        } catch {}
+      }
     }
 
     const inputEl = document.getElementById('aiChatInput');

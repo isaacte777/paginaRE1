@@ -1203,3 +1203,186 @@
   justify-content: center;
 }
 
+/* =========================================================================
+   MOTOR MULTI-HOJA EXCEL (.XLSX / .CSV) — BARRA DE HOJAS Y BOTÓN IMPORTAR
+   ========================================================================= */
+.fin-xlsx-quick-row {
+  padding: 0 0 6px;
+}
+
+.fin-import-xlsx-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.2px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+
+.fin-import-xlsx-btn:hover {
+  background: rgba(74, 222, 128, 0.16);
+  border-color: rgba(74, 222, 128, 0.65);
+}
+
+.fin-preset-xlsx-demo {
+  border-color: rgba(74, 222, 128, 0.36) !important;
+  background: rgba(74, 222, 128, 0.06) !important;
+}
+
+.fin-preset-xlsx-demo strong {
+  color: var(--green) !important;
+}
+
+.fin-fx-import-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.2px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fin-fx-import-btn:hover {
+  background: rgba(74, 222, 128, 0.18);
+  border-color: rgba(74, 222, 128, 0.68);
+}
+
+.fin-workbook-bar {
+  position: absolute;
+  top: 42px;
+  left: 10px;
+  right: 10px;
+  z-index: 26;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line2, #252b33);
+  background: rgba(14, 17, 21, 0.94);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+}
+
+.fin-workbook-bar[hidden] {
+  display: none !important;
+}
+
+.fin-wb-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding-right: 8px;
+  border-right: 1px solid var(--line, #1f242b);
+  flex-shrink: 0;
+  max-width: 220px;
+}
+
+.fin-wb-file-icon {
+  width: 13px;
+  height: 13px;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.fin-wb-filename {
+  font-size: 9.3px;
+  font-weight: 600;
+  color: var(--tx0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fin-wb-badge {
+  font-size: 8.4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--green);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fin-wb-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  flex: 1;
+  scrollbar-width: thin;
+  padding-bottom: 1px;
+}
+
+.fin-wb-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tx2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8.9px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.fin-wb-tab:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--tx0);
+}
+
+.fin-wb-tab.is-active {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: rgba(74, 222, 128, 0.55);
+  color: var(--green);
+  font-weight: 700;
+}
+
+.fin-wb-close {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tx2);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fin-wb-close:hover {
+  background: rgba(248, 113, 113, 0.14);
+  color: var(--red, #f87171);
+}
+
+
