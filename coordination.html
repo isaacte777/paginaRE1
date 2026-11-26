@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/nodes.css">
 <link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/finance.css">
 </head>
 <body>
 
@@ -46,11 +47,23 @@
   </div>
 
   <div class="header-row header-bar">
+    <div class="workspace-mode-switch" id="workspaceModeSwitch" role="group" aria-label="Modo de generación de lienzo o planilla">
+      <button type="button" class="ws-mode-btn is-active" data-ws-domain="workflow" aria-pressed="true" title="Lienzo de flujos y procesos">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/><path d="M10 6.5h4v7.5"/></svg>
+        <span>flujo</span>
+      </button>
+      <button type="button" class="ws-mode-btn" data-ws-domain="finance" aria-pressed="false" title="Apartado de Planilla Financiera tipo Excel (54 nodos y métricas propias)">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+        <span>planilla</span>
+        <span class="ws-mode-fx-pill">fx</span>
+      </button>
+    </div>
+
     <div class="template-module">
       <span class="template-module__icon" aria-hidden="true">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
       </span>
-      <select id="templateSelect" aria-label="Seleccionar plantilla">
+      <select id="templateSelect" aria-label="Seleccionar plantilla o planilla financiera">
         <option value="">plantillas::</option>
         <option value="comparacion_precios">comparacion_precios</option>
         <option value="orquestador">orquestador_ia</option>
@@ -58,6 +71,10 @@
         <option value="contratacion">contratacion_personal</option>
         <option value="personal">plan_personal</option>
         <option value="complex">pipeline_complejo</option>
+        <option value="fin_resultados">planilla_resultados_pnl</option>
+        <option value="fin_flujo_caja">planilla_van_tir_flujos</option>
+        <option value="fin_prestamo">planilla_credito_frances</option>
+        <option value="fin_blanco">planilla_financiera_vacia</option>
         <option value="blank">lienzo_blanco</option>
       </select>
     </div>
@@ -121,37 +138,79 @@
     <div class="palette-sheet-head">
       <div>
         <span class="palette-handle" aria-hidden="true"></span>
-        <strong>añadir al flujo</strong>
+        <strong>añadir al lienzo</strong>
         <small>toca para agregar · pellizca el mapa para zoom</small>
       </div>
       <button class="palette-close" id="btnClosePalette" type="button" aria-label="Cerrar herramientas" onclick="closeMobilePalette()">×</button>
     </div>
-    <h4>flujo</h4>
-    <button class="tool" data-add="start"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="8" fill="currentColor"/></svg></span>inicio()</button>
-    <button class="tool" data-add="end"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>fin()</button>
-    <button class="tool" data-add="process"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="3" fill="currentColor"/></svg></span>proceso()</button>
-    <button class="tool" data-add="decision"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,0 24,8 12,16 0,8" fill="currentColor"/></svg></span>decision()</button>
-    <button class="tool" data-add="loop"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="6,0 18,0 24,8 18,16 6,16 0,8" fill="currentColor"/></svg></span>bucle()</button>
-    <button class="tool" data-add="parallel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="2" y="0" width="3" height="16" fill="currentColor"/><rect x="19" y="0" width="3" height="16" fill="currentColor"/><rect x="8" y="3" width="8" height="10" fill="currentColor"/></svg></span>paralelo()</button>
-    <h4>datos</h4>
-    <button class="tool" data-add="io"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="4,0 24,0 20,16 0,16" fill="currentColor"/></svg></span>entrada_salida()</button>
-    <button class="tool" data-add="db"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><ellipse cx="12" cy="3" rx="10" ry="3" fill="currentColor"/><path d="M2,3 v10 c0,1.6 4.5,3 10,3 c5.5,0 10,-1.4 10,-3 V3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>base_datos()</button>
-    <button class="tool" data-add="varset"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><text x="5" y="12" fill="currentColor" font-size="9" font-family="monospace">x=</text></svg></span>variable()</button>
-    <h4>sistema</h4>
-    <button class="tool" data-add="api"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,3 1,8 6,13"/><polyline points="18,3 23,8 18,13"/><line x1="14" y1="2" x2="10" y2="14"/></svg></span>api_http()</button>
-    <button class="tool" data-add="hook"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"><rect width="24" height="16" rx="3"/></svg></span>webhook()</button>
-    <button class="tool" data-add="tryc"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><path d="M4,8 h16"/></svg></span>try_catch()</button>
-    <button class="tool" data-add="err"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,1 23,15 1,15" fill="currentColor"/></svg></span>error()</button>
-    <button class="tool" data-add="delay"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="12,4 12,8 15,10"/></svg></span>espera()</button>
-    <h4>inteligencia</h4>
-    <button class="tool" data-add="ai"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><path d="M12,0 L14,6 L20,8 L14,10 L12,16 L10,10 L4,8 L10,6 Z"/></svg></span>llm_ia()</button>
-    <button class="tool" data-add="human"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><circle cx="12" cy="5" r="4"/><path d="M3,16 C3,11 7,10 12,10 C17,10 21,11 21,16"/></svg></span>humano()</button>
-    <h4>métricas</h4>
-    <button class="tool" data-add="chart_line"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,13 6,8 11,10 17,4 23,7"/></svg></span>gráfico_línea()</button>
-    <button class="tool" data-add="chart_bar"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><rect x="1" y="6" width="3" height="10"/><rect x="7" y="2" width="3" height="14"/><rect x="13" y="4" width="3" height="12"/><rect x="19" y="8" width="3" height="8"/></svg></span>gráfico_barras()</button>
-    <button class="tool" data-add="chart_donut"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="8" r="6"/><path d="M12,2 A6,6 0 0 1 18,8"/></svg></span>gráfico_donut()</button>
-    <button class="tool" data-add="chart_gauge"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2,14 A10,10 0 0,1 22,14"/><line x1="12" y1="14" x2="16" y2="7"/></svg></span>gráfico_gauge()</button>
-    <button class="tool" data-add="chart_funnel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><polygon points="1,2 23,2 18,8 6,8"/><polygon points="7,10 17,10 14,15 10,15"/></svg></span>gráfico_funnel()</button>
+
+    <div class="palette-domain-tabs" role="tablist" aria-label="Cambiar catálogo de nodos">
+      <button type="button" class="palette-domain-tab is-active" data-ws-domain="workflow" aria-pressed="true">flujo</button>
+      <button type="button" class="palette-domain-tab" data-ws-domain="finance" aria-pressed="false">finanzas fx (54)</button>
+    </div>
+
+    <!-- Apartado 1: Nodos de Flujo de Trabajo -->
+    <div id="paletteWorkflowPane" class="palette-pane">
+      <h4>flujo</h4>
+      <button class="tool" data-add="start"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="8" fill="currentColor"/></svg></span>inicio()</button>
+      <button class="tool" data-add="end"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="1" y="1" width="22" height="14" rx="7" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>fin()</button>
+      <button class="tool" data-add="process"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect width="24" height="16" rx="3" fill="currentColor"/></svg></span>proceso()</button>
+      <button class="tool" data-add="decision"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,0 24,8 12,16 0,8" fill="currentColor"/></svg></span>decision()</button>
+      <button class="tool" data-add="loop"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="6,0 18,0 24,8 18,16 6,16 0,8" fill="currentColor"/></svg></span>bucle()</button>
+      <button class="tool" data-add="parallel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><rect x="2" y="0" width="3" height="16" fill="currentColor"/><rect x="19" y="0" width="3" height="16" fill="currentColor"/><rect x="8" y="3" width="8" height="10" fill="currentColor"/></svg></span>paralelo()</button>
+      <h4>datos</h4>
+      <button class="tool" data-add="io"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="4,0 24,0 20,16 0,16" fill="currentColor"/></svg></span>entrada_salida()</button>
+      <button class="tool" data-add="db"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><ellipse cx="12" cy="3" rx="10" ry="3" fill="currentColor"/><path d="M2,3 v10 c0,1.6 4.5,3 10,3 c5.5,0 10,-1.4 10,-3 V3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>base_datos()</button>
+      <button class="tool" data-add="varset"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><text x="5" y="12" fill="currentColor" font-size="9" font-family="monospace">x=</text></svg></span>variable()</button>
+      <h4>sistema</h4>
+      <button class="tool" data-add="api"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,3 1,8 6,13"/><polyline points="18,3 23,8 18,13"/><line x1="14" y1="2" x2="10" y2="14"/></svg></span>api_http()</button>
+      <button class="tool" data-add="hook"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"><rect width="24" height="16" rx="3"/></svg></span>webhook()</button>
+      <button class="tool" data-add="tryc"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect width="24" height="16" rx="3"/><path d="M4,8 h16"/></svg></span>try_catch()</button>
+      <button class="tool" data-add="err"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16"><polygon points="12,1 23,15 1,15" fill="currentColor"/></svg></span>error()</button>
+      <button class="tool" data-add="delay"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="12,4 12,8 15,10"/></svg></span>espera()</button>
+      <h4>inteligencia</h4>
+      <button class="tool" data-add="ai"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><path d="M12,0 L14,6 L20,8 L14,10 L12,16 L10,10 L4,8 L10,6 Z"/></svg></span>llm_ia()</button>
+      <button class="tool" data-add="human"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><circle cx="12" cy="5" r="4"/><path d="M3,16 C3,11 7,10 12,10 C17,10 21,11 21,16"/></svg></span>humano()</button>
+      <h4>visualización</h4>
+      <button class="tool" data-add="chart_bar"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><rect x="1" y="6" width="3" height="10"/><rect x="7" y="2" width="3" height="14"/><rect x="13" y="4" width="3" height="12"/><rect x="19" y="8" width="3" height="8"/></svg></span>gráfico_barras()</button>
+      <button class="tool" data-add="chart_donut"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="8" r="6"/><path d="M12,2 A6,6 0 0 1 18,8"/></svg></span>gráfico_donut()</button>
+      <button class="tool" data-add="chart_gauge"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2,14 A10,10 0 0,1 22,14"/><line x1="12" y1="14" x2="16" y2="7"/></svg></span>gráfico_gauge()</button>
+      <button class="tool" data-add="chart_funnel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><polygon points="1,2 23,2 18,8 6,8"/><polygon points="7,10 17,10 14,15 10,15"/></svg></span>gráfico_funnel()</button>
+    </div>
+
+    <!-- Apartado 2: Planilla Financiera tipo Excel (54 Nodos + Fórmulas + Modelos) -->
+    <div id="paletteFinancePane" class="palette-pane" hidden>
+      <div class="fin-palette-top">
+        <div class="fin-palette-search">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="finPaletteSearchInput" placeholder="filtrar 54 nodos fx (van, tir, pago...)" autocomplete="off">
+        </div>
+        <button type="button" class="fin-palette-PresetsBtn" id="btnFinPresetsToggle">
+          <span>:: generar planilla modelo</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="fin-PresetsDrawer" id="finPresetsDrawer" hidden>
+          <button type="button" class="fin-preset-item" data-fin-preset="fin_resultados">
+            <span>Estado de Resultados (P&amp;L)</span>
+            <small>Ventas → Utilidad Bruta → EBITDA → Neta</small>
+          </button>
+          <button type="button" class="fin-preset-item" data-fin-preset="fin_flujo_caja">
+            <span>Evaluación Inversión VAN / TIR</span>
+            <small>CAPEX + Flujos 3 años → VAN, TIR y ROI</small>
+          </button>
+          <button type="button" class="fin-preset-item" data-fin-preset="fin_prestamo">
+            <span>Crédito Francés (PAGO / DSCR)</span>
+            <small>Capital, TNA, Plazo → Cuota, Interés y Saldo</small>
+          </button>
+          <button type="button" class="fin-preset-item" data-fin-preset="fin_blanco">
+            <span>Planilla Financiera en Blanco</span>
+            <small>Lienzo limpio modo hoja de cálculo fx</small>
+          </button>
+        </div>
+      </div>
+      <div id="finCategoriesMount"></div>
+    </div>
+
     <h4>edición</h4>
     <select id="filterStatus" style="width:100%">
       <option value="">filtro: todos</option>
@@ -187,6 +246,25 @@
         <svg class="ai-world-cursor__ptr" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="#08120c" stroke-width="1.6"><path d="M4 3l16 7.2-7.1 2.1L10.8 19.5 4 3z"/></svg>
         <span class="ai-world-cursor__tag" id="aiWorldCursorTag">ia :: construyendo</span>
       </div>
+    </div>
+
+    <!-- Barra de fórmulas estilo Excel (fx) cuando está activo el modo Planilla Financiera -->
+    <div id="finFormulaBar" class="fin-formula-bar" role="region" aria-label="Barra de fórmulas financieras fx" hidden>
+      <input type="text" id="finBarCellRef" class="fin-cell-box" value="A1" maxlength="4" aria-label="Celda activa" title="Referencia de celda (ej. A1, B2)">
+      <span class="fin-fx-badge" aria-hidden="true">fx</span>
+      <input type="text" id="finBarFormulaInput" class="fin-formula-input" placeholder="Escribe un valor o fórmula Excel (=A1-B1, =SUMA(A1:A3), =VNA(12%;B1:B4))" aria-label="Valor o fórmula Excel">
+      <span id="finBarResult" class="fin-formula-result">= $0.00</span>
+      <select id="finCurrencySel" class="fin-currency-sel" aria-label="Moneda de planilla">
+        <option value="USD">USD $</option>
+        <option value="PYG">PYG ₲</option>
+        <option value="EUR">EUR €</option>
+        <option value="ARS">ARS $</option>
+        <option value="BRL">BRL R$</option>
+      </select>
+      <button type="button" class="btn fin-csv-btn" id="btnFinExportCsv" title="Exportar planilla financiera a .CSV compatible con Excel">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>.csv</span>
+      </button>
     </div>
 
     <!-- HUD flotante en vivo mientras la IA analiza, construye o edita en el lienzo -->
@@ -725,6 +803,36 @@
     </div>
     <p class="proj-modal-desc" id="projModalDesc"></p>
 
+    <!-- Selector de tipo al generar nuevo lienzo o planilla financiera -->
+    <div class="proj-domain-picker" id="projModalDomainPicker" hidden>
+      <label>tipo de entorno a generar</label>
+      <div class="proj-domain-cards">
+        <button type="button" class="proj-domain-card is-selected" data-modal-domain="workflow">
+          <strong>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/><path d="M10 6.5h4v7.5"/></svg>
+            <span>Lienzo de Flujo</span>
+          </strong>
+          <small>Procesos, decisiones, arquitectura y agentes</small>
+        </button>
+        <button type="button" class="proj-domain-card" data-modal-domain="finance">
+          <strong>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
+            <span>Planilla Financiera (fx)</span>
+          </strong>
+          <small>Cálculos tipo Excel, 54 nodos y métricas propias</small>
+        </button>
+      </div>
+      <div class="proj-fin-starter-wrap" id="projModalFinStarterWrap" hidden>
+        <label for="projModalFinStarter">estructura inicial de la planilla</label>
+        <select id="projModalFinStarter">
+          <option value="fin_blanco">Planilla en blanco (armar desde cero)</option>
+          <option value="fin_resultados">Estado de Resultados (P&amp;L · Ventas → EBITDA → Neta)</option>
+          <option value="fin_flujo_caja">Evaluación de Inversión (Flujos → VAN, TIR y ROI)</option>
+          <option value="fin_prestamo">Simulador de Crédito Francés (PAGO, Interés, Saldo)</option>
+        </select>
+      </div>
+    </div>
+
     <div class="proj-modal-field" id="projModalField1Wrap">
       <label id="projModalField1Label" for="projModalInput1">Nombre del proyecto</label>
       <input id="projModalInput1" type="text" autocomplete="off">
@@ -943,6 +1051,7 @@
 <script src="js/utils/helpers.js"></script>
 <script src="js/features/user-workspace.js"></script>
 <script src="js/utils/storage.js"></script>
+<script src="js/features/finance-sheet.js"></script>
 <script src="js/canvas/render.js"></script>
 <script src="js/interaction/selection.js"></script>
 <script src="js/interaction/editing.js"></script>

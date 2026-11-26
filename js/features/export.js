@@ -436,13 +436,15 @@ function getMermaidShape(type) {
     db: ['[(', ')]'],
     ai: ['{{', '}}'],
     human: ['[/\\', '/\\]'],
-    metrics: ['(', ')'],
     default: ['[', ']']
   };
   return shapes[type] || shapes.default;
 }
 
 function getNodeColor(type) {
+  if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type)) {
+    return '#10b981';
+  }
   const colors = {
     start: '#4ade80',
     end: '#ef4444',
@@ -459,13 +461,15 @@ function getNodeColor(type) {
     err: '#f43f5e',
     delay: '#eab308',
     human: '#fb923c',
-    varset: '#0ea5e9',
-    metrics: '#38bdf8'
+    varset: '#0ea5e9'
   };
   return colors[type] || '#64748b';
 }
 
 function getNodeBorderColor(type) {
+  if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type)) {
+    return '#059669';
+  }
   const colors = {
     start: '#22c55e',
     end: '#dc2626',
@@ -475,8 +479,7 @@ function getNodeBorderColor(type) {
     parallel: '#0891b2',
     ai: '#db2777',
     api: '#059669',
-    db: '#4f46e5',
-    metrics: '#0284c7'
+    db: '#4f46e5'
   };
   return colors[type] || '#334155';
 }
@@ -527,13 +530,21 @@ function initHeaderTooltips() {
     'delay': { title: 'espera()', desc: 'Pausa temporal o retardo en la ejecución.' },
     'ai': { title: 'llm_ia()', desc: 'Invocación a modelos de lenguaje o agentes de IA.' },
     'human': { title: 'humano()', desc: 'Punto de aprobación, revisión o intervención manual.' },
-    'metrics': { title: 'metrica()', desc: 'Panel interactivo de gráficos financieros, ROI y KPIs de rendimiento.' },
-    'chart_line': { title: 'gráfico_línea()', desc: 'Visualización dinámica de tendencias temporales.' },
     'chart_bar': { title: 'gráfico_barras()', desc: 'Comparativa categórica de leads y métricas.' },
     'chart_donut': { title: 'gráfico_donut()', desc: 'Distribución porcentual por categorías.' },
     'chart_gauge': { title: 'gráfico_gauge()', desc: 'Velocímetro de cumplimiento de metas y objetivos.' },
-    'chart_funnel': { title: 'gráfico_funnel()', desc: 'Embudo de conversión entre etapas del proceso.' }
+    'chart_funnel': { title: 'gráfico_funnel()', desc: 'Embudo de conversión entre etapas del proceso.' },
+    'btnFinExportCsv': { title: 'exportar .csv excel', desc: 'Descarga todas las celdas, fórmulas y montos calculados en un archivo CSV listo para Excel.' }
   };
+
+  if (typeof FINANCE_NODE_LIST !== 'undefined' && Array.isArray(FINANCE_NODE_LIST)) {
+    FINANCE_NODE_LIST.forEach(item => {
+      tooltips[item.type] = {
+        title: `${item.fn || item.type} · ${item.title}`,
+        desc: `Celda reactiva tipo Excel (${item.fxHint || 'cálculo automático'}).`
+      };
+    });
+  }
 
   const tooltipEl = document.getElementById('hoverTooltip');
   if (!tooltipEl) return;

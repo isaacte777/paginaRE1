@@ -5,6 +5,9 @@ function initApp() {
 
   // Cargar estado guardado
   const restoredProject = loadState();
+  if (typeof initFinanceSheetFeature === 'function') {
+    initFinanceSheetFeature();
+  }
   commitHistory();
 
   // Renderizar interfaz inicial
@@ -335,10 +338,21 @@ function registerEventListeners() {
   };
 
   const addPaletteNode = (type, x, y, animate = false, dimensions = null) => {
-    const width = dimensions?.width || 170;
-    const height = dimensions?.height || 60;
-    const n = createNode(type, 'paso', Math.round(x - width / 2), Math.round(y - height / 2));
+    const isFin = typeof isFinanceNodeType === 'function' && isFinanceNodeType(type);
+    const width = dimensions?.width || (isFin ? 224 : 170);
+    const height = dimensions?.height || (isFin ? 92 : 60);
+    const defLabel =
+      isFin && typeof getFinanceNodeDef === 'function' && getFinanceNodeDef(type)
+        ? getFinanceNodeDef(type).title
+        : 'paso';
+    const n = createNode(type, defLabel, Math.round(x - width / 2), Math.round(y - height / 2));
+    if (isFin && typeof ensureFinanceNodeDefaults === 'function') {
+      ensureFinanceNodeDefaults(n);
+    }
     STATE.nodes.push(n);
+    if (isFin && STATE.canvasDomain !== 'finance' && typeof setWorkspaceDomain === 'function') {
+      setWorkspaceDomain('finance', { silent: true });
+    }
     STATE.isBlankCanvas = false;
     commitHistory();
     setSel({ kind: 'node', id: n.id });
@@ -347,17 +361,29 @@ function registerEventListeners() {
   };
 
   const makePaletteNodeGhost = type => {
-    const previewNode = createNode(type, 'paso', 0, 0);
+    const isFin = typeof isFinanceNodeType === 'function' && isFinanceNodeType(type);
+    const defLabel =
+      isFin && typeof getFinanceNodeDef === 'function' && getFinanceNodeDef(type)
+        ? getFinanceNodeDef(type).title
+        : 'paso';
+    const previewNode = createNode(type, defLabel, 0, 0);
+    if (isFin && typeof ensureFinanceNodeDefaults === 'function') {
+      ensureFinanceNodeDefaults(previewNode);
+    }
     const ghost = document.createElement('div');
-    ghost.className = 'node ' + type + ' st-pending palette-node-ghost is-moving type-' + type;
+    let ghostCls = 'node ' + type + ' st-pending palette-node-ghost is-moving type-' + type;
+    if (isFin && typeof getFinanceNodeToneClass === 'function') {
+      ghostCls += ' ' + getFinanceNodeToneClass(type);
+    }
+    ghost.className = ghostCls;
     ghost.setAttribute('aria-hidden', 'true');
 
-    const text = '<span class="txt">paso</span>';
+    const text = '<span class="txt">' + escapeHTML(defLabel) + '</span>';
     let html = '';
-    if (type.startsWith('chart_') && typeof renderChartNodeHtml === 'function') {
+    if (isFin && typeof renderFinanceNodeHtml === 'function') {
+      html = renderFinanceNodeHtml(previewNode);
+    } else if (type.startsWith('chart_') && typeof renderChartNodeHtml === 'function') {
       html = renderChartNodeHtml(previewNode);
-    } else if (type === 'metrics' && typeof renderMetricsWidget === 'function') {
-      html = renderMetricsWidget(previewNode);
     } else {
       html = (type === 'decision' || type === 'loop' || type === 'io')
         ? '<div class="core">' + text + '</div>'
@@ -485,15 +511,24 @@ function registerEventListeners() {
       }
     }
 
+    const isFinTemplate = chosen.startsWith('fin_');
     const tmpl = getTemplate(chosen);
     STATE.nodes = tmpl.nodes;
     STATE.edges = tmpl.edges;
+    STATE.canvasDomain = isFinTemplate ? 'finance' : 'workflow';
     STATE.isBlankCanvas = STATE.nodes.length === 0 && STATE.edges.length === 0;
     STATE.activeProjectId = null;
     STATE.sel = null;
     STATE.circuit = null;
     STATE.hPtr = -1;
     STATE.history = [];
+
+    if (typeof setWorkspaceDomain === 'function') {
+      setWorkspaceDomain(STATE.canvasDomain, { silent: true });
+    }
+    if (isFinTemplate && typeof switchRightPanelTab === 'function') {
+      switchRightPanelTab('stats');
+    }
 
     const pTitle = document.getElementById('projTitle');
     const pTitleMob = document.getElementById('projTitleMobile');
@@ -503,11 +538,12 @@ function registerEventListeners() {
     commitHistory();
     if (typeof markBaselineAsClean === 'function') markBaselineAsClean();
     if (typeof refreshProjectsUI === 'function') refreshProjectsUI();
-    log('ok', 'plantilla: ' + chosen);
+    log('ok', (isFinTemplate ? 'planilla financiera: ' : 'plantilla: ') + chosen);
     renderAll();
     // Defer fitView to ensure DOM elements are fully rendered with correct dimensions
     requestAnimationFrame(() => {
-      fitView();
+      if (STATE.nodes.length > 0) fitView();
+      else applyTransform();
     });
   });
 

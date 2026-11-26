@@ -35,6 +35,7 @@ function initPanelTabs() {
 
 function updatePanel() {
   if (typeof updateAIChatContextUI === 'function') updateAIChatContextUI();
+  if (typeof syncFormulaBarUI === 'function') syncFormulaBarUI();
   if (currentPanelTab === 'ai') return;
 
   const p = DOM.panel;
@@ -42,7 +43,15 @@ function updatePanel() {
   p.innerHTML = '';
 
   if (currentPanelTab === 'stats') {
-    renderStatsTab(p);
+    if (
+      typeof renderFinanceMetricsPanel === 'function' &&
+      typeof isFinanceNodeType === 'function' &&
+      (STATE.canvasDomain === 'finance' || (STATE.nodes || []).some(nd => isFinanceNodeType(nd.type)))
+    ) {
+      renderFinanceMetricsPanel(p);
+    } else {
+      renderStatsTab(p);
+    }
     return;
   }
 
@@ -98,6 +107,11 @@ function updatePanel() {
   if (!n) return;
 
   if (!n.params) n.params = {};
+
+  if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(n.type) && typeof renderFinanceNodeInspector === 'function') {
+    renderFinanceNodeInspector(p, n);
+    return;
+  }
 
   // Información de circuito si existe
   let circuitInfoHtml = '';

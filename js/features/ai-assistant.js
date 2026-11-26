@@ -210,14 +210,21 @@
     human: 'human',
     humano: 'human',
     manual: 'human',
-    metrics: 'metrics',
-    metrica: 'metrics',
-    kpi: 'metrics',
-    chart_line: 'chart_line',
     chart_bar: 'chart_bar',
     chart_donut: 'chart_donut',
     chart_gauge: 'chart_gauge',
-    chart_funnel: 'chart_funnel'
+    chart_funnel: 'chart_funnel',
+    celda: 'fin_input',
+    formula: 'fin_formula',
+    suma: 'fin_sum',
+    ingresos: 'fin_revenue',
+    ebitda: 'fin_ebitda',
+    van: 'fin_npv',
+    npv: 'fin_npv',
+    tir: 'fin_irr',
+    irr: 'fin_irr',
+    cuota: 'fin_pmt',
+    pmt: 'fin_pmt'
   };
 
   const DEFAULT_CONFIG = {
@@ -600,7 +607,7 @@
   ];
 
   const FLOWLAB_SCOPE_REGEX =
-    /\b(flowlab|lienzo|canvas|nodo|nodos|conexion|conexiones|conectar|conectado|arista|aristas|puerto|puertos|flujo|flujos|diagrama|diagramas|workflow|pipeline|mapa|plantilla|plantillas|ordenar|ordena|organizar|organiza|acomodar|acomoda|alinear|alinea|compactar|compacta|reordenar|arregla|arreglar|distancia|distancias|espaciado|inspector|propiedades|props|stats|estadistica|estadisticas|metrica|metricas|kpi|roi|grafico|chart|donut|gauge|funnel|barra|barras|consola|terminal|powershell|cmd|comando|puente|bridge|exportar|importar|mermaid|markdown|json|svg|png|proyecto|proyectos|espacio|workspace|usuario|perfil|sesion|sesiones|guardar|guardado|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simular|simulacion|ejecutar|velocidad|bloqueado|bloquear|circuito|atajo|atajos|panel|paleta|cabecera|header|boton|dropdown|selector|chat|chats|historial|inicio|start|fin|end|proceso|procesos|process|decision|condicion|bifurcacion|rama|ramas|entrada|salida|bucle|loop|iteracion|paralelo|subproceso|base de datos|bd|db|sql|postgres|mysql|mongo|variable|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error|errores|excepcion|espera|delay|timeout|agente|ia|ai|llm|modelo|modelos|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatizacion|automatizar|orquestador|etapa|etapas|paso|pasos|secuencia|cuello de botella|optimizar|validar|validacion|autenticacion|login|registro|checkout|pago|pagos|venta|ventas|pedido|pedidos|onboarding|inventario|logistica|soporte|ticket|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
+    /\b(flowlab|lienzo|canvas|planilla|planillas|finanza|finanzas|financiero|financiera|excel|celda|celdas|formula|formulas|van|vna|npv|tir|irr|ebitda|ebit|opex|capex|margen|utilidad|amortizacion|prestamo|credito|cuota|interes|tasa|impuesto|iva|flujo de caja|cashflow|balance|presupuesto|nomina|runway|roe|roa|cagr|nodo|nodos|conexion|conexiones|conectar|conectado|arista|aristas|puerto|puertos|flujo|flujos|diagrama|diagramas|workflow|pipeline|mapa|plantilla|plantillas|ordenar|ordena|organizar|organiza|acomodar|acomoda|alinear|alinea|compactar|compacta|reordenar|arregla|arreglar|distancia|distancias|espaciado|inspector|propiedades|props|stats|estadistica|estadisticas|metrica|metricas|kpi|roi|grafico|chart|donut|gauge|funnel|barra|barras|consola|terminal|powershell|cmd|comando|puente|bridge|exportar|importar|mermaid|markdown|json|svg|png|csv|proyecto|proyectos|espacio|workspace|usuario|perfil|sesion|sesiones|guardar|guardado|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simular|simulacion|ejecutar|velocidad|bloqueado|bloquear|circuito|atajo|atajos|panel|paleta|cabecera|header|boton|dropdown|selector|chat|chats|historial|inicio|start|fin|end|proceso|procesos|process|decision|condicion|bifurcacion|rama|ramas|entrada|salida|bucle|loop|iteracion|paralelo|subproceso|base de datos|bd|db|sql|postgres|mysql|mongo|variable|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error|errores|excepcion|espera|delay|timeout|agente|ia|ai|llm|modelo|modelos|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatizacion|automatizar|orquestador|etapa|etapas|paso|pasos|secuencia|cuello de botella|optimizar|validar|validacion|autenticacion|login|registro|checkout|pago|pagos|venta|ventas|pedido|pedidos|onboarding|inventario|logistica|soporte|ticket|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
 
   const FLOWLAB_GREETING_OR_META_REGEX =
     /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal|saludos|gracias|muchas gracias|ok|okay|vale|perfecto|entendido|genial|excelente)\b|\b(que puedes hacer|para que sirves|quien eres|que eres|como funcionas|ayuda|ayudame|como uso|como se usa|explicame)\b/i;
@@ -896,7 +903,8 @@
       '   - `human`: revisión o aprobación manual\n' +
       '   - `tryc` / `err`: captura y manejo de errores\n' +
       '   - `parallel` / `loop` / `delay`: concurrencia, iteración controlada o espera\n' +
-      '   - `metrics` / `chart_bar` / `chart_line` / `chart_donut` / `chart_gauge` / `chart_funnel`: paneles KPI\n' +
+      '   - `chart_bar` / `chart_donut` / `chart_gauge` / `chart_funnel`: gráficos visuales conectados\n' +
+      '   - Planilla Financiera (modo `finance`): `fin_input`, `fin_rate`, `fin_periods`, `fin_qty`, `fin_unit_price`, `fin_formula`, `fin_sum`, `fin_subtract`, `fin_multiply`, `fin_divide`, `fin_revenue`, `fin_cogs`, `fin_gross_profit`, `fin_opex`, `fin_ebitda`, `fin_tax`, `fin_net_income`, `fin_ocf`, `fin_capex`, `fin_fcf`, `fin_npv`, `fin_irr`, `fin_roi`, `fin_pmt`, `fin_gross_margin`, `fin_net_margin`, `fin_breakeven` (con `params.value` o `params.formula` tipo Excel).\n' +
       '   - `end`: cierre limpio del flujo\n' +
       '4. GRAFO BIEN CONECTADO Y COMPACTO: Conecta todos los nodos creados con `add_edge` de principio (`start`) a fin (`end`). No dejes nodos sueltos ni crees ciclos innecesarios hacia `start`.\n' +
       '5. CUÁNDO CONECTAR AL NODO SELECCIONADO: Solo conecta al nodo `selected.id` si el usuario pide explícitamente expandir, continuar o agregar a partir de ese nodo. Si pide "crea un flujo de...", diseña un flujo limpio e independiente con su propio `start` y `end`.\n' +
@@ -1068,7 +1076,9 @@
 
   function estimateNodeBoxSize(node) {
     const type = node.type || 'process';
-    if (type === 'metrics') return { w: 312, h: 156 };
+    if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type)) {
+      return { w: 224, h: 96 };
+    }
     if (type.startsWith('chart_')) return { w: 280, h: 164 };
 
     const lines = String(node.text || '')
@@ -1518,6 +1528,12 @@
         if (normStatus) nodeObj.status = normStatus;
         if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
         if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
+        if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type) && typeof ensureFinanceNodeDefaults === 'function') {
+          ensureFinanceNodeDefaults(nodeObj);
+          if (STATE.canvasDomain !== 'finance' && typeof setWorkspaceDomain === 'function') {
+            setWorkspaceDomain('finance', { silent: true });
+          }
+        }
         if (cleanTxt.overflowNotes) {
           nodeObj.params = { ...(nodeObj.params || {}), notes: cleanTxt.overflowNotes };
         }
@@ -2414,6 +2430,12 @@
           if (normStatus) nodeObj.status = normStatus;
           if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
           if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
+          if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type) && typeof ensureFinanceNodeDefaults === 'function') {
+            ensureFinanceNodeDefaults(nodeObj);
+            if (STATE.canvasDomain !== 'finance' && typeof setWorkspaceDomain === 'function') {
+              setWorkspaceDomain('finance', { silent: true });
+            }
+          }
           if (cleanTxt.overflowNotes) {
             nodeObj.params = { ...(nodeObj.params || {}), notes: cleanTxt.overflowNotes };
           }
@@ -3063,7 +3085,7 @@
     if (/\b(error|rechazar|excepcion|fallo|rollback)\b/.test(s)) return 'err';
     if (/\b(manual|humano|supervisor|revision|revisar)\b/.test(s)) return 'human';
     if (/\b(recibir|formulario|solicitud|input|datos|credenciales)\b/.test(s)) return 'io';
-    if (/\b(metrica|kpi|panel|dashboard)\b/.test(s)) return 'metrics';
+    if (/\b(grafico|barra|panel|dashboard)\b/.test(s)) return 'chart_bar';
     if (idx === 0 && !hasAnchor) return 'start';
     if (idx === total - 1 && total >= 3) return 'end';
     return 'process';
@@ -3235,12 +3257,64 @@
       };
     }
 
-    // Caso G: Nodo único de métricas / gráfico conectado al final del flujo actual
-    if (/\b(metrica|metricas|grafico|kpi|roi|donut|gauge|funnel|embudo)\b/i.test(norm)) {
-      let mType = 'metrics';
-      if (norm.includes('barra')) mType = 'chart_bar';
-      else if (norm.includes('linea')) mType = 'chart_line';
-      else if (norm.includes('donut')) mType = 'chart_donut';
+    // Caso F2: Planillas Financieras tipo Excel (Estado de Resultados, VAN/TIR o Crédito)
+    if (/\b(planilla|estado de resultados|ebitda|van|tir|flujo de caja|amortizacion|prestamo|credito|financiera|financiero)\b/i.test(norm)) {
+      if (/\b(van|tir|inversion|capex|cashflow|flujo de caja)\b/i.test(norm)) {
+        const ops = [
+          ...prefixOps,
+          { op: 'add_node', ref: 'f1', type: 'fin_capex', text: 'Inversión Inicial', params: { cellRef: 'A1', value: 45000 } },
+          { op: 'add_node', ref: 'f2', type: 'fin_rate', text: 'Tasa Descuento', params: { cellRef: 'A2', value: 12 } },
+          { op: 'add_node', ref: 'f3', type: 'fin_fcf', text: 'Flujo Año 1', params: { cellRef: 'B1', value: 18500 } },
+          { op: 'add_node', ref: 'f4', type: 'fin_fcf', text: 'Flujo Año 2', params: { cellRef: 'B2', value: 24000 } },
+          { op: 'add_node', ref: 'f5', type: 'fin_fcf', text: 'Flujo Año 3', params: { cellRef: 'B3', value: 29500 } },
+          { op: 'add_node', ref: 'f6', type: 'fin_npv', text: 'VAN Proyecto', params: { cellRef: 'C1', rate: 12 } },
+          { op: 'add_node', ref: 'f7', type: 'fin_irr', text: 'TIR Estimada', params: { cellRef: 'C2' } },
+          { op: 'add_edge', from: 'f1', to: 'f6', label: '-I0' },
+          { op: 'add_edge', from: 'f3', to: 'f6', label: 't1' },
+          { op: 'add_edge', from: 'f4', to: 'f6', label: 't2' },
+          { op: 'add_edge', from: 'f5', to: 'f6', label: 't3' },
+          { op: 'add_edge', from: 'f1', to: 'f7', label: '-I0' },
+          { op: 'add_edge', from: 'f3', to: 'f7', label: 't1' },
+          { op: 'add_edge', from: 'f4', to: 'f7', label: 't2' },
+          { op: 'add_edge', from: 'f5', to: 'f7', label: 't3' }
+        ];
+        return {
+          cleanReply:
+            'He generado una **Planilla Financiera de Evaluación de Inversión (VAN y TIR)** con celdas conectadas reactivamente tipo Excel.',
+          actions: { summary: 'Planilla VAN / TIR (7 celdas financieras)', operations: ops }
+        };
+      }
+
+      const ops = [
+        ...prefixOps,
+        { op: 'add_node', ref: 'r1', type: 'fin_qty', text: 'Unidades Vendidas', params: { cellRef: 'A1', value: 1200 } },
+        { op: 'add_node', ref: 'r2', type: 'fin_unit_price', text: 'Precio Unitario', params: { cellRef: 'A2', value: 85 } },
+        { op: 'add_node', ref: 'r3', type: 'fin_revenue', text: 'Ingresos Brutos', params: { cellRef: 'B1', formula: '=A1*A2' } },
+        { op: 'add_node', ref: 'r4', type: 'fin_cogs', text: 'Costo Directo', params: { cellRef: 'B2', value: 38000 } },
+        { op: 'add_node', ref: 'r5', type: 'fin_gross_profit', text: 'Utilidad Bruta', params: { cellRef: 'C1' } },
+        { op: 'add_node', ref: 'r6', type: 'fin_opex', text: 'Gastos Operativos', params: { cellRef: 'C2', value: 22500 } },
+        { op: 'add_node', ref: 'r7', type: 'fin_ebitda', text: 'EBITDA Operativo', params: { cellRef: 'D1' } },
+        { op: 'add_node', ref: 'r8', type: 'fin_net_margin', text: 'Margen EBITDA %', params: { cellRef: 'E1', formula: '=(D1/B1)*100' } },
+        { op: 'add_edge', from: 'r1', to: 'r3', label: 'Q' },
+        { op: 'add_edge', from: 'r2', to: 'r3', label: 'P' },
+        { op: 'add_edge', from: 'r3', to: 'r5', label: '+' },
+        { op: 'add_edge', from: 'r4', to: 'r5', label: '-' },
+        { op: 'add_edge', from: 'r5', to: 'r7', label: '+' },
+        { op: 'add_edge', from: 'r6', to: 'r7', label: '-' },
+        { op: 'add_edge', from: 'r7', to: 'r8', label: 'fx' },
+        { op: 'add_edge', from: 'r3', to: 'r8', label: 'base' }
+      ];
+      return {
+        cleanReply:
+          'He generado una **Planilla Financiera de Estado de Resultados (P&L)** con fórmulas Excel encadenadas (`=A1*A2`, Utilidad Bruta, EBITDA y Margen).',
+        actions: { summary: 'Planilla Estado de Resultados P&L (8 celdas)', operations: ops }
+      };
+    }
+
+    // Caso G: Nodo único de gráfico conectado al final del flujo actual
+    if (/\b(grafico|donut|gauge|funnel|embudo|barras)\b/i.test(norm)) {
+      let mType = 'chart_bar';
+      if (norm.includes('donut')) mType = 'chart_donut';
       else if (norm.includes('gauge')) mType = 'chart_gauge';
       else if (norm.includes('funnel') || norm.includes('embudo')) mType = 'chart_funnel';
 
@@ -3248,8 +3322,8 @@
       const leafNode = (STATE.nodes || []).find(n => !outgoingIds.has(n.id) && n.type !== 'note');
       const lastNode = (selNode && selNode.id) || (leafNode && leafNode.id) || null;
       const ops = [
-        { op: 'add_node', ref: 'm1', type: mType, text: 'Panel KPIs del flujo', ...(lastNode ? { after: lastNode } : {}) },
-        ...(lastNode ? [{ op: 'add_edge', from: lastNode, to: 'm1', label: 'métricas' }] : [])
+        { op: 'add_node', ref: 'm1', type: mType, text: 'Panel visual del flujo', ...(lastNode ? { after: lastNode } : {}) },
+        ...(lastNode ? [{ op: 'add_edge', from: lastNode, to: 'm1', label: 'datos' }] : [])
       ];
       return {
         cleanReply: `He añadido un nodo visual **\`${CONFIG.NODE_TYPES[mType] || mType}\`** alineado justo debajo del nodo objetivo.`,

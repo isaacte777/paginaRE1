@@ -1,4 +1,19 @@
 // STORAGE: Persistencia de datos en localStorage
+function sanitizeDeprecatedChartNodes(nodesArr, edgesArr) {
+  const removedIds = new Set();
+  const cleanNodes = (Array.isArray(nodesArr) ? nodesArr : []).filter(n => {
+    if (!n || n.type === 'metrics' || n.type === 'chart_line') {
+      if (n && n.id) removedIds.add(n.id);
+      return false;
+    }
+    return true;
+  });
+  const cleanEdges = (Array.isArray(edgesArr) ? edgesArr : []).filter(
+    e => e && !removedIds.has(e.from) && !removedIds.has(e.to)
+  );
+  return { nodes: cleanNodes, edges: cleanEdges };
+}
+
 function storagePayload() {
   return {
     version: 1,
@@ -8,6 +23,8 @@ function storagePayload() {
     zoom: STATE.zoom,
     snapOn: STATE.snapOn !== false,
     speed: Number(STATE.speed) || 1,
+    canvasDomain: STATE.canvasDomain || 'workflow',
+    financeCurrency: STATE.financeCurrency || 'USD',
     title: document.getElementById('projTitle')?.value || '',
     isBlankCanvas: STATE.isBlankCanvas === true,
     activeProjectId: STATE.activeProjectId || null
@@ -22,6 +39,8 @@ function storageFingerprint(data) {
     zoom: data.zoom,
     snapOn: data.snapOn !== false,
     speed: Number(data.speed) || 1,
+    canvasDomain: data.canvasDomain || 'workflow',
+    financeCurrency: data.financeCurrency || 'USD',
     title: data.title,
     isBlankCanvas: data.isBlankCanvas === true
   });
@@ -60,12 +79,15 @@ function loadState() {
     if (saved) {
       const data = JSON.parse(saved);
       if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
-        STATE.nodes = data.nodes;
-        STATE.edges = data.edges;
+        const cleaned = sanitizeDeprecatedChartNodes(data.nodes, data.edges);
+        STATE.nodes = cleaned.nodes;
+        STATE.edges = cleaned.edges;
         STATE.pan = data.pan || { x: 60, y: 80 };
         STATE.zoom = data.zoom || 1;
         STATE.snapOn = data.snapOn !== false;
         STATE.speed = Number(data.speed) || 1;
+        STATE.canvasDomain = data.canvasDomain === 'finance' ? 'finance' : 'workflow';
+        STATE.financeCurrency = typeof data.financeCurrency === 'string' ? data.financeCurrency : 'USD';
         STATE.isBlankCanvas = data.isBlankCanvas === true;
         STATE.activeProjectId = typeof data.activeProjectId === 'string' ? data.activeProjectId : null;
         STATE.localSavedAt = Number(data.savedAt) || 0;
@@ -103,6 +125,8 @@ function exportJSON() {
   const data = {
     nodes: STATE.nodes,
     edges: STATE.edges,
+    canvasDomain: STATE.canvasDomain || 'workflow',
+    financeCurrency: STATE.financeCurrency || 'USD',
     title: titleVal,
     exported: new Date().toISOString()
   };
@@ -123,8 +147,20 @@ function importProjectFile(file) {
     if (file.name.endsWith('.json') || text.trim().startsWith('{')) {
       try {
         const data = JSON.parse(text);
-        STATE.nodes = data.nodes || [];
-        STATE.edges = data.edges || [];
+        const cleaned = sanitizeDeprecatedChartNodes(data.nodes || [], data.edges || []);
+        STATE.nodes = cleaned.nodes;
+        STATE.edges = cleaned.edges;
+        STATE.canvasDomain =
+          data.canvasDomain === 'finance' ||
+          (typeof isFinanceNodeType === 'function' && STATE.nodes.some(n => isFinanceNodeType(n.type)))
+            ? 'finance'
+            : 'workflow';
+        if (typeof data.financeCurrency === 'string') {
+          STATE.financeCurrency = data.financeCurrency;
+        }
+        if (typeof setWorkspaceDomain === 'function') {
+          setWorkspaceDomain(STATE.canvasDomain, { silent: true });
+        }
         STATE.isBlankCanvas = STATE.nodes.length === 0;
         STATE.activeProjectId = null;
         if (data.title) {

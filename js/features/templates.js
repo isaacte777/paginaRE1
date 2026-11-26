@@ -1,5 +1,8 @@
-// TEMPLATES: Plantillas predefinidas de flujos
+// TEMPLATES: Plantillas predefinidas de flujos y planillas financieras
 function getTemplate(name) {
+  if (name && name.startsWith('fin_') && typeof buildFinanceTemplate === 'function') {
+    return buildFinanceTemplate(name);
+  }
   const N = [];
   const E = [];
   const add = (t, tx, x, y) => {
@@ -81,11 +84,6 @@ function getTemplate(name) {
 
     const end = add('end', 'Página Comparación\nPUBLICADA ✓', 400, 1020);
     link(dep, end, 'En producción');
-
-    const metricsNode = add('metrics', 'Métrica Eficiencia:\n• ROI: +34.2%\n• Throughput: 140 op/s\n• Latencia: 42ms\n• Uptime: 99.98%', 400, 1160);
-    metricsNode.status = 'done';
-    metricsNode.progress = 100;
-    link(end, metricsNode, 'Performance');
 
   } else if (name === 'orquestador') {
     const hook = add('hook', 'GitHub push', 300, 20);

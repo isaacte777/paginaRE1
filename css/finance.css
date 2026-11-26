@@ -1,0 +1,696 @@
+/* FINANCE SHEET: Apartado de Planilla Financiera tipo Excel (nodos fx, barra de fórmulas y métricas) */
+
+/* Selector de entorno en la cabecera (Flujo vs Planilla FX) */
+.workspace-mode-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #101316;
+  flex-shrink: 0;
+}
+
+.ws-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--tx2);
+  font: 600 10px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.ws-mode-btn:hover {
+  color: var(--tx0);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ws-mode-btn.is-active {
+  color: var(--green);
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(134, 239, 172, 0.38);
+}
+
+.ws-mode-fx-pill {
+  font-size: 8.2px;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(74, 222, 128, 0.14);
+  color: var(--green);
+  letter-spacing: 0.02em;
+}
+
+/* Conmutador de paleta lateral izquierda (#palette) */
+.palette-domain-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 3px;
+  margin-bottom: 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #0f1215;
+}
+
+.palette-domain-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 25px;
+  padding: 0 6px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tx2);
+  font: 600 9.6px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: 0.14s ease;
+}
+
+.palette-domain-tab:hover {
+  color: var(--tx0);
+}
+
+.palette-domain-tab.is-active {
+  background: rgba(74, 222, 128, 0.11);
+  border-color: rgba(134, 239, 172, 0.4);
+  color: var(--green);
+}
+
+.palette-pane[hidden] {
+  display: none !important;
+}
+
+/* Buscador y categorías de los 52 nodos financieros en #paletteFinancePane */
+.fin-palette-top {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.fin-palette-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fin-palette-search svg {
+  position: absolute;
+  left: 7px;
+  color: var(--tx3);
+  pointer-events: none;
+}
+
+.fin-palette-search input {
+  width: 100%;
+  height: 27px;
+  padding: 4px 8px 4px 24px !important;
+  font: 500 9.8px 'JetBrains Mono', monospace;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #0f1215;
+  color: var(--tx0);
+}
+
+.fin-palette-search input:focus {
+  outline: none;
+  border-color: rgba(134, 239, 172, 0.55);
+}
+
+.fin-palette-PresetsBtn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(134, 239, 172, 0.3);
+  background: rgba(74, 222, 128, 0.06);
+  color: var(--green);
+  font: 600 9.5px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: 0.14s ease;
+}
+
+.fin-palette-PresetsBtn:hover {
+  background: rgba(74, 222, 128, 0.13);
+  border-color: rgba(134, 239, 172, 0.6);
+}
+
+.fin-PresetsDrawer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #101317;
+}
+
+.fin-PresetsDrawer[hidden] {
+  display: none !important;
+}
+
+.fin-preset-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 7px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--tx0);
+  font: 600 9.4px 'JetBrains Mono', monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.14s ease;
+}
+
+.fin-preset-item small {
+  font-weight: 400;
+  font-size: 8.3px;
+  color: var(--tx2);
+}
+
+.fin-preset-item:hover {
+  border-color: rgba(134, 239, 172, 0.45);
+  background: rgba(74, 222, 128, 0.08);
+  color: var(--green);
+}
+
+.fin-cat-group {
+  margin-bottom: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.012);
+  overflow: hidden;
+}
+
+.fin-cat-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 5px 7px;
+  border: none;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--tx1);
+  font: 700 9.2px 'JetBrains Mono', monospace;
+  text-transform: lowercase;
+  cursor: pointer;
+  text-align: left;
+}
+
+.fin-cat-head:hover {
+  color: var(--tx0);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.fin-cat-count {
+  font-size: 8.3px;
+  font-weight: 600;
+  color: var(--tx3);
+  margin-left: auto;
+}
+
+.fin-cat-chev {
+  transition: transform 0.15s ease;
+  color: var(--tx3);
+}
+
+.fin-cat-group.is-collapsed .fin-cat-chev {
+  transform: rotate(-90deg);
+}
+
+.fin-cat-group.is-collapsed .fin-cat-body {
+  display: none;
+}
+
+.fin-cat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+}
+
+.fin-cat-body .tool {
+  margin: 0;
+  padding: 5px 7px;
+  font-size: 9.6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fin-tool-sub {
+  margin-left: auto;
+  font-size: 8px;
+  color: var(--tx3);
+  font-weight: 500;
+}
+
+/* Barra superior estilo Excel (fx) dentro de #viewport */
+.fin-formula-bar {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  z-index: 65;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(134, 239, 172, 0.28);
+  background: rgba(14, 17, 20, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.fin-formula-bar[hidden] {
+  display: none !important;
+}
+
+.fin-cell-box {
+  width: 52px !important;
+  height: 24px;
+  padding: 2px 6px !important;
+  text-align: center;
+  font: 700 10px 'JetBrains Mono', monospace !important;
+  color: var(--green) !important;
+  background: #0b0e10 !important;
+  border: 1px solid rgba(134, 239, 172, 0.34) !important;
+  border-radius: 5px !important;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.fin-fx-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+  color: var(--tx1);
+  font: italic 700 10.5px 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+}
+
+.fin-formula-input {
+  flex: 1 1 auto;
+  min-width: 110px;
+  height: 24px;
+  padding: 2px 8px !important;
+  font: 500 10.2px 'JetBrains Mono', monospace !important;
+  color: var(--tx0) !important;
+  background: #0b0e10 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 5px !important;
+}
+
+.fin-formula-input:focus {
+  outline: none;
+  border-color: rgba(134, 239, 172, 0.65) !important;
+}
+
+.fin-formula-result {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(134, 239, 172, 0.24);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fin-currency-sel {
+  width: auto !important;
+  height: 24px;
+  padding: 0 6px !important;
+  font: 600 9.5px 'JetBrains Mono', monospace !important;
+  background: #101316 !important;
+  color: var(--tx1) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 5px !important;
+  flex-shrink: 0;
+}
+
+.fin-csv-btn {
+  height: 24px;
+  padding: 0 8px !important;
+  font-size: 9.3px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* Diseño minimalista de Nodos Financieros (.node.fin-node) en el lienzo */
+.node.fin-node {
+  width: 214px;
+  min-height: 78px;
+  padding: 9px 11px 10px;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #171b1f 0%, #111417 100%);
+  border: 1px solid #2c3238;
+  border-left: 3px solid #64748b;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 4px;
+  text-align: left;
+  box-sizing: border-box;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.42);
+}
+
+.node.fin-node.fin-tone-positive {
+  border-left-color: #4ade80;
+}
+
+.node.fin-node.fin-tone-negative {
+  border-left-color: #fb7185;
+}
+
+.node.fin-node.fin-tone-formula {
+  border-left-color: #38bdf8;
+}
+
+.node.fin-node.fin-tone-ratio {
+  border-left-color: #eab308;
+}
+
+.node.fin-node.fin-tone-input {
+  border-left-color: #94a3b8;
+}
+
+.fin-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding-right: 16px;
+  box-sizing: border-box;
+}
+
+.fin-cell-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  font: 700 8.6px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+  letter-spacing: 0.02em;
+}
+
+.fin-cat-tag {
+  font: 500 8px 'JetBrains Mono', monospace;
+  color: var(--tx3);
+  text-transform: lowercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fin-card-title {
+  font: 600 10.2px 'JetBrains Mono', monospace;
+  color: var(--tx1);
+  line-height: 1.28;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fin-card-val {
+  font: 700 14px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fin-card-val.is-pos {
+  color: #4ade80;
+}
+
+.fin-card-val.is-neg {
+  color: #fb7185;
+}
+
+.fin-card-val.is-err {
+  color: #f87171;
+  font-size: 11.5px;
+}
+
+.fin-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font: 500 8.2px 'JetBrains Mono', monospace;
+  color: var(--tx3);
+}
+
+.fin-card-fx {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 145px;
+  color: #9ca3af;
+}
+
+.fin-card-refs {
+  flex-shrink: 0;
+  color: var(--tx3);
+}
+
+/* Panel derecho: Métricas Financieras Dedicadas y Tabla Resumen */
+.fin-metrics-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.fin-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.fin-kpi-card {
+  padding: 7px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fin-kpi-card.is-wide {
+  grid-column: 1 / -1;
+}
+
+.fin-kpi-lbl {
+  font-size: 8.6px;
+  color: var(--tx2);
+  text-transform: lowercase;
+}
+
+.fin-kpi-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tx0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fin-kpi-num.is-pos {
+  color: #4ade80;
+}
+
+.fin-kpi-num.is-neg {
+  color: #fb7185;
+}
+
+.fin-sheet-ledger {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #0f1215;
+  overflow: hidden;
+}
+
+.fin-ledger-head,
+.fin-ledger-row {
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  font-size: 9px;
+}
+
+.fin-ledger-head {
+  background: rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--line);
+  color: var(--tx2);
+  font-weight: 700;
+}
+
+.fin-ledger-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.fin-ledger-row:last-child {
+  border-bottom: none;
+}
+
+.fin-ledger-row:hover {
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.fin-ledger-cell {
+  font-weight: 700;
+  color: var(--green);
+}
+
+.fin-ledger-name {
+  color: var(--tx1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fin-ledger-val {
+  font-weight: 700;
+  color: var(--tx0);
+  text-align: right;
+}
+
+/* Selector de tipo de lienzo dentro del modal "+ nuevo" (#projectActionModal) */
+.proj-domain-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.proj-domain-picker[hidden] {
+  display: none !important;
+}
+
+.proj-domain-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.proj-domain-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #121518;
+  color: var(--tx1);
+  font-family: 'JetBrains Mono', monospace;
+  text-align: left;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.proj-domain-card strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.2px;
+  color: var(--tx0);
+}
+
+.proj-domain-card small {
+  font-size: 8.6px;
+  color: var(--tx2);
+  line-height: 1.35;
+}
+
+.proj-domain-card.is-selected {
+  border-color: rgba(134, 239, 172, 0.65);
+  background: rgba(74, 222, 128, 0.09);
+}
+
+.proj-domain-card.is-selected strong {
+  color: var(--green);
+}
+
+.proj-fin-starter-wrap {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.proj-fin-starter-wrap[hidden] {
+  display: none !important;
+}
+
+.fl-dropdown-sec-label {
+  padding: 6px 10px 3px;
+  margin-top: 3px;
+  border-top: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+@media (max-width: 768px) {
+  .fin-formula-bar {
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    flex-wrap: wrap;
+    padding: 5px 6px;
+  }
+  .fin-formula-result {
+    margin-left: auto;
+  }
+  .proj-domain-cards {
+    grid-template-columns: 1fr;
+  }
+}

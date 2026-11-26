@@ -224,12 +224,26 @@
     if (!record || !record.data) return;
     const snap = deepClone(record.data);
 
-    STATE.nodes = Array.isArray(snap.nodes) ? snap.nodes : [];
-    STATE.edges = Array.isArray(snap.edges) ? snap.edges : [];
+    const rawNodes = Array.isArray(snap.nodes) ? snap.nodes : [];
+    const rawEdges = Array.isArray(snap.edges) ? snap.edges : [];
+    const cleaned =
+      typeof sanitizeDeprecatedChartNodes === 'function'
+        ? sanitizeDeprecatedChartNodes(rawNodes, rawEdges)
+        : { nodes: rawNodes, edges: rawEdges };
+
+    STATE.nodes = cleaned.nodes;
+    STATE.edges = cleaned.edges;
     STATE.pan = snap.pan && typeof snap.pan.x === 'number' ? snap.pan : { x: 60, y: 80 };
     STATE.zoom = Number(snap.zoom) || 1;
     STATE.snapOn = snap.snapOn !== false;
     STATE.speed = Number(snap.speed) || 1;
+    const inferredDomain =
+      snap.canvasDomain === 'finance' ||
+      (typeof isFinanceNodeType === 'function' && STATE.nodes.some(n => isFinanceNodeType(n.type)))
+        ? 'finance'
+        : 'workflow';
+    STATE.canvasDomain = inferredDomain;
+    STATE.financeCurrency = typeof snap.financeCurrency === 'string' ? snap.financeCurrency : 'USD';
     STATE.isBlankCanvas = STATE.nodes.length === 0 && STATE.edges.length === 0;
     STATE.sel = null;
     STATE.circuit = null;
@@ -242,6 +256,9 @@
     document.getElementById('btnSnap')?.classList.toggle('on', STATE.snapOn);
     const speedSel = document.getElementById('speedSel');
     if (speedSel) speedSel.value = String(STATE.speed);
+    if (typeof setWorkspaceDomain === 'function') {
+      setWorkspaceDomain(inferredDomain, { silent: true });
+    }
 
     if (typeof commitHistory === 'function') commitHistory();
     markBaselineAsClean();
@@ -358,11 +375,38 @@
     if (typeof showToast === 'function') showToast(`Descargado flowlab-${safeSlug}.json`, 'ok', 1800);
   }
 
+  function getModalSelectedDomain() {
+    const activeCard = document.querySelector('#projModalDomainPicker .proj-domain-card.is-selected');
+    return activeCard?.dataset.modalDomain === 'finance' ? 'finance' : 'workflow';
+  }
+
+  function setModalSelectedDomain(domain) {
+    const clean = domain === 'finance' ? 'finance' : 'workflow';
+    document.querySelectorAll('#projModalDomainPicker .proj-domain-card').forEach(card => {
+      card.classList.toggle('is-selected', card.dataset.modalDomain === clean);
+    });
+    const starterWrap = document.getElementById('projModalFinStarterWrap');
+    if (starterWrap) starterWrap.hidden = clean !== 'finance';
+    const f2Label = document.getElementById('projModalField2Label');
+    const f2Input = document.getElementById('projModalInput2');
+    if (f2Label && f2Input && modalState.mode === 'new-blank') {
+      f2Label.textContent =
+        clean === 'finance' ? 'Título para la nueva planilla financiera' : 'Título para el nuevo lienzo';
+      if (clean === 'finance' && (!f2Input.value || f2Input.value === 'nuevo_proyecto')) {
+        f2Input.value = 'planilla_financiera';
+      } else if (clean === 'workflow' && f2Input.value === 'planilla_financiera') {
+        f2Input.value = 'nuevo_proyecto';
+      }
+    }
+  }
+
   function executeNewBlankCanvas(options = {}) {
     const {
       saveCurrentFirst = false,
       currentSaveName = '',
-      newCanvasTitle = 'nuevo_proyecto'
+      newCanvasTitle = 'nuevo_proyecto',
+      targetDomain = 'workflow',
+      financeStarter = 'fin_blanco'
     } = options;
 
     if (saveCurrentFirst) {
@@ -374,32 +418,56 @@
     }
 
     resetState();
-    const cleanNewTitle = String(newCanvasTitle || 'nuevo_proyecto').trim() || 'nuevo_proyecto';
+    const isFin = targetDomain === 'finance';
+    STATE.canvasDomain = isFin ? 'finance' : 'workflow';
+
+    if (isFin && financeStarter && financeStarter !== 'fin_blanco' && typeof getTemplate === 'function') {
+      const tpl = getTemplate(financeStarter);
+      STATE.nodes = tpl.nodes || [];
+      STATE.edges = tpl.edges || [];
+      STATE.isBlankCanvas = STATE.nodes.length === 0;
+    }
+
+    const fallbackTitle = isFin ? 'planilla_financiera' : 'nuevo_proyecto';
+    const cleanNewTitle = String(newCanvasTitle || fallbackTitle).trim() || fallbackTitle;
     setProjectTitleInputs(cleanNewTitle);
+
+    if (typeof setWorkspaceDomain === 'function') {
+      setWorkspaceDomain(STATE.canvasDomain, { silent: true });
+    }
+    if (isFin && typeof switchRightPanelTab === 'function') {
+      switchRightPanelTab('stats');
+    }
 
     if (typeof commitHistory === 'function') commitHistory();
     markBaselineAsClean();
     if (typeof renderAll === 'function') renderAll();
-    if (typeof applyTransform === 'function') applyTransform();
+    if (STATE.nodes.length > 0 && typeof fitView === 'function') {
+      requestAnimationFrame(() => fitView());
+    } else if (typeof applyTransform === 'function') {
+      applyTransform();
+    }
     if (typeof updateMobileNodeBar === 'function') updateMobileNodeBar();
 
     const stSave = document.getElementById('stSave');
-    if (stSave) stSave.textContent = 'lienzo en blanco';
+    if (stSave) stSave.textContent = isFin ? 'planilla fx activa' : 'lienzo en blanco';
 
     closeProjectActionModal();
     toggleProjectsPopover(false);
 
     if (typeof showToast === 'function') {
       showToast(
-        saveCurrentFirst
-          ? 'Proyecto guardado · Nuevo lienzo en blanco listo'
-          : 'Nuevo lienzo en blanco listo',
+        isFin
+          ? `Planilla financiera "${cleanNewTitle}" lista`
+          : saveCurrentFirst
+            ? 'Proyecto guardado · Nuevo lienzo en blanco listo'
+            : 'Nuevo lienzo en blanco listo',
         'ok',
         2300
       );
     }
     if (typeof log === 'function') {
-      log('ok', `nuevo lienzo en blanco (${cleanNewTitle})`);
+      log('ok', isFin ? `nueva planilla financiera (${cleanNewTitle})` : `nuevo lienzo en blanco (${cleanNewTitle})`);
     }
   }
 
@@ -407,12 +475,6 @@
     if (typeof closeActiveDropdown === 'function') closeActiveDropdown(true);
     if (typeof toggleExportPopover === 'function') toggleExportPopover(false);
     toggleProjectsPopover(false);
-
-    // Si el lienzo ya está completamente vacío, reiniciar directamente sin molestar al usuario
-    if (!STATE.nodes.length && !STATE.edges.length) {
-      executeNewBlankCanvas({ saveCurrentFirst: false, newCanvasTitle: 'nuevo_proyecto' });
-      return;
-    }
 
     openNewBlankCanvasModal();
   }
@@ -429,6 +491,8 @@
     if (!modal) return;
 
     modalState = { mode: 'save', targetProjectId: null };
+    const domainPicker = document.getElementById('projModalDomainPicker');
+    if (domainPicker) domainPicker.hidden = true;
 
     const currentName = getProjectTitleInputValue() || 'mi_proyecto';
     const existingList = getSavedProjects();
@@ -480,13 +544,18 @@
     const modal = document.getElementById('projectActionModal');
     if (!modal) return;
 
-    modalState = { mode: 'new-blank', targetProjectId: null };
+    const canvasEmpty = !STATE.nodes.length && !STATE.edges.length;
+    modalState = { mode: 'new-blank', targetProjectId: null, canvasEmpty };
 
     const currentName = getProjectTitleInputValue() || 'proyecto_actual';
+    const domainPicker = document.getElementById('projModalDomainPicker');
+    if (domainPicker) domainPicker.hidden = false;
+    setModalSelectedDomain(STATE.canvasDomain || 'workflow');
 
-    document.getElementById('projModalTitle').textContent = 'nuevo_lienzo_en_blanco';
-    document.getElementById('projModalDesc').textContent =
-      `El lienzo actual tiene ${STATE.nodes.length} ${STATE.nodes.length === 1 ? 'nodo' : 'nodos'} y ${STATE.edges.length} ${STATE.edges.length === 1 ? 'conexión' : 'conexiones'}. ¿Deseas guardarlo localmente antes de dejar el lienzo en blanco?`;
+    document.getElementById('projModalTitle').textContent = 'generar_lienzo_o_planilla';
+    document.getElementById('projModalDesc').textContent = canvasEmpty
+      ? 'Elige si deseas iniciar un Lienzo de Flujo tradicional o una Planilla Financiera tipo Excel (fx) con nodos reactivos y métricas propias.'
+      : `El espacio actual tiene ${STATE.nodes.length} ${STATE.nodes.length === 1 ? 'nodo' : 'nodos'} y ${STATE.edges.length} ${STATE.edges.length === 1 ? 'conexión' : 'conexiones'}. Elige el tipo de nuevo entorno y opcionalmente respalda tu trabajo actual.`;
 
     const field1Wrap = document.getElementById('projModalField1Wrap');
     const field1Label = document.getElementById('projModalField1Label');
@@ -496,30 +565,41 @@
     const field2Label = document.getElementById('projModalField2Label');
     const field2Input = document.getElementById('projModalInput2');
 
-    field1Wrap.hidden = false;
-    field1Label.textContent = 'Guardar flujo actual con el nombre';
-    field1Input.value = currentName;
-    field1Input.placeholder = 'nombre para respaldar el flujo actual';
+    if (canvasEmpty) {
+      field1Wrap.hidden = true;
+    } else {
+      field1Wrap.hidden = false;
+      field1Label.textContent = 'Guardar trabajo actual con el nombre';
+      field1Input.value = currentName;
+      field1Input.placeholder = 'nombre para respaldar el espacio actual';
+    }
 
     field2Wrap.hidden = false;
-    field2Label.textContent = 'Título para el nuevo lienzo en blanco';
-    field2Input.value = 'nuevo_proyecto';
+    field2Label.textContent =
+      (STATE.canvasDomain === 'finance') ? 'Título para la nueva planilla financiera' : 'Título para el nuevo lienzo';
+    field2Input.value = (STATE.canvasDomain === 'finance') ? 'planilla_financiera' : 'nuevo_proyecto';
     field2Input.placeholder = 'nuevo_proyecto';
 
     const btnPrimary = document.getElementById('projModalPrimary');
     const btnSecondary = document.getElementById('projModalSecondary');
 
-    btnPrimary.textContent = 'Guardar actual y limpiar';
-    btnPrimary.className = 'btn primary';
-
-    btnSecondary.hidden = false;
-    btnSecondary.textContent = 'Limpiar sin guardar';
-    btnSecondary.className = 'btn proj-btn-danger';
+    if (canvasEmpty) {
+      btnPrimary.textContent = 'Crear espacio';
+      btnPrimary.className = 'btn primary';
+      btnSecondary.hidden = true;
+    } else {
+      btnPrimary.textContent = 'Guardar actual y crear';
+      btnPrimary.className = 'btn primary';
+      btnSecondary.hidden = false;
+      btnSecondary.textContent = 'Crear sin guardar';
+      btnSecondary.className = 'btn proj-btn-danger';
+    }
 
     modal.hidden = false;
     setTimeout(() => {
-      field1Input.focus();
-      field1Input.select();
+      const focusEl = canvasEmpty ? field2Input : field1Input;
+      focusEl.focus();
+      focusEl.select();
     }, 30);
   }
 
@@ -528,6 +608,8 @@
     if (!modal || !targetRecord) return;
 
     modalState = { mode: 'switch-project', targetProjectId: targetRecord.id };
+    const domainPicker = document.getElementById('projModalDomainPicker');
+    if (domainPicker) domainPicker.hidden = true;
 
     const currentName = getProjectTitleInputValue() || 'proyecto_actual';
 
@@ -580,10 +662,14 @@
     }
 
     if (modalState.mode === 'new-blank') {
+      const dom = getModalSelectedDomain();
+      const starter = document.getElementById('projModalFinStarter')?.value || 'fin_blanco';
       executeNewBlankCanvas({
-        saveCurrentFirst: true,
+        saveCurrentFirst: !modalState.canvasEmpty,
         currentSaveName: in1,
-        newCanvasTitle: in2 || 'nuevo_proyecto'
+        newCanvasTitle: in2 || (dom === 'finance' ? 'planilla_financiera' : 'nuevo_proyecto'),
+        targetDomain: dom,
+        financeStarter: starter
       });
       return;
     }
@@ -612,9 +698,13 @@
     }
 
     if (modalState.mode === 'new-blank') {
+      const dom = getModalSelectedDomain();
+      const starter = document.getElementById('projModalFinStarter')?.value || 'fin_blanco';
       executeNewBlankCanvas({
         saveCurrentFirst: false,
-        newCanvasTitle: in2 || 'nuevo_proyecto'
+        newCanvasTitle: in2 || (dom === 'finance' ? 'planilla_financiera' : 'nuevo_proyecto'),
+        targetDomain: dom,
+        financeStarter: starter
       });
       return;
     }
@@ -899,6 +989,12 @@
     document.getElementById('projModalCancel')?.addEventListener('click', closeProjectActionModal);
     document.getElementById('projModalPrimary')?.addEventListener('click', handleModalPrimary);
     document.getElementById('projModalSecondary')?.addEventListener('click', handleModalSecondary);
+
+    document.querySelectorAll('#projModalDomainPicker .proj-domain-card').forEach(card => {
+      card.addEventListener('click', () => {
+        setModalSelectedDomain(card.dataset.modalDomain);
+      });
+    });
 
     document.getElementById('projectActionModal')?.addEventListener('pointerdown', e => {
       if (e.target.id === 'projectActionModal') {

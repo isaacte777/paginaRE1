@@ -18,8 +18,8 @@ function getUpstreamNodes(nodeId) {
 function renderChartNodeHtml(n) {
   const type = n.type;
   const upstream = getUpstreamNodes(n.id);
-  const title = n.params?.title || (type === 'chart_line' ? 'Performance' : type === 'chart_bar' ? 'Leads por canal' : type === 'chart_donut' ? 'Tráfico por dispositivo' : type === 'chart_gauge' ? 'Meta mensual' : 'Conversión');
-  const accent = type === 'chart_line' ? '#38bdf8' : type === 'chart_bar' ? '#f59e0b' : type === 'chart_donut' ? '#22c55e' : type === 'chart_gauge' ? '#eab308' : '#a855f7';
+  const title = n.params?.title || (type === 'chart_bar' ? 'Leads por canal' : type === 'chart_donut' ? 'Tráfico por dispositivo' : type === 'chart_gauge' ? 'Meta mensual' : 'Conversión');
+  const accent = type === 'chart_bar' ? '#f59e0b' : type === 'chart_donut' ? '#22c55e' : type === 'chart_gauge' ? '#eab308' : '#a855f7';
 
   // Si no está conectado a nada, mostrar estado vacío / pendiente
   if (upstream.length === 0) {
@@ -45,42 +45,11 @@ function renderChartNodeHtml(n) {
   const successRate = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
   const subtitle = n.params?.subtitle || `Basado en ${total} nodos upstream`;
-  const badge = type === 'chart_line' ? 'TREND' : type === 'chart_bar' ? 'COMPARE' : type === 'chart_donut' ? 'SHARE' : type === 'chart_gauge' ? 'EN CAMINO' : 'FUNNEL';
+  const badge = type === 'chart_bar' ? 'COMPARE' : type === 'chart_donut' ? 'SHARE' : type === 'chart_gauge' ? 'EN CAMINO' : 'FUNNEL';
 
   let bodyHtml = '';
 
-  if (type === 'chart_line') {
-    const W = 260, H = 65;
-    const baseVal = successRate;
-    const ptsArr = [baseVal * 0.4, baseVal * 0.6, baseVal * 0.5, baseVal * 0.8, baseVal * 0.7, baseVal * 0.9, baseVal];
-    const maxV = Math.max(...ptsArr, 100);
-    const pts = ptsArr.map((v, i) => `${(i / (ptsArr.length - 1)) * W},${H - (v / maxV) * H}`).join(' ');
-    const area = `M0,${H} L${pts} L${W},${H} Z`;
-
-    bodyHtml = `
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px">
-        <div>
-          <span style="font-size:20px; font-weight:700; color:var(--tx0)">${successRate}%</span>
-          <span style="font-size:9.5px; color:var(--tx3)">Éxito global</span>
-        </div>
-        <span style="font-size:10px; font-weight:700; color:#4ade80">▲ ${total} nodos</span>
-      </div>
-      <svg viewBox="0 0 ${W} ${H}" style="width:100%; overflow:visible">
-        <defs>
-          <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="${accent}" stop-opacity="0.4"/>
-            <stop offset="100%" stop-color="${accent}" stop-opacity="0.0"/>
-          </linearGradient>
-        </defs>
-        <path d="${area}" fill="url(#lineGrad)" />
-        <polyline fill="none" stroke="${accent}" stroke-width="2" points="${pts}" />
-        <circle cx="${W}" cy="${H - (successRate / maxV) * H}" r="3.5" fill="#ffffff" stroke="${accent}" stroke-width="1.5" />
-      </svg>
-      <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--tx3); margin-top:2px">
-        <span>hechos: ${doneCount}</span><span>pendientes: ${pendingCount}</span>
-      </div>
-    `;
-  } else if (type === 'chart_bar') {
+  if (type === 'chart_bar') {
     const bars = [
       { l: 'Hechos', v: doneCount, max: total },
       { l: 'Progreso', v: progressCount, max: total },

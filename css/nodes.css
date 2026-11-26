@@ -20,12 +20,6 @@
 .pv-err { background: var(--white); }
 .pv-ai { background: #202224; border-color: var(--tx2); box-shadow: 0 0 0 2px var(--bg2), 0 0 0 3px var(--line2); }
 .pv-human { background: #26282a; border-color: #55595d; border-radius: 7px; }
-.pv-metrics {
-  background: var(--bg3);
-  border: 1px solid var(--line2);
-  border-radius: 4px;
-  background-image: linear-gradient(90deg, #38bdf8 45%, transparent 45%);
-}
 .pv-note { background: #3a3d40; }
 
 /* Nodos en el canvas */
@@ -453,31 +447,6 @@ body.palette-drag-active * {
 .node.human .txt::before {
   content: "@ ";
   color: var(--tx1);
-}
-
-.node.metrics {
-  background: var(--bg2);
-  border: 1px solid var(--line2);
-  border-left: 6px solid #38bdf8;
-  width: 320px;
-  min-height: 180px;
-  border-radius: 12px;
-  padding: 14px 16px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* Icono vectorial en nodos metrics (sin emoji a color) */
-.node.metrics .txt::before {
-  content: "";
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  margin-right: 5px;
-  vertical-align: -1.5px;
-  background-color: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E") no-repeat center / contain;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='20' x2='18' y2='10'/%3E%3Cline x1='12' y1='20' x2='12' y2='4'/%3E%3Cline x1='6' y1='20' x2='6' y2='14'/%3E%3Cline x1='2' y1='20' x2='22' y2='20'/%3E%3C/svg%3E") no-repeat center / contain;
 }
 
 .node.note {
