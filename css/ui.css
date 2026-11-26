@@ -5510,14 +5510,14 @@ select.fl-select-native {
   }
 }
 
-.ai-build-hud-head {
+.ai-build-hud__main {
   display: flex;
   align-items: center;
   gap: 7px;
   min-width: 0;
 }
 
-.ai-build-hud-dot {
+.ai-build-hud__pulse {
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -5527,14 +5527,24 @@ select.fl-select-native {
   animation: aiHudDotPulse 1.05s ease-in-out infinite;
 }
 
-.ai-build-hud.is-analyzing .ai-build-hud-dot {
+.ai-build-hud.is-analyzing .ai-build-hud__pulse {
   background: #7dd3fc;
   box-shadow: 0 0 8px rgba(125, 211, 252, 0.72);
 }
 
-.ai-build-hud.is-done .ai-build-hud-dot {
+.ai-build-hud.is-done .ai-build-hud__pulse {
   animation: none;
   background: var(--green);
+}
+
+.ai-build-hud__icon {
+  color: var(--green);
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
+.ai-build-hud.is-analyzing .ai-build-hud__icon {
+  color: #7dd3fc;
 }
 
 @keyframes aiHudDotPulse {
@@ -5548,7 +5558,15 @@ select.fl-select-native {
   }
 }
 
-.ai-build-hud-phase {
+.ai-build-hud__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.ai-build-hud__phase {
   font-size: 9.6px;
   font-weight: 700;
   color: var(--tx0);
@@ -5558,7 +5576,16 @@ select.fl-select-native {
   text-overflow: ellipsis;
 }
 
-.ai-build-hud-count {
+.ai-build-hud__step {
+  font-size: 9px;
+  color: var(--tx1);
+  line-height: 1.32;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-build-hud__count {
   margin-left: auto;
   font-size: 8.8px;
   font-weight: 600;
@@ -5570,7 +5597,7 @@ select.fl-select-native {
   flex-shrink: 0;
 }
 
-.ai-build-hud-skip {
+.ai-build-hud__skip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -5586,26 +5613,17 @@ select.fl-select-native {
   transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
 }
 
-.ai-build-hud-skip:hover {
+.ai-build-hud__skip:hover {
   border-color: rgba(134, 239, 172, 0.6);
   color: var(--green);
   background: rgba(74, 222, 128, 0.09);
 }
 
-.ai-build-hud-skip[hidden] {
+.ai-build-hud__skip[hidden] {
   display: none !important;
 }
 
-.ai-build-hud-step {
-  font-size: 9.1px;
-  color: var(--tx1);
-  line-height: 1.35;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ai-build-hud-track {
+.ai-build-hud__bar {
   width: 100%;
   height: 3px;
   border-radius: 999px;
@@ -5613,7 +5631,9 @@ select.fl-select-native {
   overflow: hidden;
 }
 
-.ai-build-hud-fill {
+.ai-build-hud__bar > i,
+#aiBuildHudFill {
+  display: block;
   height: 100%;
   width: 0%;
   border-radius: inherit;
@@ -5621,7 +5641,8 @@ select.fl-select-native {
   transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.ai-build-hud.is-analyzing .ai-build-hud-fill {
+.ai-build-hud.is-analyzing .ai-build-hud__bar > i,
+.ai-build-hud.is-analyzing #aiBuildHudFill {
   background: linear-gradient(90deg, #38bdf8 0%, #93c5fd 100%);
 }
 
@@ -5696,21 +5717,21 @@ select.fl-select-native {
   display: none !important;
 }
 
-.ai-world-cursor-svg {
+.ai-world-cursor__ptr {
   color: var(--green);
   filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.72));
   flex-shrink: 0;
 }
 
-.ai-world-cursor.is-editing .ai-world-cursor-svg {
+.ai-world-cursor.is-editing .ai-world-cursor__ptr {
   color: #7dd3fc;
 }
 
-.ai-world-cursor.is-deleting .ai-world-cursor-svg {
+.ai-world-cursor.is-deleting .ai-world-cursor__ptr {
   color: #fb7185;
 }
 
-.ai-world-cursor-tag {
+.ai-world-cursor__tag {
   margin-top: 10px;
   padding: 2px 6px;
   border-radius: 5px;
@@ -5722,12 +5743,12 @@ select.fl-select-native {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
 }
 
-.ai-world-cursor.is-editing .ai-world-cursor-tag {
+.ai-world-cursor.is-editing .ai-world-cursor__tag {
   border-color: rgba(125, 211, 252, 0.48);
   color: #bae6fd;
 }
 
-.ai-world-cursor.is-deleting .ai-world-cursor-tag {
+.ai-world-cursor.is-deleting .ai-world-cursor__tag {
   border-color: rgba(251, 113, 133, 0.5);
   color: #fecdd3;
 }
@@ -5825,17 +5846,17 @@ svg text.edge-label.ai-edge-label-reveal {
     width: calc(100% - 18px);
     padding: 7px 9px 8px;
   }
-  .ai-build-hud-phase {
+  .ai-build-hud__phase {
     font-size: 9px;
   }
-  .ai-build-hud-step {
+  .ai-build-hud__step {
     font-size: 8.6px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ai-build-hud,
-  .ai-build-hud-dot,
+  .ai-build-hud__pulse,
   .ai-blueprint-slot,
   .node.ai-node-constructing,
   .node.ai-typing-active .text::after,
@@ -5843,7 +5864,7 @@ svg text.edge-label.ai-edge-label-reveal {
     animation: none !important;
   }
   .ai-world-cursor,
-  .ai-build-hud-fill {
+  #aiBuildHudFill {
     transition: none !important;
   }
 }
