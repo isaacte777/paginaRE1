@@ -346,72 +346,249 @@
     <div class="pbody" id="panel"></div>
 
     <div class="ai-sidebar" id="aiSidebarView" hidden>
+      <!-- Cabecera minimalista unificada -->
       <div class="ai-topbar">
         <div class="ai-topbar-left">
-          <button type="button" class="ai-icon-btn ai-sidebar-toggle-btn" id="btnAiSidebarOpen" aria-label="Abrir historial lateral de chats" aria-expanded="false" title="Abrir historial de chats (panel lateral)">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          <button type="button" class="ai-icon-btn ai-sidebar-toggle-btn" id="btnAiSidebarOpen" aria-label="Abrir menú lateral de IA" aria-expanded="false" title="Abrir menú lateral (Chats y Ajustes)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
           </button>
-          <button type="button" class="ai-provider-pill" id="btnAiProviderPill" title="Configurar conexión IA">
-            <span class="ai-provider-dot" id="aiProviderDot" aria-hidden="true"></span>
-            <span id="aiProviderLabel">Asistente integrado</span>
-          </button>
+          <div class="ai-topbar-identity">
+            <button type="button" class="ai-session-current" id="btnAiSessionCurrent" title="Cambiar de chat guardado">
+              <span class="ai-session-current__title" id="aiActiveSessionTitle">Nuevo chat FlowLab</span>
+              <span class="ai-session-current__meta" id="aiActiveSessionMeta">nuevo</span>
+              <svg class="ai-session-current__chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <button type="button" class="ai-provider-pill" id="btnAiProviderPill" title="Abrir ajustes de conexión IA">
+              <span class="ai-provider-dot" id="aiProviderDot" aria-hidden="true"></span>
+              <span id="aiProviderLabel">Asistente integrado</span>
+            </button>
+          </div>
         </div>
+
         <div class="ai-topbar-actions">
-          <button type="button" class="ai-icon-btn" id="btnAiNewChat" aria-label="Crear nuevo chat" title="Crear nuevo chat sin borrar los anteriores">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>nuevo</span>
+          <button type="button" class="ai-icon-btn ai-icon-btn--square" id="btnAiNewChat" aria-label="Crear nuevo chat" title="Nuevo chat">
+            <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </button>
-          <button type="button" class="ai-icon-btn" id="btnAiHistory" aria-label="Historial de chats guardados" aria-expanded="false" title="Abrir historial lateral de chats guardados">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>
-            <span>chats</span>
+          <button type="button" class="ai-icon-btn ai-icon-btn--chats" id="btnAiHistory" aria-label="Historial de chats guardados" aria-expanded="false" title="Historial de chats guardados">
+            <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
             <span class="ai-sessions-badge" id="aiSessionsCount">1</span>
           </button>
-          <button type="button" class="ai-icon-btn" id="btnAiConfig" aria-label="Configurar conexión IA" title="Configurar proveedor IA">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
-          <button type="button" class="ai-icon-btn" id="btnAiClear" aria-label="Vaciar mensajes del chat actual" title="Vaciar mensajes del chat actual">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          <button type="button" class="ai-icon-btn ai-icon-btn--square" id="btnAiConfig" aria-label="Ajustes de IA" aria-expanded="false" title="Abrir ajustes de IA (panel lateral)">
+            <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
         </div>
       </div>
 
-      <!-- Barra de sesión activa (clic abre el panel lateral superpuesto de izquierda a derecha) -->
-      <div class="ai-session-bar" id="aiSessionBar">
-        <button type="button" class="ai-session-current" id="btnAiSessionCurrent" title="Abrir historial de chats guardados">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          <span class="ai-session-current__title" id="aiActiveSessionTitle">Nuevo chat FlowLab</span>
-          <span class="ai-session-current__meta" id="aiActiveSessionMeta">guardado</span>
-          <svg class="ai-session-current__chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-
-      <!-- Fondo semitransparente + Ventana lateral de historial (despliegue izquierda -> derecha superpuesta sobre todo el menú IA) -->
+      <!-- Fondo oscurecido + Menú lateral unificado (Chats + Ajustes IA) desplegable de izquierda -> derecha -->
       <div class="ai-sessions-backdrop" id="aiSessionsBackdrop" hidden></div>
-      <aside class="ai-sessions-drawer" id="aiSessionsDrawer" aria-label="Historial de chats guardados" hidden>
+      <aside class="ai-sessions-drawer" id="aiSessionsDrawer" aria-label="Menú lateral de FlowLab IA" hidden>
         <div class="ai-sessions-head">
           <div class="ai-sessions-brand">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+            <span class="ai-sessions-brand__mark" aria-hidden="true">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+            </span>
             <span>FlowLab IA</span>
           </div>
-          <button type="button" class="ai-sessions-collapse-btn" id="btnAiCloseSessions" aria-label="Cerrar panel de chats" title="Ocultar historial de chats">
+          <button type="button" class="ai-sessions-collapse-btn" id="btnAiCloseSessions" aria-label="Cerrar menú lateral" title="Ocultar menú lateral">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><line x1="9" y1="3" x2="9" y2="21"/><polyline points="15 15 12 12 15 9"/></svg>
           </button>
         </div>
 
-        <div class="ai-sessions-nav">
-          <button type="button" class="ai-sessions-new-row" id="btnAiDrawerNewChat">
-            <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <span>Nuevo chat</span>
+        <!-- Selector segmentado dentro del menú lateral: Chats | Ajustes -->
+        <div class="ai-drawer-tabs" role="tablist" aria-label="Secciones del menú lateral">
+          <button type="button" class="ai-drawer-tab is-active" id="btnAiDrawerTabChats" role="tab" aria-selected="true" data-drawer-view="chats">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>Chats</span>
+            <span class="ai-drawer-tab__badge" id="aiDrawerSessionsCount">1</span>
           </button>
-
-          <div class="ai-sessions-search-wrap" id="aiSessionsSearchWrap">
-            <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7.5"/><line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/></svg>
-            <input type="text" id="aiSessionSearchInput" placeholder="Buscar chats..." autocomplete="off">
-            <button type="button" class="ai-sessions-search-clear" id="btnAiClearSessionSearch" aria-label="Limpiar búsqueda" hidden>×</button>
-          </div>
+          <button type="button" class="ai-drawer-tab" id="btnAiDrawerTabSettings" role="tab" aria-selected="false" data-drawer-view="settings">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Ajustes</span>
+            <span class="ai-provider-dot" id="aiDrawerConnDot" aria-hidden="true"></span>
+          </button>
         </div>
 
-        <div class="ai-sessions-list" id="aiSessionsList" role="listbox" aria-label="Conversaciones guardadas"></div>
+        <!-- Vista 1: Historial de conversaciones estilo ChatGPT -->
+        <div class="ai-drawer-pane" id="aiDrawerChatsPane">
+          <div class="ai-sessions-nav">
+            <button type="button" class="ai-sessions-new-row" id="btnAiDrawerNewChat">
+              <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span>Nuevo chat</span>
+            </button>
+
+            <div class="ai-sessions-search-wrap" id="aiSessionsSearchWrap">
+              <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7.5"/><line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/></svg>
+              <input type="text" id="aiSessionSearchInput" placeholder="Buscar chats..." autocomplete="off">
+              <button type="button" class="ai-sessions-search-clear" id="btnAiClearSessionSearch" aria-label="Limpiar búsqueda" hidden>×</button>
+            </div>
+          </div>
+
+          <div class="ai-sessions-list" id="aiSessionsList" role="listbox" aria-label="Conversaciones guardadas"></div>
+        </div>
+
+        <!-- Vista 2: Ajustes de conexión y preferencias IA (integrado en el menú deslizable de izquierda a derecha) -->
+        <div class="ai-config-drawer" id="aiConfigDrawer" hidden>
+          <div class="ai-cfg-summary-card">
+            <div class="ai-cfg-summary-card__top">
+              <span class="ai-cfg-summary-card__kicker">motor activo</span>
+              <span class="ai-cfg-health-pill" id="aiCfgHealthBadge">listo</span>
+            </div>
+            <strong class="ai-cfg-summary-card__name" id="aiCfgActiveSummary">Asistente integrado</strong>
+          </div>
+
+          <div class="ai-cfg-section-title">proveedor de conexión</div>
+          <div class="ai-mode-tabs" role="tablist">
+            <button type="button" class="ai-mode-tab is-active" data-ai-mode-tab="local">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+              <span>Local</span>
+            </button>
+            <button type="button" class="ai-mode-tab" data-ai-mode-tab="api">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2m-3 3l3 3m-6 1l3 3"/></svg>
+              <span>API</span>
+            </button>
+            <button type="button" class="ai-mode-tab" data-ai-mode-tab="url">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18z"/></svg>
+              <span>URL</span>
+            </button>
+            <button type="button" class="ai-mode-tab" data-ai-mode-tab="builtin">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>Base</span>
+            </button>
+          </div>
+
+          <!-- Modo 1: IA Local en PC / Laptop -->
+          <div class="ai-mode-pane" data-ai-mode-pane="local">
+            <label class="ai-cfg-label">motor o pasarela en tu pc</label>
+            <select id="aiLocalPreset" aria-label="Motor local">
+              <option value="ollama">Ollama (localhost:11434)</option>
+              <option value="lmstudio">LM Studio (localhost:1234)</option>
+              <option value="omniroute">Omniroute / Gateway (:20128)</option>
+              <option value="jan">Jan AI (localhost:1337)</option>
+              <option value="llamacpp">llama.cpp / LocalAI (:8080)</option>
+              <option value="textgen">TextGen WebUI (:5000)</option>
+            </select>
+
+            <label class="ai-cfg-label">url local (base o /v1/chat/completions)</label>
+            <input type="text" id="aiLocalUrl" placeholder="http://localhost:11434/v1/chat/completions">
+
+            <label class="ai-cfg-label">token / api key local (opcional)</label>
+            <div class="ai-key-wrap">
+              <input type="password" id="aiLocalKey" placeholder="Opcional (ej. Omniroute)" autocomplete="off">
+              <button type="button" class="ai-key-eye" id="btnToggleLocalKeyVis" title="Mostrar u ocultar clave" aria-label="Mostrar u ocultar clave">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+
+            <div class="ai-cfg-row-head">
+              <label class="ai-cfg-label">modelo instalado</label>
+              <button type="button" class="ai-mini-link" id="btnDetectLocalModels">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <span>detectar</span>
+              </button>
+            </div>
+            <input type="text" id="aiLocalModel" placeholder="qwen2.5-coder:7b, llama3.2...">
+            <div class="ai-detected-models" id="aiDetectedModels"></div>
+            <p class="ai-cfg-note">En Ollama activa CORS con: <code>OLLAMA_ORIGINS="*" ollama serve</code> · En LM Studio activa <code>Enable CORS</code>.</p>
+          </div>
+
+          <!-- Modo 2: Cloud API Key -->
+          <div class="ai-mode-pane" data-ai-mode-pane="api" hidden>
+            <label class="ai-cfg-label">proveedor cloud</label>
+            <select id="aiCloudProvider" aria-label="Proveedor de IA">
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="anthropic">Anthropic Claude</option>
+              <option value="openrouter">OpenRouter (modelos gratis)</option>
+              <option value="groq">Groq</option>
+              <option value="deepseek">DeepSeek</option>
+            </select>
+
+            <label class="ai-cfg-label">api key (guardada solo en tu navegador)</label>
+            <div class="ai-key-wrap">
+              <input type="password" id="aiCloudKey" placeholder="sk-..." autocomplete="off">
+              <button type="button" class="ai-key-eye" id="btnToggleKeyVis" title="Mostrar u ocultar clave" aria-label="Mostrar u ocultar clave">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+
+            <label class="ai-cfg-label">modelo</label>
+            <input type="text" id="aiCloudModel" placeholder="gpt-4o-mini">
+          </div>
+
+          <!-- Modo 3: URL / Endpoint Personalizado -->
+          <div class="ai-mode-pane" data-ai-mode-pane="url" hidden>
+            <label class="ai-cfg-label">endpoint url (base o ruta completa)</label>
+            <input type="text" id="aiCustomUrl" placeholder="http://localhost:20128 o https://api.../v1/chat/completions">
+            <p class="ai-cfg-note" style="margin-top:4px;margin-bottom:2px">Si ingresas solo <code>http://host:puerto</code> en modo OpenAI, se resuelve automáticamente <code>/v1/chat/completions</code>.</p>
+
+            <label class="ai-cfg-label">formato de petición</label>
+            <select id="aiCustomFormat" aria-label="Formato de endpoint">
+              <option value="openai">Compatible con OpenAI (/v1/chat/completions)</option>
+              <option value="openai_exact">OpenAI en URL exacta (sin autocompletar ruta)</option>
+              <option value="webhook">Endpoint / Webhook JSON ({ message, context })</option>
+            </select>
+
+            <label class="ai-cfg-label">token bearer / api key (opcional)</label>
+            <div class="ai-key-wrap">
+              <input type="password" id="aiCustomKey" placeholder="Opcional: Authorization: Bearer ..." autocomplete="off">
+              <button type="button" class="ai-key-eye" id="btnToggleCustomKeyVis" title="Mostrar u ocultar token" aria-label="Mostrar u ocultar token">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+
+            <div class="ai-cfg-row-head">
+              <label class="ai-cfg-label">nombre del modelo (opcional)</label>
+              <button type="button" class="ai-mini-link" id="btnDetectCustomModels">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                <span>consultar</span>
+              </button>
+            </div>
+            <input type="text" id="aiCustomModel" placeholder="default, gpt-4o-mini, qwen...">
+            <div class="ai-detected-models" id="aiCustomDetectedModels"></div>
+          </div>
+
+          <!-- Modo 4: Asistente integrado sin conexión -->
+          <div class="ai-mode-pane" data-ai-mode-pane="builtin" hidden>
+            <p class="ai-cfg-note" style="margin-top:4px">
+              <b>Asistente integrado FlowLab:</b> funciona al instante sin claves ni descargas para analizar el archivo actual y generar estructuras de nodos base en español.
+            </p>
+          </div>
+
+          <div class="ai-test-status" id="aiTestStatus"></div>
+
+          <div class="ai-cfg-actions">
+            <button type="button" class="btn" id="btnAiTest">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span>probar</span>
+            </button>
+            <button type="button" class="btn primary" id="btnAiSaveConfig">guardar conexión</button>
+          </div>
+
+          <div class="ai-cfg-divider"></div>
+          <div class="ai-cfg-section-title">comportamiento y chat actual</div>
+          <div class="ai-cfg-prefs">
+            <button type="button" class="ai-cfg-pref-row is-on" id="btnAiDrawerToggleCtx">
+              <div class="ai-cfg-pref-row__copy">
+                <strong>Contexto del lienzo</strong>
+                <span>Enviar nodos y conexiones actuales a la IA</span>
+              </div>
+              <span class="ai-cfg-switch" aria-hidden="true"><i></i></span>
+            </button>
+
+            <button type="button" class="ai-cfg-pref-row is-on" id="btnAiDrawerToggleAuto">
+              <div class="ai-cfg-pref-row__copy">
+                <strong>Auto-nodos en vivo</strong>
+                <span>Aplicar flujos generados directo al lienzo</span>
+              </div>
+              <span class="ai-cfg-switch" aria-hidden="true"><i></i></span>
+            </button>
+
+            <button type="button" class="ai-cfg-danger-btn" id="btnAiClear" title="Vaciar mensajes del chat actual">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span>Vaciar mensajes de este chat</span>
+            </button>
+          </div>
+        </div>
 
         <div class="ai-sessions-foot">
           <span class="ai-sessions-foot__avatar" id="aiDrawerUserInitial" aria-hidden="true">F</span>
@@ -419,6 +596,10 @@
             <strong id="aiDrawerUserName">Espacio local</strong>
             <small id="aiSessionsSubtitle">1 chat guardado</small>
           </div>
+          <button type="button" class="ai-sessions-foot__btn" id="btnAiDrawerSwitchView" title="Alternar entre Chats y Ajustes IA">
+            <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span id="aiDrawerSwitchLabel">Ajustes</span>
+          </button>
         </div>
       </aside>
 
@@ -434,153 +615,6 @@
         <button type="button" class="ai-conn-banner__btn" id="btnAiFixConn">revisar</button>
       </div>
 
-      <div class="ai-config-drawer" id="aiConfigDrawer" hidden>
-        <div class="ai-mode-tabs" role="tablist">
-          <button type="button" class="ai-mode-tab is-active" data-ai-mode-tab="local">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
-            <span>Local</span>
-          </button>
-          <button type="button" class="ai-mode-tab" data-ai-mode-tab="api">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L21 2m-3 3l3 3m-6 1l3 3"/></svg>
-            <span>API</span>
-          </button>
-          <button type="button" class="ai-mode-tab" data-ai-mode-tab="url">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14.5 14.5 0 0 1 0 18 14.5 14.5 0 0 1 0-18z"/></svg>
-            <span>URL</span>
-          </button>
-          <button type="button" class="ai-mode-tab" data-ai-mode-tab="builtin">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>Base</span>
-          </button>
-        </div>
-
-        <!-- Modo 1: IA Local en PC / Laptop -->
-        <div class="ai-mode-pane" data-ai-mode-pane="local">
-          <label class="ai-cfg-label">motor o pasarela en tu pc</label>
-          <select id="aiLocalPreset" aria-label="Motor local">
-            <option value="ollama">Ollama (localhost:11434)</option>
-            <option value="lmstudio">LM Studio (localhost:1234)</option>
-            <option value="omniroute">Omniroute / Gateway (:20128)</option>
-            <option value="jan">Jan AI (localhost:1337)</option>
-            <option value="llamacpp">llama.cpp / LocalAI (:8080)</option>
-            <option value="textgen">TextGen WebUI (:5000)</option>
-          </select>
-
-          <label class="ai-cfg-label">url local (admite URL base o /v1/chat/completions)</label>
-          <input type="text" id="aiLocalUrl" placeholder="http://localhost:11434/v1/chat/completions">
-
-          <label class="ai-cfg-label">token / api key local (opcional, ej. Omniroute)</label>
-          <div class="ai-key-wrap">
-            <input type="password" id="aiLocalKey" placeholder="Opcional (vacío para Ollama/LM Studio)" autocomplete="off">
-            <button type="button" class="ai-key-eye" id="btnToggleLocalKeyVis" title="Mostrar u ocultar clave" aria-label="Mostrar u ocultar clave">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-
-          <div class="ai-cfg-row-head">
-            <label class="ai-cfg-label">modelo instalado</label>
-            <button type="button" class="ai-mini-link" id="btnDetectLocalModels">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              <span>detectar en mi pc</span>
-            </button>
-          </div>
-          <input type="text" id="aiLocalModel" placeholder="qwen2.5-coder:7b, llama3.2...">
-          <div class="ai-detected-models" id="aiDetectedModels"></div>
-          <p class="ai-cfg-note">En Ollama activa CORS con: <code>OLLAMA_ORIGINS="*" ollama serve</code> · En LM Studio activa <code>Enable CORS</code>.</p>
-        </div>
-
-        <!-- Modo 2: Cloud API Key -->
-        <div class="ai-mode-pane" data-ai-mode-pane="api" hidden>
-          <label class="ai-cfg-label">proveedor cloud</label>
-          <select id="aiCloudProvider" aria-label="Proveedor de IA">
-            <option value="openai">OpenAI</option>
-            <option value="gemini">Google Gemini</option>
-            <option value="anthropic">Anthropic Claude</option>
-            <option value="openrouter">OpenRouter (modelos gratis)</option>
-            <option value="groq">Groq</option>
-            <option value="deepseek">DeepSeek</option>
-          </select>
-
-          <label class="ai-cfg-label">api key (guardada solo en tu navegador)</label>
-          <div class="ai-key-wrap">
-            <input type="password" id="aiCloudKey" placeholder="sk-..." autocomplete="off">
-            <button type="button" class="ai-key-eye" id="btnToggleKeyVis" title="Mostrar u ocultar clave" aria-label="Mostrar u ocultar clave">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-
-          <label class="ai-cfg-label">modelo</label>
-          <input type="text" id="aiCloudModel" placeholder="gpt-4o-mini">
-        </div>
-
-        <!-- Modo 3: URL / Endpoint Personalizado -->
-        <div class="ai-mode-pane" data-ai-mode-pane="url" hidden>
-          <label class="ai-cfg-label">endpoint url (base o ruta completa)</label>
-          <input type="text" id="aiCustomUrl" placeholder="http://localhost:20128 o https://api.../v1/chat/completions">
-          <p class="ai-cfg-note" style="margin-top:4px;margin-bottom:2px">Si ingresas solo <code>http://host:puerto</code> en modo OpenAI, se resuelve automáticamente <code>/v1/chat/completions</code>.</p>
-
-          <label class="ai-cfg-label">formato de petición</label>
-          <select id="aiCustomFormat" aria-label="Formato de endpoint">
-            <option value="openai">Compatible con OpenAI (/v1/chat/completions)</option>
-            <option value="openai_exact">OpenAI en URL exacta (sin autocompletar ruta)</option>
-            <option value="webhook">Endpoint / Webhook JSON ({ message, context })</option>
-          </select>
-
-          <label class="ai-cfg-label">token bearer / api key (opcional)</label>
-          <div class="ai-key-wrap">
-            <input type="password" id="aiCustomKey" placeholder="Opcional: se envía Authorization: Bearer ..." autocomplete="off">
-            <button type="button" class="ai-key-eye" id="btnToggleCustomKeyVis" title="Mostrar u ocultar token" aria-label="Mostrar u ocultar token">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-
-          <div class="ai-cfg-row-head">
-            <label class="ai-cfg-label">nombre del modelo (opcional)</label>
-            <button type="button" class="ai-mini-link" id="btnDetectCustomModels">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-              <span>consultar modelos</span>
-            </button>
-          </div>
-          <input type="text" id="aiCustomModel" placeholder="default, gpt-4o-mini, qwen...">
-          <div class="ai-detected-models" id="aiCustomDetectedModels"></div>
-        </div>
-
-        <!-- Modo 4: Asistente integrado sin conexión -->
-        <div class="ai-mode-pane" data-ai-mode-pane="builtin" hidden>
-          <p class="ai-cfg-note" style="margin-top:4px">
-            <b>Asistente integrado FlowLab:</b> funciona al instante sin claves ni descargas para analizar el archivo actual y generar estructuras de nodos base en español.
-          </p>
-        </div>
-
-        <div class="ai-test-status" id="aiTestStatus"></div>
-
-        <div class="ai-cfg-actions">
-          <button type="button" class="btn" id="btnAiTest">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>probar</span>
-          </button>
-          <button type="button" class="btn primary" id="btnAiSaveConfig">guardar conexión</button>
-        </div>
-      </div>
-
-      <div class="ai-context-bar">
-        <button type="button" class="ai-chip is-active" id="btnAiToggleCtx" title="Enviar contexto del archivo actual a la IA">
-          <span class="ai-chip-dot"></span>
-          <span id="aiCtxSummary">contexto: activo</span>
-        </button>
-        <span class="ai-sel-badge" id="aiSelBadge" hidden></span>
-        <div class="ai-context-right">
-          <button type="button" class="ai-chip" id="btnAiOrganize" title="Compactar y alinear todos los nodos del lienzo automáticamente">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="3" y="17" width="6" height="5" rx="1"/><rect x="15" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M6 17v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/></svg>
-            <span>ordenar</span>
-          </button>
-          <button type="button" class="ai-chip is-active" id="btnAiAutoApply" title="Crear nodos automáticamente en el lienzo">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <span>auto-nodos</span>
-          </button>
-        </div>
-      </div>
-
       <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
 
       <!-- Selector rápido de modos de organización cuando se pulsa "ordenar" -->
@@ -594,25 +628,47 @@
 
       <div class="ai-composer" id="aiComposerDropzone">
         <input type="file" id="aiAttachInput" multiple hidden>
-        <div class="ai-attachments-bar" id="aiAttachmentsBar" hidden></div>
-        <textarea id="aiChatInput" rows="2" placeholder="Adjunta imágenes/documentos, pide armar tareas o indica cómo ordenar (ej. vertical, horizontal, árbol)..."></textarea>
-        <div class="ai-composer-foot">
-          <div class="ai-composer-left">
-            <button type="button" class="ai-attach-btn" id="btnAiAttach" title="Adjuntar imágenes, PDF, Word, Excel, CSV o cualquier documento (también puedes arrastrar o pegar Ctrl+V)">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-              <span>adjuntar</span>
+        <div class="ai-composer-card">
+          <div class="ai-context-bar">
+            <button type="button" class="ai-chip is-active" id="btnAiToggleCtx" title="Enviar contexto del archivo actual a la IA">
+              <span class="ai-chip-dot"></span>
+              <span id="aiCtxSummary">10n · 10c</span>
             </button>
-            <span class="ai-composer-hint">Enter · Ctrl+V img/doc</span>
+            <span class="ai-sel-badge" id="aiSelBadge" hidden></span>
+            <div class="ai-context-right">
+              <button type="button" class="ai-chip" id="btnAiOrganize" title="Compactar y alinear todos los nodos del lienzo automáticamente">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="3" y="17" width="6" height="5" rx="1"/><rect x="15" y="17" width="6" height="5" rx="1"/><path d="M12 7v5M6 17v-3a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/></svg>
+                <span>ordenar</span>
+              </button>
+              <button type="button" class="ai-chip is-active" id="btnAiAutoApply" title="Crear nodos automáticamente en el lienzo">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span>auto-nodos</span>
+              </button>
+            </div>
           </div>
-          <div class="ai-composer-btns">
-            <button type="button" class="ai-stop-btn" id="btnAiStop" hidden>
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
-              <span>detener</span>
-            </button>
-            <button type="button" class="ai-send-btn" id="btnAiSend">
-              <span>enviar</span>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
+
+          <div class="ai-attachments-bar" id="aiAttachmentsBar" hidden></div>
+
+          <textarea id="aiChatInput" rows="2" placeholder="Escribe un flujo, adjunta un PDF/imagen o pide reorganizar el lienzo..."></textarea>
+
+          <div class="ai-composer-foot">
+            <div class="ai-composer-left">
+              <button type="button" class="ai-attach-btn" id="btnAiAttach" title="Adjuntar imágenes, PDF, Word, Excel, CSV o cualquier documento (también puedes arrastrar o pegar Ctrl+V)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <span>adjuntar</span>
+              </button>
+              <span class="ai-composer-hint">Enter · Ctrl+V</span>
+            </div>
+            <div class="ai-composer-btns">
+              <button type="button" class="ai-stop-btn" id="btnAiStop" hidden>
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                <span>detener</span>
+              </button>
+              <button type="button" class="ai-send-btn" id="btnAiSend" title="Enviar mensaje (Enter)">
+                <span>enviar</span>
+                <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>

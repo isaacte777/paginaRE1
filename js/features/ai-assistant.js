@@ -4844,41 +4844,62 @@
     return { configured: false, text: 'Asistente integrado' };
   }
 
+  let sessionsDrawerHideTimer = null;
+  let activeDrawerView = 'chats'; // 'chats' | 'settings'
+
   function updateProviderHeaderUI() {
     const info = getActiveProviderSummary();
     const lbl = document.getElementById('aiProviderLabel');
     const pill = document.getElementById('btnAiProviderPill');
     const dot = document.getElementById('aiProviderDot');
+    const drawerDot = document.getElementById('aiDrawerConnDot');
     const tabDot = document.getElementById('aiTabDot');
     const tabDotMob = document.getElementById('aiTabDotMobile');
+    const cfgSum = document.getElementById('aiCfgActiveSummary');
+    const cfgHealth = document.getElementById('aiCfgHealthBadge');
     const banner = document.getElementById('aiConnBanner');
     const bannerTitle = document.getElementById('aiConnBannerTitle');
     const bannerText = document.getElementById('aiConnBannerText');
-    const drawer = document.getElementById('aiConfigDrawer');
 
     if (lbl) lbl.textContent = info.text;
+    if (cfgSum) cfgSum.textContent = info.text;
 
     const isErr = aiConfig.mode !== 'builtin' && connectionHealth.state === 'error';
     const isLive = aiConfig.mode !== 'builtin' && connectionHealth.state === 'ok' && info.configured;
     const isConfigured = aiConfig.mode !== 'builtin' && info.configured && !isErr && !isLive;
 
-    [dot, tabDot, tabDotMob].forEach(el => {
+    [dot, drawerDot, tabDot, tabDotMob].forEach(el => {
       if (!el) return;
       el.classList.toggle('is-live', isLive);
       el.classList.toggle('is-error', isErr);
       el.classList.toggle('is-configured', isConfigured);
     });
 
+    if (cfgHealth) {
+      cfgHealth.classList.toggle('is-live', isLive || aiConfig.mode === 'builtin');
+      cfgHealth.classList.toggle('is-error', isErr);
+      cfgHealth.classList.toggle('is-configured', isConfigured);
+      cfgHealth.textContent = isErr
+        ? 'error'
+        : isLive
+          ? 'verificado'
+          : aiConfig.mode === 'builtin'
+            ? 'activo'
+            : info.configured
+              ? 'configurado'
+              : 'sin clave';
+    }
+
     if (pill) {
       pill.classList.toggle('is-error', isErr);
       pill.title = isErr
-        ? `${connectionHealth.title} — Haz clic para revisar la conexión`
-        : 'Configurar conexión IA';
+        ? `${connectionHealth.title} — Haz clic para abrir Ajustes`
+        : 'Abrir ajustes de conexión IA';
     }
 
     if (banner) {
-      const drawerClosed = !drawer || drawer.hidden;
-      if (isErr && drawerClosed) {
+      const settingsOpen = isSessionsDrawerOpen() && activeDrawerView === 'settings';
+      if (isErr && !settingsOpen) {
         if (bannerTitle) bannerTitle.textContent = connectionHealth.title || 'Fallo de conexión IA';
         if (bannerText) {
           const firstLine = (connectionHealth.detail || '').split('\n')[0];
@@ -4896,16 +4917,20 @@
     const ctxSum = document.getElementById('aiCtxSummary');
     const selBadge = document.getElementById('aiSelBadge');
     const autoBtn = document.getElementById('btnAiAutoApply');
+    const drawerCtxBtn = document.getElementById('btnAiDrawerToggleCtx');
+    const drawerAutoBtn = document.getElementById('btnAiDrawerToggleAuto');
 
     if (ctxBtn) ctxBtn.classList.toggle('is-active', aiConfig.includeContext);
     if (autoBtn) autoBtn.classList.toggle('is-active', aiConfig.autoApply);
+    if (drawerCtxBtn) drawerCtxBtn.classList.toggle('is-on', aiConfig.includeContext);
+    if (drawerAutoBtn) drawerAutoBtn.classList.toggle('is-on', aiConfig.autoApply);
 
     if (ctxSum) {
       const nCount = (STATE.nodes || []).length;
       const eCount = (STATE.edges || []).length;
       ctxSum.textContent = aiConfig.includeContext
-        ? `contexto: ${nCount}n · ${eCount}c`
-        : 'contexto: off';
+        ? `${nCount}n · ${eCount}c`
+        : 'ctx off';
     }
 
     if (selBadge) {
@@ -4953,8 +4978,6 @@
     return AI_SVG.spark;
   }
 
-  let sessionsDrawerHideTimer = null;
-
   function classifyChatDateBucket(ts) {
     const t = Number(ts) || Date.now();
     const now = new Date();
@@ -4979,6 +5002,7 @@
   function updateAISessionBarUI() {
     const active = getActiveAISession();
     const countBadge = document.getElementById('aiSessionsCount');
+    const drawerCountBadge = document.getElementById('aiDrawerSessionsCount');
     const titleEl = document.getElementById('aiActiveSessionTitle');
     const metaEl = document.getElementById('aiActiveSessionMeta');
     const subEl = document.getElementById('aiSessionsSubtitle');
@@ -4986,9 +5010,8 @@
     const userInitEl = document.getElementById('aiDrawerUserInitial');
     const userNameEl = document.getElementById('aiDrawerUserName');
 
-    if (countBadge) {
-      countBadge.textContent = String(aiSessions.length);
-    }
+    if (countBadge) countBadge.textContent = String(aiSessions.length);
+    if (drawerCountBadge) drawerCountBadge.textContent = String(aiSessions.length);
     if (titleEl) {
       titleEl.textContent = active.title || 'Nuevo chat FlowLab';
     }
@@ -5019,15 +5042,78 @@
     return Boolean(drawer && !drawer.hidden && drawer.classList.contains('is-open'));
   }
 
-  function toggleSessionsDrawer(forceState) {
-    const drawer = document.getElementById('aiSessionsDrawer');
-    const backdrop = document.getElementById('aiSessionsBackdrop');
+  function syncDrawerHeaderButtons(isOpen) {
     const btnHist = document.getElementById('btnAiHistory');
     const btnOpen = document.getElementById('btnAiSidebarOpen');
     const btnCur = document.getElementById('btnAiSessionCurrent');
+    const btnCfg = document.getElementById('btnAiConfig');
+    const isChats = isOpen && activeDrawerView === 'chats';
+    const isCfg = isOpen && activeDrawerView === 'settings';
+
+    if (btnOpen) {
+      btnOpen.classList.toggle('is-active', isOpen);
+      btnOpen.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+    if (btnHist) {
+      btnHist.classList.toggle('is-active', isChats);
+      btnHist.setAttribute('aria-expanded', isChats ? 'true' : 'false');
+    }
+    if (btnCur) {
+      btnCur.classList.toggle('is-open', isChats);
+    }
+    if (btnCfg) {
+      btnCfg.classList.toggle('is-active', isCfg);
+      btnCfg.setAttribute('aria-expanded', isCfg ? 'true' : 'false');
+    }
+  }
+
+  function setAIDrawerView(view) {
+    activeDrawerView = view === 'settings' ? 'settings' : 'chats';
+    const isSettings = activeDrawerView === 'settings';
+    const chatsPane = document.getElementById('aiDrawerChatsPane');
+    const cfgPane = document.getElementById('aiConfigDrawer');
+    const tabChats = document.getElementById('btnAiDrawerTabChats');
+    const tabCfg = document.getElementById('btnAiDrawerTabSettings');
+    const footLbl = document.getElementById('aiDrawerSwitchLabel');
+
+    if (chatsPane) chatsPane.hidden = isSettings;
+    if (cfgPane) cfgPane.hidden = !isSettings;
+
+    if (tabChats) {
+      tabChats.classList.toggle('is-active', !isSettings);
+      tabChats.setAttribute('aria-selected', !isSettings ? 'true' : 'false');
+    }
+    if (tabCfg) {
+      tabCfg.classList.toggle('is-active', isSettings);
+      tabCfg.setAttribute('aria-selected', isSettings ? 'true' : 'false');
+    }
+    if (footLbl) {
+      footLbl.textContent = isSettings ? 'Chats' : 'Ajustes';
+    }
+
+    if (isSettings) {
+      syncConfigFormFromState();
+    } else {
+      renderAISessionsList();
+    }
+    syncDrawerHeaderButtons(isSessionsDrawerOpen());
+    updateProviderHeaderUI();
+  }
+
+  function toggleSessionsDrawer(forceState, targetView = 'chats') {
+    const drawer = document.getElementById('aiSessionsDrawer');
+    const backdrop = document.getElementById('aiSessionsBackdrop');
     if (!drawer) return;
 
+    const desiredView = targetView === 'settings' ? 'settings' : 'chats';
     const currentlyOpen = !drawer.hidden && drawer.classList.contains('is-open');
+
+    if (typeof forceState !== 'boolean' && currentlyOpen && activeDrawerView !== desiredView) {
+      // Ya estaba desplegado de izquierda a derecha: cambiar suavemente entre Chats y Ajustes
+      setAIDrawerView(desiredView);
+      return;
+    }
+
     const nextOpen = typeof forceState === 'boolean' ? forceState : !currentlyOpen;
 
     if (sessionsDrawerHideTimer) {
@@ -5036,23 +5122,22 @@
     }
 
     if (nextOpen) {
-      const cfgDrawer = document.getElementById('aiConfigDrawer');
-      if (cfgDrawer && !cfgDrawer.hidden) {
-        toggleConfigDrawer(false);
-      }
       renamingSessionId = null;
       pendingDeleteSessionId = null;
-      renderAISessionsList();
-
       drawer.hidden = false;
       if (backdrop) backdrop.hidden = false;
+      setAIDrawerView(desiredView);
       // Forzar reflujo para animar limpiamente de izquierda -> derecha
       void drawer.offsetWidth;
       drawer.classList.add('is-open');
       if (backdrop) backdrop.classList.add('is-open');
+      syncDrawerHeaderButtons(true);
+      updateProviderHeaderUI();
     } else {
       drawer.classList.remove('is-open');
       if (backdrop) backdrop.classList.remove('is-open');
+      syncDrawerHeaderButtons(false);
+      updateProviderHeaderUI();
       sessionsDrawerHideTimer = setTimeout(() => {
         if (!drawer.classList.contains('is-open')) {
           drawer.hidden = true;
@@ -5060,18 +5145,6 @@
         }
         sessionsDrawerHideTimer = null;
       }, 220);
-    }
-
-    if (btnHist) {
-      btnHist.classList.toggle('is-active', nextOpen);
-      btnHist.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
-    }
-    if (btnOpen) {
-      btnOpen.classList.toggle('is-active', nextOpen);
-      btnOpen.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
-    }
-    if (btnCur) {
-      btnCur.classList.toggle('is-open', nextOpen);
     }
   }
 
@@ -6330,23 +6403,18 @@
   }
 
   function toggleConfigDrawer(forceState) {
-    const drawer = document.getElementById('aiConfigDrawer');
-    const btn = document.getElementById('btnAiConfig');
-    if (!drawer) return;
-
-    const nextOpen = typeof forceState === 'boolean' ? forceState : drawer.hidden;
-    if (nextOpen) {
-      const sessDrawer = document.getElementById('aiSessionsDrawer');
-      if (sessDrawer && !sessDrawer.hidden) {
+    if (typeof forceState === 'boolean') {
+      if (forceState) {
+        toggleSessionsDrawer(true, 'settings');
+      } else if (isSessionsDrawerOpen() && activeDrawerView === 'settings') {
         toggleSessionsDrawer(false);
+      } else {
+        syncDrawerHeaderButtons(isSessionsDrawerOpen());
+        updateProviderHeaderUI();
       }
+      return;
     }
-    drawer.hidden = !nextOpen;
-    if (btn) btn.classList.toggle('is-active', nextOpen);
-    if (nextOpen) {
-      syncConfigFormFromState();
-    }
-    updateProviderHeaderUI();
+    toggleSessionsDrawer(undefined, 'settings');
   }
 
   function bindPasswordToggle(btnId, inputId) {
@@ -6395,11 +6463,27 @@
 
     document.getElementById('btnAiNewChat')?.addEventListener('click', () => createNewAISession());
     document.getElementById('btnAiDrawerNewChat')?.addEventListener('click', () => createNewAISession());
-    document.getElementById('btnAiSidebarOpen')?.addEventListener('click', () => toggleSessionsDrawer());
-    document.getElementById('btnAiHistory')?.addEventListener('click', () => toggleSessionsDrawer());
-    document.getElementById('btnAiSessionCurrent')?.addEventListener('click', () => toggleSessionsDrawer());
+    document.getElementById('btnAiSidebarOpen')?.addEventListener('click', () => toggleSessionsDrawer(undefined, activeDrawerView));
+    document.getElementById('btnAiHistory')?.addEventListener('click', () => toggleSessionsDrawer(undefined, 'chats'));
+    document.getElementById('btnAiSessionCurrent')?.addEventListener('click', () => toggleSessionsDrawer(undefined, 'chats'));
+    document.getElementById('btnAiDrawerTabChats')?.addEventListener('click', () => setAIDrawerView('chats'));
+    document.getElementById('btnAiDrawerTabSettings')?.addEventListener('click', () => setAIDrawerView('settings'));
+    document.getElementById('btnAiDrawerSwitchView')?.addEventListener('click', () => {
+      setAIDrawerView(activeDrawerView === 'settings' ? 'chats' : 'settings');
+    });
     document.getElementById('btnAiCloseSessions')?.addEventListener('click', () => toggleSessionsDrawer(false));
     document.getElementById('aiSessionsBackdrop')?.addEventListener('click', () => toggleSessionsDrawer(false));
+
+    document.getElementById('btnAiDrawerToggleCtx')?.addEventListener('click', () => {
+      aiConfig.includeContext = !aiConfig.includeContext;
+      saveAIConfig();
+      updateAIChatContextUI();
+    });
+    document.getElementById('btnAiDrawerToggleAuto')?.addEventListener('click', () => {
+      aiConfig.autoApply = !aiConfig.autoApply;
+      saveAIConfig();
+      updateAIChatContextUI();
+    });
 
     const searchInput = document.getElementById('aiSessionSearchInput');
     const clearSearchBtn = document.getElementById('btnAiClearSessionSearch');
@@ -6434,6 +6518,7 @@
 
     document.getElementById('btnAiClear')?.addEventListener('click', () => {
       if (!messages || messages.length === 0) {
+        toggleSessionsDrawer(false);
         if (typeof showToast === 'function') {
           showToast('El chat actual ya está vacío', 'info', 1400);
         }
@@ -6447,6 +6532,7 @@
       }
       persistAISessionsRegistry(true);
       renderAIMessages(true);
+      toggleSessionsDrawer(false);
       if (typeof showToast === 'function') {
         showToast('Chat actual vaciado (los demás chats siguen guardados)', 'info', 1800);
       }
@@ -6590,10 +6676,17 @@
 
     const inputEl = document.getElementById('aiChatInput');
     if (inputEl) {
+      const syncComposerHeight = () => {
+        inputEl.style.height = 'auto';
+        const nextH = Math.min(132, Math.max(42, inputEl.scrollHeight || 42));
+        inputEl.style.height = `${nextH}px`;
+      };
+      inputEl.addEventListener('input', syncComposerHeight);
       inputEl.addEventListener('keydown', e => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendAIChatMessage(inputEl.value);
+          inputEl.style.height = '';
         }
       });
       inputEl.addEventListener('paste', async e => {
