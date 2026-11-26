@@ -1,4 +1,4 @@
-/* FINANCE SHEET: Apartado de Planilla Financiera tipo Excel (nodos fx, barra de fórmulas y métricas) */
+/* FINANCE SHEET: Apartado Financiero Reactivo (nodos financieros, gráficas de ganancia/pérdida, barra fx y métricas) */
 
 /* Selector de entorno en la cabecera (Flujo vs Planilla FX) */
 .workspace-mode-switch {
@@ -912,3 +912,294 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================================
+   GRÁFICAS Y VEREDICTO FINANCIERO EN VIVO (GANANCIA / PÉRDIDA / EQUILIBRIO)
+   ========================================================================= */
+.fin-bar-verdict {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 3px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.fin-bar-verdict:hover {
+  filter: brightness(1.12);
+}
+
+.fin-bar-verdict.is-profit,
+.fin-verdict-pill.is-profit {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.36);
+}
+
+.fin-bar-verdict.is-loss,
+.fin-verdict-pill.is-loss {
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.13);
+  border-color: rgba(251, 113, 133, 0.4);
+}
+
+.fin-bar-verdict.is-even,
+.fin-verdict-pill.is-even {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.38);
+}
+
+.fin-verdict-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 7.9px;
+  font-weight: 700;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.node.fin-node.fin-tone-chart {
+  border-left-color: #38bdf8;
+  background: linear-gradient(180deg, #161b21 0%, #0f1318 100%);
+}
+
+.node.fin-node.fin-chart-card {
+  width: 288px;
+  min-height: 196px;
+  padding: 10px 12px 10px;
+  gap: 6px;
+}
+
+.node.fin-node.fin-verdict-card {
+  width: 256px;
+  min-height: 162px;
+}
+
+.fin-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: rgba(9, 12, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 2px 3px;
+  box-sizing: border-box;
+}
+
+.fin-verdict-hero {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(10, 14, 18, 0.7);
+}
+
+.fin-verdict-hero.is-profit {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+.fin-verdict-hero.is-loss {
+  border-color: rgba(251, 113, 133, 0.32);
+  background: rgba(251, 113, 133, 0.07);
+}
+
+.fin-verdict-amount {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--tx0);
+}
+
+.fin-verdict-hero.is-profit .fin-verdict-amount {
+  color: #4ade80;
+}
+
+.fin-verdict-hero.is-loss .fin-verdict-amount {
+  color: #fb7185;
+}
+
+.fin-verdict-mg {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--tx2);
+}
+
+.fin-verdict-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 2px 0;
+}
+
+.fin-vbar-row {
+  display: grid;
+  grid-template-columns: 48px 1fr auto;
+  align-items: center;
+  gap: 6px;
+  font-size: 8.3px;
+  color: var(--tx2);
+}
+
+.fin-vbar-row b {
+  color: var(--tx1);
+  font-weight: 600;
+}
+
+.fin-vbar-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #0b0e12;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fin-vbar-track i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.fin-vbar-track i.is-in {
+  background: #4ade80;
+}
+
+.fin-vbar-track i.is-out {
+  background: #fb7185;
+}
+
+.fin-inline-val-editor {
+  width: 100%;
+  height: 22px;
+  padding: 1px 6px !important;
+  font: 700 12px 'JetBrains Mono', monospace !important;
+  color: var(--green) !important;
+  background: #0a0d10 !important;
+  border: 1px solid rgba(134, 239, 172, 0.65) !important;
+  border-radius: 4px !important;
+  box-sizing: border-box;
+}
+
+/* Panel lateral de diagnóstico financiero (métricas fx) */
+.fin-diag-banner {
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fin-diag-banner.is-profit {
+  border-color: rgba(74, 222, 128, 0.34);
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.09), rgba(16, 20, 24, 0.92));
+}
+
+.fin-diag-banner.is-loss {
+  border-color: rgba(251, 113, 133, 0.38);
+  background: linear-gradient(180deg, rgba(251, 113, 133, 0.1), rgba(16, 20, 24, 0.92));
+}
+
+.fin-diag-banner.is-even {
+  border-color: rgba(251, 191, 36, 0.34);
+}
+
+.fin-diag-banner__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.fin-diag-cov {
+  font-size: 8.6px;
+  color: var(--tx2);
+}
+
+.fin-diag-banner__val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--tx0);
+  letter-spacing: -0.02em;
+}
+
+.fin-diag-banner.is-profit .fin-diag-banner__val {
+  color: #4ade80;
+}
+
+.fin-diag-banner.is-loss .fin-diag-banner__val {
+  color: #fb7185;
+}
+
+.fin-diag-banner__desc {
+  font-size: 8.8px;
+  color: var(--tx2);
+  line-height: 1.35;
+}
+
+.fin-panel-chart-box {
+  padding: 8px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: #101418;
+}
+
+.fin-panel-chart-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8.8px;
+  color: var(--tx2);
+  margin-bottom: 5px;
+}
+
+.fin-panel-chart-head b {
+  color: var(--tx0);
+}
+
+.fin-panel-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.fin-insert-charts-box {
+  padding: 7px 8px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fin-insert-charts-lbl {
+  font-size: 8.6px;
+  font-weight: 700;
+  color: var(--tx2);
+  text-transform: lowercase;
+}
+
+.fin-insert-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+}
+
+.fin-ins-chart-btn {
+  font-size: 9px !important;
+  padding: 4px 6px !important;
+  justify-content: center;
+}
+

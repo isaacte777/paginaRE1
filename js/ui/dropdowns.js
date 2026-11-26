@@ -31,8 +31,12 @@
       tag: 'pipeline',
       svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>'
     },
+    fin_dashboard_pnl: {
+      tag: 'ganancia/p&l',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="10" width="4" height="10"/><rect x="11" y="5" width="4" height="15"/><rect x="17" y="13" width="4" height="7"/></svg>'
+    },
     fin_resultados: {
-      tag: 'excel p&l',
+      tag: 'resultados p&l',
       svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>'
     },
     fin_flujo_caja: {

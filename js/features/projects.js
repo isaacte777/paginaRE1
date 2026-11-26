@@ -554,7 +554,7 @@
 
     document.getElementById('projModalTitle').textContent = 'generar_lienzo_o_planilla';
     document.getElementById('projModalDesc').textContent = canvasEmpty
-      ? 'Elige si deseas iniciar un Lienzo de Flujo tradicional o una Planilla Financiera tipo Excel (fx) con nodos reactivos y métricas propias.'
+      ? 'Elige si deseas iniciar un Lienzo de Flujo o una Planilla Financiera (fx) con cálculos automáticos, gráficas de ganancia/pérdida y métricas.'
       : `El espacio actual tiene ${STATE.nodes.length} ${STATE.nodes.length === 1 ? 'nodo' : 'nodos'} y ${STATE.edges.length} ${STATE.edges.length === 1 ? 'conexión' : 'conexiones'}. Elige el tipo de nuevo entorno y opcionalmente respalda tu trabajo actual.`;
 
     const field1Wrap = document.getElementById('projModalField1Wrap');

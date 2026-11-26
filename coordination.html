@@ -52,7 +52,7 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/><path d="M10 6.5h4v7.5"/></svg>
         <span>flujo</span>
       </button>
-      <button type="button" class="ws-mode-btn" data-ws-domain="finance" aria-pressed="false" title="Apartado de Planilla Financiera tipo Excel (54 nodos y métricas propias)">
+      <button type="button" class="ws-mode-btn" data-ws-domain="finance" aria-pressed="false" title="Apartado Financiero (nodos reactivos, gráficas de ganancia/pérdida y métricas)">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
         <span>planilla</span>
         <span class="ws-mode-fx-pill">fx</span>
@@ -71,6 +71,7 @@
         <option value="contratacion">contratacion_personal</option>
         <option value="personal">plan_personal</option>
         <option value="complex">pipeline_complejo</option>
+        <option value="fin_dashboard_pnl">tablero_ganancia_perdida</option>
         <option value="fin_resultados">planilla_resultados_pnl</option>
         <option value="fin_flujo_caja">planilla_van_tir_flujos</option>
         <option value="fin_prestamo">planilla_credito_frances</option>
@@ -178,18 +179,22 @@
       <button class="tool" data-add="chart_funnel"><span class="prev"><svg width="14" height="10" viewBox="0 0 24 16" fill="currentColor"><polygon points="1,2 23,2 18,8 6,8"/><polygon points="7,10 17,10 14,15 10,15"/></svg></span>gráfico_funnel()</button>
     </div>
 
-    <!-- Apartado 2: Planilla Financiera tipo Excel (54 Nodos + Fórmulas + Modelos) -->
+    <!-- Apartado 2: Planilla Financiera (Nodos, Gráficas Ganancia/Pérdida, Fórmulas y Modelos) -->
     <div id="paletteFinancePane" class="palette-pane" hidden>
       <div class="fin-palette-top">
         <div class="fin-palette-search">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="finPaletteSearchInput" placeholder="filtrar 54 nodos fx (van, tir, pago...)" autocomplete="off">
+          <input type="text" id="finPaletteSearchInput" placeholder="filtrar nodos y gráficas (ganancia, van, tir...)" autocomplete="off">
         </div>
         <button type="button" class="fin-palette-PresetsBtn" id="btnFinPresetsToggle">
           <span>:: generar planilla modelo</span>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
         <div class="fin-PresetsDrawer" id="finPresetsDrawer" hidden>
+          <button type="button" class="fin-preset-item" data-fin-preset="fin_dashboard_pnl">
+            <span>Tablero Ganancia vs Pérdida + Gráficas</span>
+            <small>P&amp;L + Veredicto + Cascada + Margen visual</small>
+          </button>
           <button type="button" class="fin-preset-item" data-fin-preset="fin_resultados">
             <span>Estado de Resultados (P&amp;L)</span>
             <small>Ventas → Utilidad Bruta → EBITDA → Neta</small>
@@ -204,7 +209,7 @@
           </button>
           <button type="button" class="fin-preset-item" data-fin-preset="fin_blanco">
             <span>Planilla Financiera en Blanco</span>
-            <small>Lienzo limpio modo hoja de cálculo fx</small>
+            <small>Lienzo limpio para cálculos y métricas</small>
           </button>
         </div>
       </div>
@@ -250,12 +255,13 @@
       </div>
     </div>
 
-    <!-- Barra de fórmulas estilo Excel (fx) cuando está activo el modo Planilla Financiera -->
+    <!-- Barra de fórmulas financieras (fx) cuando está activo el modo Planilla Financiera -->
     <div id="finFormulaBar" class="fin-formula-bar" role="region" aria-label="Barra de fórmulas financieras fx" hidden>
       <input type="text" id="finBarCellRef" class="fin-cell-box" value="A1" maxlength="4" aria-label="Celda activa" title="Referencia de celda (ej. A1, B2)">
       <span class="fin-fx-badge" aria-hidden="true">fx</span>
-      <input type="text" id="finBarFormulaInput" class="fin-formula-input" placeholder="Escribe un valor o fórmula Excel (=A1-B1, =SUMA(A1:A3), =VNA(12%;B1:B4))" aria-label="Valor o fórmula Excel">
+      <input type="text" id="finBarFormulaInput" class="fin-formula-input" placeholder="Escribe un monto o fórmula (=A1-B1, =SUMA(A1:A3), =VNA(12%;B1:B4))" aria-label="Monto o fórmula financiera">
       <span id="finBarResult" class="fin-formula-result">= $0.00</span>
+      <span id="finBarVerdict" class="fin-bar-verdict" title="Diagnóstico neto actual de la planilla" hidden></span>
       <select id="finCurrencySel" class="fin-currency-sel" aria-label="Moneda de planilla">
         <option value="USD">USD $</option>
         <option value="PYG">PYG ₲</option>
@@ -263,7 +269,7 @@
         <option value="ARS">ARS $</option>
         <option value="BRL">BRL R$</option>
       </select>
-      <button type="button" class="btn fin-csv-btn" id="btnFinExportCsv" title="Exportar planilla financiera a .CSV compatible con Excel">
+      <button type="button" class="btn fin-csv-btn" id="btnFinExportCsv" title="Exportar planilla financiera a formato .CSV">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span>.csv</span>
       </button>
@@ -285,6 +291,9 @@
         <i id="aiBuildHudFill" style="width: 18%"></i>
       </div>
     </div>
+
+    <!-- Barra contextual flotante de edición rápida para cualquier nodo seleccionado -->
+    <div id="nodeQuickBar" class="node-quick-bar" role="toolbar" aria-label="Edición rápida de elemento" hidden></div>
 
     <!-- Barra flotante táctil al seleccionar un nodo o conexión en móvil/tablet -->
     <div id="mobileNodeBar" class="mobile-node-bar" role="toolbar" aria-label="Acciones rápidas de selección" hidden>
@@ -324,7 +333,7 @@
 
   <aside class="panel" id="rightPanel">
     <div class="ptabs" role="tablist" aria-label="Panel lateral derecho">
-      <button id="tabProps" class="on" type="button">props</button>
+      <button id="tabProps" class="on" type="button" title="Menú de edición del nodo o conexión">editar</button>
       <button id="tabStats" type="button">stats</button>
       <button id="tabAI" type="button">
         <span class="ai-tab-dot" id="aiTabDot" aria-hidden="true"></span>
@@ -838,13 +847,14 @@
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/></svg>
             <span>Planilla Financiera (fx)</span>
           </strong>
-          <small>Cálculos tipo Excel, 54 nodos y métricas propias</small>
+          <small>Cálculos automáticos, gráficas de ganancia/pérdida y métricas</small>
         </button>
       </div>
       <div class="proj-fin-starter-wrap" id="projModalFinStarterWrap" hidden>
         <label for="projModalFinStarter">estructura inicial de la planilla</label>
         <select id="projModalFinStarter">
           <option value="fin_blanco">Planilla en blanco (armar desde cero)</option>
+          <option value="fin_dashboard_pnl">Tablero Ganancia vs Pérdida + Gráficas</option>
           <option value="fin_resultados">Estado de Resultados (P&amp;L · Ventas → EBITDA → Neta)</option>
           <option value="fin_flujo_caja">Evaluación de Inversión (Flujos → VAN, TIR y ROI)</option>
           <option value="fin_prestamo">Simulador de Crédito Francés (PAGO, Interés, Saldo)</option>
@@ -1027,27 +1037,41 @@
 <!-- Menú Contextual del Nodo (Clic Derecho) -->
 <div id="nodeContextMenu" class="context-menu" hidden>
   <div class="ctx-header" id="ctxNodeTitle">:: nodo</div>
-  <div class="ctx-item" onclick="ctxAction('delete')">
-    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-    <span>Eliminar nodo</span>
+  <div class="ctx-item" onclick="ctxAction('edit_props')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    <span>Editar propiedades</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('rename_inline')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    <span>Renombrar en lienzo</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('duplicate')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <span>Duplicar nodo</span>
+  </div>
+  <div class="ctx-item" onclick="ctxAction('toggle_lock')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span id="ctxLockLabel">Bloquear / Desbloquear</span>
   </div>
   <div class="ctx-divider"></div>
-  <div class="ctx-item" onclick="ctxAction('inspect')">
-    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <span>Ver en inspector</span>
+  <div class="ctx-status-strip">
+    <button type="button" class="ctx-st-pill" onclick="ctxAction('pending')" title="Pendiente">pend.</button>
+    <button type="button" class="ctx-st-pill" onclick="ctxAction('progress')" title="En curso">curso</button>
+    <button type="button" class="ctx-st-pill" onclick="ctxAction('done')" title="Hecho">hecho</button>
+    <button type="button" class="ctx-st-pill" onclick="ctxAction('error')" title="Error">error</button>
   </div>
+  <div class="ctx-divider"></div>
   <div class="ctx-item" onclick="ctxAction('ask_ai')">
     <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
     <span>Preguntar a la IA</span>
   </div>
-  <div class="ctx-divider"></div>
-  <div class="ctx-item" onclick="ctxAction('done')">
-    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-    <span>Marcar como hecho</span>
+  <div class="ctx-item" onclick="ctxAction('disconnect')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <span>Desconectar cables</span>
   </div>
-  <div class="ctx-item" onclick="ctxAction('pending')">
-    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-    <span>Marcar como pendiente</span>
+  <div class="ctx-item ctx-item--danger" onclick="ctxAction('delete')">
+    <svg class="ctx-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    <span>Eliminar nodo</span>
   </div>
 </div>
 

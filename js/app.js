@@ -692,6 +692,14 @@ function registerEventListeners() {
       redo();
       return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd') {
+      if (typing) return;
+      if (STATE.sel && STATE.sel.kind === 'node' && typeof duplicateNodeById === 'function') {
+        e.preventDefault();
+        duplicateNodeById(STATE.sel.id);
+      }
+      return;
+    }
     if (typing) return;
     if (e.key === 'Delete' || e.key === 'Backspace') {
       e.preventDefault();
@@ -741,7 +749,9 @@ function registerEventListeners() {
     if (
       e.target.closest('.zoombar') ||
       e.target.closest('#minimap') ||
-      e.target.closest('#mobileNodeBar')
+      e.target.closest('#mobileNodeBar') ||
+      e.target.closest('#nodeQuickBar') ||
+      e.target.closest('#finFormulaBar')
     ) {
       return;
     }
@@ -956,19 +966,22 @@ function registerEventListeners() {
     STATE.panning = null;
     STATE.connecting = null;
     DOM.vp.classList.remove('panning');
+    if (typeof updateNodeQuickBar === 'function') updateNodeQuickBar();
   });
 
   DOM.vp.addEventListener('dblclick', e => {
     const nEl = e.target.closest('.node');
     if (nEl) {
-      startEdit(nEl);
+      startEdit(nEl, e);
       return;
     }
     if (
       e.target.closest('.edge-hit') ||
       e.target.closest('.zoombar') ||
       e.target.closest('#minimap') ||
-      e.target.closest('#mobileNodeBar')
+      e.target.closest('#mobileNodeBar') ||
+      e.target.closest('#nodeQuickBar') ||
+      e.target.closest('#finFormulaBar')
     ) {
       return;
     }
@@ -1013,6 +1026,7 @@ function applyTransform() {
     zoomLbl.textContent = Math.round(STATE.zoom * 100) + '%';
   }
   updateStatus();
+  if (typeof updateNodeQuickBar === 'function') updateNodeQuickBar();
   if (typeof drawMinimap === 'function') drawMinimap();
 }
 

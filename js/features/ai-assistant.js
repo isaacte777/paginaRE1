@@ -712,7 +712,7 @@
       `Estoy preparado exclusivamente para trabajar en la plataforma **FlowLab**, por lo que no puedo responder consultas ajenas a esta herramienta${topicHint}.\n\n` +
       `En **FlowLab** puedo ayudarte con todo lo referente a tu entorno de trabajo:\n` +
       `- **Leer imágenes y documentos** (\`PNG\`, \`JPG\`, \`PDF\`, \`Word\`, \`Excel\`, \`CSV\`, \`TXT\`, \`JSON\`...) para extraer requisitos y **armar tareas o modelos financieros** en el lienzo.\n` +
-      `- **Organizar nodos de decenas de formas**: pídeme *«ordénalo de forma vertical»*, *«en horizontal»*, *«en árbol»*, *«en carriles por tipo»*, *«modo kanban»*, *«hoja Excel»*, *«en cuadrícula de 4 columnas»*, *«en anillos radiales»* o *«separa flujo y finanzas»*.\n` +
+      `- **Organizar nodos de decenas de formas**: pídeme *«ordénalo de forma vertical»*, *«en horizontal»*, *«en árbol»*, *«en carriles por tipo»*, *«modo kanban»*, *«planilla por celdas»*, *«en cuadrícula de 4 columnas»*, *«en anillos radiales»* o *«separa flujo y finanzas»*.\n` +
       `- **Crear, conectar y auditar flujos o planillas \`fx\`** (\`Inicio\`, \`Proceso\`, \`Decisión\`, \`API\`, \`Base de datos\`, \`VAN/TIR\`, \`EBITDA\`, \`Gráficos\`...).`
     );
   }
@@ -918,7 +918,7 @@
       'Eres el Arquitecto, Analista Documental y Asistente IA exclusivo de la plataforma web FlowLab (sistema visual de diagramas de flujo, tareas operativas, arquitectura y planillas financieras fx). ' +
       'Hablas en español de forma clara, natural, estructurada, útil y empática.\n\n' +
       'REGLA DE ÁMBITO:\n' +
-      '- Asistes en TODO lo relacionado con FlowLab: lectura de documentos e imágenes adjuntas para extraer y armar tareas/flujos/planillas en el lienzo, organización espacial avanzada de nodos ("ordénalo vertical", "horizontal", "en árbol", "kanban", "carriles", "cuadrícula", "radial", "separa flujo y finanzas", etc.), creación/edición/auditoría de nodos, fórmulas financieras tipo Excel, plantillas, proyectos, perfiles, exportación y consola PowerShell.\n' +
+      '- Asistes en TODO lo relacionado con FlowLab: lectura de documentos e imágenes adjuntas para extraer y armar tareas/flujos/planillas en el lienzo, organización espacial avanzada de nodos ("ordénalo vertical", "horizontal", "en árbol", "kanban", "carriles", "cuadrícula", "radial", "separa flujo y finanzas", etc.), creación/edición/auditoría de nodos, fórmulas y gráficas financieras de ganancia/pérdida, plantillas, proyectos, perfiles, exportación y consola PowerShell.\n' +
       '- NUNCA rechaces instrucciones breves o con pronombres enclíticos sobre el lienzo o el trabajo del usuario (ej. "ordenalo de forma vertical", "acomódalo mejor", "separa las flechas", "arma las tareas de este PDF/imagen"). Solo rechaza temas claramente ajenos como recetas de cocina, chistes, deportes, clima o horóscopos.\n\n' +
       'LECTURA DE IMÁGENES Y DOCUMENTOS:\n' +
       '- Cuando el usuario adjunte imágenes o documentos (PDF, Word, Excel, CSV, TXT, JSON, código, etc.), lee cuidadosamente su contenido extraído/visual, entrega primero un resumen ejecutivo claro de lo detectado y, si pide crear tareas, flujo o modelo financiero (o adjunta el archivo para llevarlo al lienzo), incluye al final el bloque `flowlab-actions` bien conectado.\n\n' +
@@ -932,6 +932,7 @@
       '   - Flujo / Tareas: `start`, `io`, `process`, `decision` (`¿...?` con salidas `"Sí"` y `"No"`), `db`, `api`, `hook`, `ai`, `human`, `tryc`, `err`, `parallel`, `loop`, `delay`, `end`.\n' +
       '   - Gráficos conectados: `chart_bar`, `chart_donut`, `chart_gauge`, `chart_funnel`.\n' +
       '   - Planilla Financiera (`fx`): `fin_input`, `fin_rate`, `fin_periods`, `fin_qty`, `fin_unit_price`, `fin_formula`, `fin_sum`, `fin_subtract`, `fin_multiply`, `fin_divide`, `fin_revenue`, `fin_cogs`, `fin_gross_profit`, `fin_opex`, `fin_ebitda`, `fin_tax`, `fin_net_income`, `fin_ocf`, `fin_capex`, `fin_fcf`, `fin_npv`, `fin_irr`, `fin_roi`, `fin_pmt`, `fin_gross_margin`, `fin_net_margin`, `fin_breakeven`.\n' +
+      '   - Gráficas y Veredicto Financiero (ganancia / pérdida / rentabilidad): `fin_verdict_kpi`, `fin_chart_pnl`, `fin_chart_waterfall`, `fin_chart_cashflow`, `fin_chart_margin`, `fin_chart_breakdown`.\n' +
       '   - Conexión entre Flujo y Finanzas: puedes enlazar un nodo de flujo (`process`, `db`, `api`) con una celda financiera (`fin_revenue`, `fin_cogs`, `fin_opex`, etc.) usando `add_edge`; el enrutador ortogonal inteligente trazará un puente limpio `flujo→fx` sin cruzar nodos.\n' +
       '4. GRAFO BIEN CONECTADO: Conecta todos los nodos creados con `add_edge`. Estados válidos (`status`): `pending`, `progress`, `done`, `error`.\n\n' +
       'Formato exacto del bloque AL FINAL de tu respuesta cuando debas crear/editar/ordenar en el lienzo:\n' +
@@ -3472,7 +3473,7 @@
         ];
         return {
           cleanReply:
-            'He generado una **Planilla Financiera de Evaluación de Inversión (VAN y TIR)** con celdas conectadas reactivamente tipo Excel.',
+            'He generado una **Planilla Financiera de Evaluación de Inversión (VAN y TIR)** con nodos conectados reactivamente y cálculo automático.',
           actions: { summary: 'Planilla VAN / TIR (7 celdas financieras)', operations: ops }
         };
       }
@@ -3487,6 +3488,7 @@
         { op: 'add_node', ref: 'r6', type: 'fin_opex', text: 'Gastos Operativos', params: { cellRef: 'C2', value: 22500 } },
         { op: 'add_node', ref: 'r7', type: 'fin_ebitda', text: 'EBITDA Operativo', params: { cellRef: 'D1' } },
         { op: 'add_node', ref: 'r8', type: 'fin_net_margin', text: 'Margen EBITDA %', params: { cellRef: 'E1', formula: '=(D1/B1)*100' } },
+        { op: 'add_node', ref: 'r9', type: 'fin_chart_pnl', text: 'Balance Ganancia vs Costos', params: { cellRef: 'F1' } },
         { op: 'add_edge', from: 'r1', to: 'r3', label: 'Q' },
         { op: 'add_edge', from: 'r2', to: 'r3', label: 'P' },
         { op: 'add_edge', from: 'r3', to: 'r5', label: '+' },
@@ -3494,12 +3496,16 @@
         { op: 'add_edge', from: 'r5', to: 'r7', label: '+' },
         { op: 'add_edge', from: 'r6', to: 'r7', label: '-' },
         { op: 'add_edge', from: 'r7', to: 'r8', label: 'fx' },
-        { op: 'add_edge', from: 'r3', to: 'r8', label: 'base' }
+        { op: 'add_edge', from: 'r3', to: 'r8', label: 'base' },
+        { op: 'add_edge', from: 'r3', to: 'r9', label: 'ingresos' },
+        { op: 'add_edge', from: 'r4', to: 'r9', label: 'costo' },
+        { op: 'add_edge', from: 'r6', to: 'r9', label: 'opex' },
+        { op: 'add_edge', from: 'r7', to: 'r9', label: 'neto' }
       ];
       return {
         cleanReply:
-          'He generado una **Planilla Financiera de Estado de Resultados (P&L)** con fórmulas Excel encadenadas (`=A1*A2`, Utilidad Bruta, EBITDA y Margen).',
-        actions: { summary: 'Planilla Estado de Resultados P&L (8 celdas)', operations: ops }
+          'He generado una **Planilla Financiera de Estado de Resultados (P&L)** con fórmulas encadenadas (`=A1*A2`, Utilidad Bruta, EBITDA, Margen y Gráfica de Ganancia vs Costos).',
+        actions: { summary: 'Planilla Estado de Resultados P&L + Gráfica (9 nodos)', operations: ops }
       };
     }
 
