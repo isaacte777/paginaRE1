@@ -69,6 +69,8 @@ function renderNodes() {
     n.w = d.offsetWidth;
     n.h = d.offsetHeight;
   });
+
+  if (typeof updateNodeQuickBar === 'function') updateNodeQuickBar();
 }
 
 function drawEdges() {

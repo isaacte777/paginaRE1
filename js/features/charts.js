@@ -18,7 +18,17 @@ function getUpstreamNodes(nodeId) {
 function renderChartNodeHtml(n) {
   const type = n.type;
   const upstream = getUpstreamNodes(n.id);
-  const title = n.params?.title || (type === 'chart_bar' ? 'Leads por canal' : type === 'chart_donut' ? 'Tráfico por dispositivo' : type === 'chart_gauge' ? 'Meta mensual' : 'Conversión');
+  const rawTitle =
+    n.text ||
+    n.params?.title ||
+    (type === 'chart_bar'
+      ? 'Gráfico de Barras'
+      : type === 'chart_donut'
+        ? 'Distribución'
+        : type === 'chart_gauge'
+          ? 'Cumplimiento de Meta'
+          : 'Embudo de Etapas');
+  const title = escapeHTML(rawTitle);
   const accent = type === 'chart_bar' ? '#f59e0b' : type === 'chart_donut' ? '#22c55e' : type === 'chart_gauge' ? '#eab308' : '#a855f7';
 
   // Si no está conectado a nada, mostrar estado vacío / pendiente
@@ -28,9 +38,9 @@ function renderChartNodeHtml(n) {
     return `
       <div style="position:relative; width:280px; background:var(--bg2); border:1px solid var(--line2); border-radius:10px; padding:12px; font-family:'JetBrains Mono',monospace; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden">
         <div style="position:absolute; top:0; left:0; bottom:0; width:4px; background:${accent}"></div>
-        <div style="font-size:11px; font-weight:700; color:var(--tx0); margin-bottom:6px; padding-left:6px">${title}</div>
+        <div class="txt chart-card-title" style="font-size:11px; font-weight:700; color:var(--tx0); margin-bottom:6px; padding-left:6px">${title}</div>
         <div style="display:flex; align-items:center; justify-content:center; gap:6px; padding:16px 6px; text-align:center; font-size:10px; color:var(--tx3); border:1px dashed var(--line); border-radius:6px; margin-left:6px">
-          ${plugSvg}<span>Sin datos (Conecta nodos upstream)</span>
+          ${plugSvg}<span>Sin datos (Conecta nodos al gráfico)</span>
         </div>
       </div>
     `;
@@ -139,8 +149,8 @@ function renderChartNodeHtml(n) {
       <div style="position:absolute; top:0; left:0; bottom:0; width:4px; background:${accent}"></div>
       <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; padding-left:6px">
         <div>
-          <div style="font-size:11px; font-weight:700; color:var(--tx0)">${title}</div>
-          <div style="font-size:9px; color:var(--tx3)">${subtitle}</div>
+          <div class="txt chart-card-title" style="font-size:11px; font-weight:700; color:var(--tx0)">${title}</div>
+          <div style="font-size:9px; color:var(--tx3)">${escapeHTML(subtitle)}</div>
         </div>
         <span style="font-size:8.5px; font-weight:700; color:${accent}; border:1px solid ${accent}; padding:1px 5px; border-radius:3px">${badge}</span>
       </div>

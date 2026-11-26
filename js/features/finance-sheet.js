@@ -1,4 +1,4 @@
-// FINANCE SHEET: Motor de Planilla Financiera tipo Excel (54 nodos financieros, evaluador reactivo DAG, barra fx y métricas propias)
+// FINANCE SHEET: Motor Financiero Reactivo (Nodos financieros, gráficas de ganancia/pérdida, evaluador DAG, barra fx y métricas)
 
 (function () {
   const CURRENCY_CONFIG = {
@@ -10,6 +10,7 @@
   };
 
   const FIN_SVGS = {
+    chart: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="14" x2="23" y2="14"/><rect x="3" y="6" width="4" height="8"/><rect x="10" y="2" width="4" height="12"/><polyline points="16,10 19,5 22,7"/></svg>',
     cell: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="1" width="22" height="14" rx="2"/><line x1="8" y1="1" x2="8" y2="15"/><line x1="1" y1="8" x2="23" y2="8"/></svg>',
     fx: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14l4-12h3"/><line x1="3" y1="8" x2="9" y2="8"/><line x1="14" y1="6" x2="21" y2="13"/><line x1="21" y1="6" x2="14" y2="13"/></svg>',
     sum: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="19,2 5,2 13,8 5,14 19,14"/></svg>',
@@ -22,18 +23,27 @@
   };
 
   const FINANCE_CATEGORIES = [
-    { id: 'entradas', label: 'celdas y datos base', icon: FIN_SVGS.cell },
-    { id: 'excel', label: 'fórmulas excel', icon: FIN_SVGS.sum },
-    { id: 'resultados', label: 'estado resultados (p&l)', icon: FIN_SVGS.pnl },
-    { id: 'flujo_caja', label: 'flujo de caja y liquidez', icon: FIN_SVGS.cash },
-    { id: 'inversion', label: 'inversión (van · tir · roi)', icon: FIN_SVGS.inv },
-    { id: 'credito', label: 'préstamos y amortización', icon: FIN_SVGS.loan },
-    { id: 'ratios', label: 'ratios y equilibrio', icon: FIN_SVGS.ratio },
-    { id: 'comercial', label: 'impuestos, precios y nómina', icon: FIN_SVGS.comm }
+    { id: 'graficas_pnl', label: 'gráficas y ganancia / pérdida', cardTag: 'resultado', icon: FIN_SVGS.chart },
+    { id: 'entradas', label: 'celdas y datos base', cardTag: 'dato base', icon: FIN_SVGS.cell },
+    { id: 'operaciones', label: 'operaciones y cálculos', cardTag: 'cálculo', icon: FIN_SVGS.sum },
+    { id: 'resultados', label: 'estado resultados (p&l)', cardTag: 'p&l', icon: FIN_SVGS.pnl },
+    { id: 'flujo_caja', label: 'flujo de caja y liquidez', cardTag: 'flujo', icon: FIN_SVGS.cash },
+    { id: 'inversion', label: 'inversión (van · tir · roi)', cardTag: 'inversión', icon: FIN_SVGS.inv },
+    { id: 'credito', label: 'préstamos y amortización', cardTag: 'crédito', icon: FIN_SVGS.loan },
+    { id: 'ratios', label: 'ratios y equilibrio', cardTag: 'ratio', icon: FIN_SVGS.ratio },
+    { id: 'comercial', label: 'impuestos, precios y nómina', cardTag: 'comercial', icon: FIN_SVGS.comm }
   ];
 
-  // 54 Nodos Financieros con lógica real de hoja de cálculo
+  // 60 Nodos Financieros (54 de cálculo + 6 gráficas/indicadores de ganancia y pérdida)
   const FINANCE_NODE_LIST = [
+    // 0. GRÁFICAS Y DIAGNÓSTICO DE GANANCIA / PÉRDIDA (6)
+    { type: 'fin_verdict_kpi', cat: 'graficas_pnl', fn: 'veredicto_resultado()', title: 'Veredicto Ganancia / Pérdida', format: 'currency', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Diagnóstico Neto' },
+    { type: 'fin_chart_pnl', cat: 'graficas_pnl', fn: 'grafica_ganancia_perdida()', title: 'Gráfica Ingresos vs Costos', format: 'currency', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Comparativa P&L' },
+    { type: 'fin_chart_waterfall', cat: 'graficas_pnl', fn: 'grafica_cascada_pnl()', title: 'Cascada de Rentabilidad', format: 'currency', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Puente Ingresos→Neto' },
+    { type: 'fin_chart_cashflow', cat: 'graficas_pnl', fn: 'grafica_flujos_barras()', title: 'Barras de Flujo (+ / -)', format: 'currency', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Saldos + vs -' },
+    { type: 'fin_chart_margin', cat: 'graficas_pnl', fn: 'termometro_margen()', title: 'Termómetro de Rentabilidad', format: 'percent', tone: 'chart', isChart: true, defaultVal: 0, rateParam: 25, fxHint: 'Margen % vs Meta' },
+    { type: 'fin_chart_breakdown', cat: 'graficas_pnl', fn: 'anillo_ingresos_costos()', title: 'Anillo Costos vs Ganancia', format: 'percent', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Peso Costo/Utilidad' },
+
     // 1. CELDAS Y DATOS BASE (7)
     { type: 'fin_input', cat: 'entradas', fn: 'celda_valor()', title: 'Celda de Valor', format: 'currency', tone: 'input', defaultVal: 10000, fxHint: 'Valor base' },
     { type: 'fin_rate', cat: 'entradas', fn: 'tasa_porcentaje()', title: 'Tasa / Interés (%)', format: 'percent', tone: 'input', defaultVal: 12, fxHint: 'Tasa %' },
@@ -41,17 +51,17 @@
     { type: 'fin_qty', cat: 'entradas', fn: 'cantidad_unidades()', title: 'Cantidad / Unidades', format: 'number', tone: 'input', defaultVal: 250, fxHint: 'Volumen Q' },
     { type: 'fin_unit_price', cat: 'entradas', fn: 'precio_unitario()', title: 'Precio Unitario', format: 'currency', tone: 'input', defaultVal: 120, fxHint: 'Precio P' },
     { type: 'fin_fx_rate', cat: 'entradas', fn: 'tipo_cambio()', title: 'Conversión Divisa', format: 'currency', tone: 'formula', defaultVal: 1, rateParam: 7500, fxHint: '=Monto × TC' },
-    { type: 'fin_formula', cat: 'entradas', fn: 'formula_excel()', title: 'Fórmula Libre Excel', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=SUMA(entradas)' },
+    { type: 'fin_formula', cat: 'entradas', fn: 'formula_libre()', title: 'Fórmula Libre', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=SUMA(entradas)' },
 
-    // 2. FÓRMULAS HOJA EXCEL (8)
-    { type: 'fin_sum', cat: 'excel', fn: 'suma_rango()', title: 'SUMA Total', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=SUMA(rango)' },
-    { type: 'fin_subtract', cat: 'excel', fn: 'resta_diferencia()', title: 'Resta / Diferencia', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=A - B' },
-    { type: 'fin_multiply', cat: 'excel', fn: 'producto_mult()', title: 'PRODUCTO (×)', format: 'currency', tone: 'formula', defaultVal: 1, fxHint: '=PRODUCTO(A;B)' },
-    { type: 'fin_divide', cat: 'excel', fn: 'division_ratio()', title: 'División / Cociente', format: 'number', tone: 'formula', defaultVal: 0, fxHint: '=A / B' },
-    { type: 'fin_average', cat: 'excel', fn: 'promedio_media()', title: 'PROMEDIO', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=PROMEDIO(rango)' },
-    { type: 'fin_min_max', cat: 'excel', fn: 'min_max_rango()', title: 'MÁX / MÍN Rango', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=MAX(rango)' },
-    { type: 'fin_if_cond', cat: 'excel', fn: 'si_condicional()', title: 'Condicional SI()', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=SI(A>=Meta)' },
-    { type: 'fin_variance_pct', cat: 'excel', fn: 'variacion_pct()', title: 'Variación Δ%', format: 'percent', tone: 'ratio', defaultVal: 0, fxHint: '=(Act-Base)/Base' },
+    // 2. OPERACIONES Y CÁLCULOS (8)
+    { type: 'fin_sum', cat: 'operaciones', fn: 'suma_rango()', title: 'SUMA Total', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=SUMA(rango)' },
+    { type: 'fin_subtract', cat: 'operaciones', fn: 'resta_diferencia()', title: 'Resta / Diferencia', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=A - B' },
+    { type: 'fin_multiply', cat: 'operaciones', fn: 'producto_mult()', title: 'PRODUCTO (×)', format: 'currency', tone: 'formula', defaultVal: 1, fxHint: '=PRODUCTO(A;B)' },
+    { type: 'fin_divide', cat: 'operaciones', fn: 'division_ratio()', title: 'División / Cociente', format: 'number', tone: 'formula', defaultVal: 0, fxHint: '=A / B' },
+    { type: 'fin_average', cat: 'operaciones', fn: 'promedio_media()', title: 'PROMEDIO', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=PROMEDIO(rango)' },
+    { type: 'fin_min_max', cat: 'operaciones', fn: 'min_max_rango()', title: 'MÁX / MÍN Rango', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=MAX(rango)' },
+    { type: 'fin_if_cond', cat: 'operaciones', fn: 'si_condicional()', title: 'Condicional SI()', format: 'currency', tone: 'formula', defaultVal: 0, fxHint: '=SI(A>=Meta)' },
+    { type: 'fin_variance_pct', cat: 'operaciones', fn: 'variacion_pct()', title: 'Variación Δ%', format: 'percent', tone: 'ratio', defaultVal: 0, fxHint: '=(Act-Base)/Base' },
 
     // 3. ESTADO DE RESULTADOS P&L (9)
     { type: 'fin_revenue', cat: 'resultados', fn: 'ingresos_ventas()', title: 'Ingresos por Ventas', format: 'currency', tone: 'positive', defaultVal: 85000, fxHint: '=Ventas Brutas' },
@@ -855,6 +865,37 @@
         return { value: baseVal, fxAuto: `${baseVal} meses` };
       }
 
+      case 'fin_verdict_kpi':
+      case 'fin_chart_pnl':
+      case 'fin_chart_waterfall':
+      case 'fin_chart_cashflow':
+      case 'fin_chart_margin':
+      case 'fin_chart_breakdown': {
+        if (upstreamEntries.length > 0) {
+          let upIn = 0;
+          let upOut = 0;
+          let explicitRes = null;
+          const negTypes = new Set([
+            'fin_cogs', 'fin_opex', 'fin_depreciation', 'fin_tax',
+            'fin_cash_out', 'fin_capex', 'fin_payroll_cost', 'fin_pmt'
+          ]);
+          const netTypes = new Set(['fin_net_income', 'fin_fcf', 'fin_ebit', 'fin_ebitda', 'fin_ocf', 'fin_npv']);
+          upstreamEntries.forEach(u => {
+            if (netTypes.has(u.nodeType)) explicitRes = u.value;
+            else if (negTypes.has(u.nodeType)) upOut += Math.abs(u.value);
+            else if (u.value < 0) upOut += Math.abs(u.value);
+            else upIn += u.value;
+          });
+          const netVal = explicitRes !== null ? explicitRes : (upIn - upOut);
+          if (node.type === 'fin_chart_margin' || node.type === 'fin_chart_breakdown') {
+            const mg = upIn > 0 ? (netVal / upIn) * 100 : (explicitRes !== null ? explicitRes : 0);
+            return { value: mg, fxAuto: `Margen (${upstreamEntries.map(u => u.ref).join(',')})` };
+          }
+          return { value: netVal, fxAuto: `Neto (${upstreamEntries.map(u => u.ref).join(',')})` };
+        }
+        return { value: baseVal, fxAuto: 'Resumen planilla' };
+      }
+
       default:
         return { value: baseVal, fxAuto: `${baseVal}` };
     }
@@ -1074,10 +1115,12 @@
       });
     });
 
-    // Calcular métricas financieras propias agregadas del lienzo
+    // Calcular métricas financieras agregadas de la planilla (excluyendo nodos puramente gráficos para no duplicar montos)
+    const calcFinNodes = finNodes.filter(n => !getFinanceNodeDef(n.type)?.isChart);
     let totalInflows = 0;
     let totalOutflows = 0;
     let explicitNet = null;
+    let explicitNetPriority = 99;
     let npvValue = null;
     let irrValue = null;
     let roiValue = null;
@@ -1085,35 +1128,96 @@
     const inflowTypes = new Set(['fin_revenue', 'fin_cash_in']);
     const outflowTypes = new Set([
       'fin_cogs', 'fin_opex', 'fin_depreciation', 'fin_tax',
-      'fin_cash_out', 'fin_capex', 'fin_payroll_cost'
+      'fin_cash_out', 'fin_capex', 'fin_payroll_cost', 'fin_pmt'
     ]);
+    const netPriorityMap = {
+      fin_net_income: 1,
+      fin_fcf: 2,
+      fin_ebit: 3,
+      fin_ebitda: 4,
+      fin_ocf: 5,
+      fin_gross_profit: 6
+    };
 
-    finNodes.forEach(n => {
+    calcFinNodes.forEach(n => {
       const res = byNodeId.get(n.id);
       if (!res || res.error) return;
       if (inflowTypes.has(n.type)) totalInflows += res.value;
       if (outflowTypes.has(n.type)) totalOutflows += Math.abs(res.value);
-      if (n.type === 'fin_net_income' || n.type === 'fin_fcf') explicitNet = res.value;
+      if (netPriorityMap[n.type] && netPriorityMap[n.type] <= explicitNetPriority) {
+        explicitNet = res.value;
+        explicitNetPriority = netPriorityMap[n.type];
+      }
       if (n.type === 'fin_npv') npvValue = res.value;
       if (n.type === 'fin_irr') irrValue = res.value;
       if (n.type === 'fin_roi') roiValue = res.value;
     });
 
-    const netBalance = explicitNet !== null ? explicitNet : totalInflows - totalOutflows;
+    // Si la planilla usa celdas libres (fin_input / fin_formula / fin_subtract) sin tipos P&L dedicados, inferir entradas vs salidas
+    if (totalInflows === 0 && totalOutflows === 0 && calcFinNodes.length > 0) {
+      calcFinNodes.forEach(n => {
+        const res = byNodeId.get(n.id);
+        const def = getFinanceNodeDef(n.type);
+        if (!res || res.error || def?.format === 'percent' || def?.format === 'multiple' || def?.format === 'months') return;
+        if (n.type === 'fin_qty' || n.type === 'fin_unit_price' || n.type === 'fin_periods' || n.type === 'fin_rate') return;
+        const lbl = String(n.text || '').toLowerCase();
+        if (n.type === 'fin_subtract' && explicitNet === null) {
+          explicitNet = res.value;
+          return;
+        }
+        if (res.value < 0 || /\b(costo|coste|gasto|egreso|pago|salida|impuesto|deuda|cuota|perdida|inversion)\b/.test(lbl)) {
+          totalOutflows += Math.abs(res.value);
+        } else if ((incoming.get(n.id) || []).length === 0 || /\b(ingreso|venta|cobro|entrada|facturacion|abono)\b/.test(lbl)) {
+          totalInflows += Math.max(0, res.value);
+        }
+      });
+    }
+
+    const netBalance =
+      explicitNet !== null
+        ? explicitNet
+        : npvValue !== null && totalInflows === 0
+          ? npvValue
+          : totalInflows - totalOutflows;
+
     const impliedMarginPct =
-      totalInflows > 0 ? (netBalance / totalInflows) * 100 : null;
+      totalInflows > 0 ? (netBalance / totalInflows) * 100 : roiValue !== null ? roiValue : null;
+
+    const coverageRatio =
+      totalOutflows > 0 ? totalInflows / totalOutflows : totalInflows > 0 ? 9.99 : null;
+
+    const verdict =
+      netBalance > 0.005 ? 'profit' : netBalance < -0.005 ? 'loss' : 'breakeven';
+
+    // Actualizar valores mostrados de nodos gráficos sin conexiones entrantes para reflejar el diagnóstico global
+    finNodes.forEach(n => {
+      const def = getFinanceNodeDef(n.type);
+      if (!def?.isChart) return;
+      const entry = byNodeId.get(n.id);
+      if (!entry) return;
+      const scope = n.params?.dataScope || 'auto';
+      if (scope === 'sheet' || (scope === 'auto' && entry.upstreamRefs.length === 0)) {
+        const isPctChart = n.type === 'fin_chart_margin' || n.type === 'fin_chart_breakdown';
+        entry.value = isPctChart ? (impliedMarginPct ?? 0) : netBalance;
+        entry.formatted = formatFinanceNumber(entry.value, isPctChart ? 'percent' : 'currency', null);
+        entry.fxText = 'Resumen planilla';
+      }
+    });
 
     lastComputedSheet = {
       byNodeId,
       byCellRef,
       summary: {
-        totalCells: finNodes.length,
+        totalCells: calcFinNodes.length,
+        chartCells: finNodes.length - calcFinNodes.length,
         formulaCells,
         errorCells,
         totalInflows,
         totalOutflows,
         netBalance,
         impliedMarginPct,
+        coverageRatio,
+        verdict,
         npvValue,
         irrValue,
         roiValue
@@ -1125,7 +1229,434 @@
   }
 
   // =========================================================================
-  // RENDERIZADO HTML DE CADA NODO CELDA EN EL LIENZO
+  // MOTOR DE EXTRACCIÓN Y GRÁFICAS FINANCIERAS DE GANANCIA / PÉRDIDA (SVG)
+  // =========================================================================
+  function compactMoney(val) {
+    const num = Number(val) || 0;
+    const cur = getSheetCurrency();
+    const abs = Math.abs(num);
+    const sign = num < 0 ? '-' : '';
+    if (abs >= 1e6) return `${sign}${cur.symbol}${(abs / 1e6).toFixed(1)}M`;
+    if (abs >= 1e3) return `${sign}${cur.symbol}${(abs / 1e3).toFixed(abs >= 1e5 ? 0 : 1)}k`;
+    return formatFinanceNumber(num, 'currency', null);
+  }
+
+  function extractFinanceChartDataset(n) {
+    const s = lastComputedSheet.summary || {};
+    const scope = n.params?.dataScope || 'auto';
+    const negTypes = new Set([
+      'fin_cogs', 'fin_opex', 'fin_depreciation', 'fin_tax',
+      'fin_cash_out', 'fin_capex', 'fin_payroll_cost', 'fin_pmt'
+    ]);
+    const netTypes = new Set([
+      'fin_net_income', 'fin_fcf', 'fin_ebit', 'fin_ebitda', 'fin_ocf', 'fin_gross_profit', 'fin_npv'
+    ]);
+    const skipRatioTypes = new Set([
+      'fin_gross_margin', 'fin_net_margin', 'fin_roe', 'fin_roa', 'fin_irr',
+      'fin_roi', 'fin_dscr', 'fin_liquidity', 'fin_payback', 'fin_runway',
+      'fin_rate', 'fin_periods', 'fin_qty', 'fin_unit_price'
+    ]);
+
+    let sourceNodes = [];
+    if (scope !== 'sheet' && typeof STATE !== 'undefined' && Array.isArray(STATE.edges)) {
+      const upIds = STATE.edges.filter(e => e.to === n.id).map(e => e.from);
+      sourceNodes = upIds
+        .map(id => (STATE.nodes || []).find(x => x.id === id))
+        .filter(x => x && isFinanceNodeType(x.type) && !getFinanceNodeDef(x.type)?.isChart);
+    }
+
+    const usingConnected = sourceNodes.length > 0;
+    if (!usingConnected && scope !== 'connected' && typeof STATE !== 'undefined' && Array.isArray(STATE.nodes)) {
+      sourceNodes = STATE.nodes.filter(
+        x => x.id !== n.id && isFinanceNodeType(x.type) && !getFinanceNodeDef(x.type)?.isChart
+      );
+    }
+
+    let inflows = 0;
+    let outflows = 0;
+    let explicitNet = null;
+    let explicitPriority = 99;
+    const netPrio = { fin_net_income: 1, fin_fcf: 2, fin_ebit: 3, fin_ebitda: 4, fin_ocf: 5, fin_npv: 6, fin_gross_profit: 7 };
+    const items = [];
+
+    sourceNodes.forEach(sn => {
+      const entry = lastComputedSheet.byNodeId.get(sn.id);
+      if (!entry || entry.error) return;
+      if (!usingConnected && skipRatioTypes.has(sn.type)) return;
+
+      const lbl = String(sn.text || entry.title || sn.params?.cellRef || 'Ítem').trim();
+      const lower = lbl.toLowerCase();
+      let role = 'neutral';
+      let signedVal = entry.value;
+
+      if (netTypes.has(sn.type)) {
+        role = 'net';
+        const pr = netPrio[sn.type] || 10;
+        if (pr <= explicitPriority) {
+          explicitNet = entry.value;
+          explicitPriority = pr;
+        }
+      } else if (negTypes.has(sn.type) || /\b(costo|coste|gasto|egreso|pago|impuesto|capex|cuota|salida)\b/.test(lower)) {
+        role = 'outflow';
+        signedVal = -Math.abs(entry.value);
+        outflows += Math.abs(entry.value);
+      } else if (entry.value < 0) {
+        role = 'outflow';
+        signedVal = entry.value;
+        outflows += Math.abs(entry.value);
+      } else if (
+        usingConnected ||
+        sn.type === 'fin_revenue' ||
+        sn.type === 'fin_cash_in' ||
+        /\b(ingreso|venta|cobro|entrada|flujo)\b/.test(lower)
+      ) {
+        role = 'inflow';
+        signedVal = Math.abs(entry.value);
+        inflows += Math.abs(entry.value);
+      } else if (sn.type === 'fin_input' && sourceNodes.length <= 6) {
+        role = 'inflow';
+        signedVal = Math.abs(entry.value);
+        inflows += Math.abs(entry.value);
+      }
+
+      if (role !== 'neutral') {
+        items.push({
+          ref: entry.cellRef,
+          label: lbl,
+          shortLabel: lbl.length > 12 ? lbl.slice(0, 11) + '…' : lbl,
+          raw: entry.value,
+          signed: signedVal,
+          role
+        });
+      }
+    });
+
+    if (!usingConnected && inflows === 0 && outflows === 0) {
+      inflows = s.totalInflows || 0;
+      outflows = s.totalOutflows || 0;
+      if (explicitNet === null && typeof s.netBalance === 'number') explicitNet = s.netBalance;
+    }
+
+    const net = explicitNet !== null ? explicitNet : inflows - outflows;
+    const marginPct =
+      inflows > 0
+        ? (net / inflows) * 100
+        : !usingConnected && typeof s.impliedMarginPct === 'number'
+          ? s.impliedMarginPct
+          : net > 0
+            ? 100
+            : net < 0
+              ? -100
+              : 0;
+
+    const coverage = outflows > 0 ? inflows / outflows : inflows > 0 ? 9.9 : 1;
+    const verdict = net > 0.005 ? 'profit' : net < -0.005 ? 'loss' : 'breakeven';
+    const verdictLabel =
+      verdict === 'profit' ? 'GANANCIA' : verdict === 'loss' ? 'PÉRDIDA' : 'EQUILIBRIO';
+    const verdictIcon = verdict === 'profit' ? '▲' : verdict === 'loss' ? '▼' : '●';
+
+    return {
+      usingConnected,
+      sourceCount: sourceNodes.length,
+      inflows,
+      outflows,
+      net,
+      marginPct,
+      coverage,
+      verdict,
+      verdictLabel,
+      verdictIcon,
+      items
+    };
+  }
+
+  function renderFinanceChartCardHtml(n, def, evalEntry) {
+    const d = extractFinanceChartDataset(n);
+    const scopeLbl = d.usingConnected ? `← ${d.sourceCount} celdas` : 'planilla activa';
+    const badgeCls =
+      d.verdict === 'profit' ? 'is-profit' : d.verdict === 'loss' ? 'is-loss' : 'is-even';
+    const netSignedFmt =
+      (d.net > 0 ? '+' : '') + formatFinanceNumber(d.net, 'currency', null);
+    const mgFmt = `${d.marginPct >= 0 ? '+' : ''}${d.marginPct.toFixed(1)}%`;
+    const customSub = n.params?.subtitle ? escapeHTML(n.params.subtitle) : '';
+
+    // 1. TARJETA EJECUTIVA DE VEREDICTO (GANANCIA / PÉRDIDA / EQUILIBRIO)
+    if (n.type === 'fin_verdict_kpi') {
+      const maxBar = Math.max(1, d.inflows, d.outflows, Math.abs(d.net));
+      const inPct = Math.round(clamp((d.inflows / maxBar) * 100, 3, 100));
+      const outPct = Math.round(clamp((d.outflows / maxBar) * 100, 3, 100));
+      return `
+        <div class="fin-card-top">
+          <span class="fin-cell-pill">${escapeHTML(evalEntry.cellRef)}</span>
+          <span class="fin-verdict-pill ${badgeCls}">${d.verdictIcon} ${d.verdictLabel}</span>
+        </div>
+        <div class="fin-card-title text">${escapeHTML(n.text || def.title)}</div>
+        <div class="fin-verdict-hero ${badgeCls}">
+          <span class="fin-verdict-amount">${escapeHTML(netSignedFmt)}</span>
+          <span class="fin-verdict-mg">${escapeHTML(mgFmt)}</span>
+        </div>
+        <div class="fin-verdict-bars">
+          <div class="fin-vbar-row">
+            <span>ingresos</span>
+            <div class="fin-vbar-track"><i class="is-in" style="width:${inPct}%"></i></div>
+            <b>${escapeHTML(compactMoney(d.inflows))}</b>
+          </div>
+          <div class="fin-vbar-row">
+            <span>egresos</span>
+            <div class="fin-vbar-track"><i class="is-out" style="width:${outPct}%"></i></div>
+            <b>${escapeHTML(compactMoney(d.outflows))}</b>
+          </div>
+        </div>
+        <div class="fin-card-foot">
+          <span class="fin-card-fx">${customSub || `cobertura ${d.coverage.toFixed(2)}x`}</span>
+          <span class="fin-card-refs">${escapeHTML(scopeLbl)}</span>
+        </div>
+      `;
+    }
+
+    let svgHtml = '';
+    let footerLeft = customSub || `margen ${mgFmt}`;
+
+    // 2. GRÁFICA COMPARATIVA INGRESOS VS COSTOS VS RESULTADO NETO
+    if (n.type === 'fin_chart_pnl') {
+      const maxRef = Math.max(1, d.inflows, d.outflows, Math.abs(d.net));
+      const wMax = 148;
+      const wIn = Math.max(4, Math.round((d.inflows / maxRef) * wMax));
+      const wOut = Math.max(4, Math.round((d.outflows / maxRef) * wMax));
+      const wNet = Math.max(4, Math.round((Math.abs(d.net) / maxRef) * wMax));
+      const netColor = d.verdict === 'profit' ? '#4ade80' : d.verdict === 'loss' ? '#fb7185' : '#fbbf24';
+
+      svgHtml = `
+        <svg class="fin-chart-svg" viewBox="0 0 264 108" aria-hidden="true">
+          <line x1="68" y1="8" x2="68" y2="98" stroke="#2a3138" stroke-width="1"/>
+          <line x1="142" y1="8" x2="142" y2="98" stroke="#1d2329" stroke-width="1" stroke-dasharray="2 3"/>
+          <line x1="216" y1="8" x2="216" y2="98" stroke="#1d2329" stroke-width="1" stroke-dasharray="2 3"/>
+
+          <text x="4" y="26" fill="#94a3b8" font-size="8.5" font-family="JetBrains Mono">Ingresos</text>
+          <rect x="69" y="15" width="${wIn}" height="15" rx="3" fill="#4ade80" fill-opacity="0.86"/>
+          <text x="${Math.min(220, 74 + wIn)}" y="26" fill="#dcfce7" font-size="8.4" font-weight="700" font-family="JetBrains Mono">${escapeHTML(compactMoney(d.inflows))}</text>
+
+          <text x="4" y="57" fill="#94a3b8" font-size="8.5" font-family="JetBrains Mono">Costos</text>
+          <rect x="69" y="46" width="${wOut}" height="15" rx="3" fill="#fb7185" fill-opacity="0.86"/>
+          <text x="${Math.min(220, 74 + wOut)}" y="57" fill="#ffe4e6" font-size="8.4" font-weight="700" font-family="JetBrains Mono">${escapeHTML(compactMoney(d.outflows))}</text>
+
+          <text x="4" y="88" fill="#cbd5e1" font-size="8.5" font-weight="700" font-family="JetBrains Mono">${d.verdict === 'loss' ? 'Pérdida' : 'Ganancia'}</text>
+          <rect x="69" y="77" width="${wNet}" height="15" rx="3" fill="${netColor}"/>
+          <text x="${Math.min(214, 74 + wNet)}" y="88" fill="${netColor}" font-size="8.6" font-weight="700" font-family="JetBrains Mono">${escapeHTML((d.net > 0 ? '+' : '') + compactMoney(d.net))}</text>
+        </svg>
+      `;
+      const costWeight = d.inflows > 0 ? `${Math.round((d.outflows / d.inflows) * 100)}% costo` : 'balance directo';
+      footerLeft = customSub || `${mgFmt} · ${costWeight}`;
+    }
+
+    // 3. CASCADA DE RENTABILIDAD (WATERFALL P&L)
+    else if (n.type === 'fin_chart_waterfall') {
+      const flowSteps = d.items.filter(i => i.role !== 'net').slice(0, 4);
+      let steps = [];
+      if (flowSteps.length >= 2) {
+        let running = 0;
+        flowSteps.forEach(st => {
+          const prev = running;
+          running += st.signed;
+          steps.push({ lbl: st.ref || st.shortLabel.slice(0, 6), from: prev, to: running, val: st.signed, kind: st.signed >= 0 ? 'pos' : 'neg' });
+        });
+        steps.push({ lbl: 'Neto', from: 0, to: d.net, val: d.net, kind: 'total' });
+      } else {
+        steps = [
+          { lbl: 'Ventas', from: 0, to: d.inflows, val: d.inflows, kind: 'pos' },
+          { lbl: 'Costos', from: d.inflows, to: d.net, val: -d.outflows, kind: 'neg' },
+          { lbl: 'Neto', from: 0, to: d.net, val: d.net, kind: 'total' }
+        ];
+      }
+
+      const allVals = [0, ...steps.flatMap(s => [s.from, s.to])];
+      const minV = Math.min(...allVals);
+      const maxV = Math.max(1, ...allVals);
+      const span = Math.max(1, maxV - minV);
+      const yTop = 16;
+      const plotH = 68;
+      const toY = v => yTop + plotH - ((v - minV) / span) * plotH;
+      const zeroY = toY(0);
+      const colSlot = 244 / steps.length;
+      const barW = Math.min(34, Math.max(18, colSlot - 12));
+
+      const barsSvg = steps
+        .map((st, idx) => {
+          const x = 12 + idx * colSlot + (colSlot - barW) / 2;
+          const y1 = toY(st.from);
+          const y2 = toY(st.to);
+          const rectY = Math.min(y1, y2);
+          const rectH = Math.max(3, Math.abs(y2 - y1));
+          const fill =
+            st.kind === 'total'
+              ? d.net >= 0
+                ? '#38bdf8'
+                : '#f43f5e'
+              : st.kind === 'pos'
+                ? '#4ade80'
+                : '#fb7185';
+          const conn =
+            idx < steps.length - 1
+              ? `<line x1="${x + barW}" y1="${y2.toFixed(1)}" x2="${(12 + (idx + 1) * colSlot + (colSlot - barW) / 2).toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#475569" stroke-width="0.9" stroke-dasharray="2 2"/>`
+              : '';
+          return `
+            ${conn}
+            <rect x="${x.toFixed(1)}" y="${rectY.toFixed(1)}" width="${barW.toFixed(1)}" height="${rectH.toFixed(1)}" rx="2.5" fill="${fill}" fill-opacity="0.9"/>
+            <text x="${(x + barW / 2).toFixed(1)}" y="${Math.max(10, rectY - 3).toFixed(1)}" text-anchor="middle" fill="#cbd5e1" font-size="7.4" font-family="JetBrains Mono">${escapeHTML(compactMoney(st.val))}</text>
+            <text x="${(x + barW / 2).toFixed(1)}" y="99" text-anchor="middle" fill="#94a3b8" font-size="7.6" font-family="JetBrains Mono">${escapeHTML(st.lbl)}</text>
+          `;
+        })
+        .join('');
+
+      svgHtml = `
+        <svg class="fin-chart-svg" viewBox="0 0 264 106" aria-hidden="true">
+          <line x1="8" y1="${zeroY.toFixed(1)}" x2="256" y2="${zeroY.toFixed(1)}" stroke="#334155" stroke-width="1"/>
+          ${barsSvg}
+        </svg>
+      `;
+      footerLeft = customSub || `puente neto ${compactMoney(d.net)}`;
+    }
+
+    // 4. BARRAS DE FLUJO POSITIVO VS NEGATIVO (EJE CERO)
+    else if (n.type === 'fin_chart_cashflow') {
+      const series =
+        d.items.length >= 2
+          ? d.items.slice(0, 6).map(i => ({ lbl: i.ref, val: i.role === 'outflow' ? -Math.abs(i.raw) : i.raw }))
+          : [
+              { lbl: 'Entradas', val: d.inflows },
+              { lbl: 'Salidas', val: -d.outflows },
+              { lbl: 'Saldo', val: d.net }
+            ];
+      const maxAbs = Math.max(1, ...series.map(s => Math.abs(s.val)));
+      const midY = 52;
+      const halfH = 34;
+      const slot = 240 / series.length;
+      const bw = Math.min(30, Math.max(14, slot - 10));
+      let posCount = 0;
+      let negCount = 0;
+
+      const cols = series
+        .map((s, idx) => {
+          if (s.val >= 0) posCount++;
+          else negCount++;
+          const h = Math.max(3, (Math.abs(s.val) / maxAbs) * halfH);
+          const x = 14 + idx * slot + (slot - bw) / 2;
+          const y = s.val >= 0 ? midY - h : midY;
+          const color = s.val >= 0 ? '#4ade80' : '#fb7185';
+          const lblY = s.val >= 0 ? Math.max(10, y - 3) : Math.min(92, y + h + 9);
+          return `
+            <rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" rx="2.5" fill="${color}" fill-opacity="0.88"/>
+            <text x="${(x + bw / 2).toFixed(1)}" y="${lblY.toFixed(1)}" text-anchor="middle" fill="${color}" font-size="7.3" font-weight="700" font-family="JetBrains Mono">${escapeHTML(compactMoney(s.val))}</text>
+            <text x="${(x + bw / 2).toFixed(1)}" y="102" text-anchor="middle" fill="#94a3b8" font-size="7.5" font-family="JetBrains Mono">${escapeHTML(s.lbl)}</text>
+          `;
+        })
+        .join('');
+
+      svgHtml = `
+        <svg class="fin-chart-svg" viewBox="0 0 264 106" aria-hidden="true">
+          <line x1="8" y1="${midY}" x2="256" y2="${midY}" stroke="#475569" stroke-width="1"/>
+          <text x="10" y="${midY - 3}" fill="#64748b" font-size="7" font-family="JetBrains Mono">$0</text>
+          ${cols}
+        </svg>
+      `;
+      footerLeft = customSub || `+${posCount} favor · -${negCount} contra`;
+    }
+
+    // 5. TERMÓMETRO / VELOCÍMETRO DE RENTABILIDAD Y MARGEN (%)
+    else if (n.type === 'fin_chart_margin') {
+      const targetMg = Number(n.params?.rate ?? 25);
+      const clampedMg = clamp(d.marginPct, -50, 50);
+      const norm = (clampedMg + 50) / 100; // 0 = -50%, 0.5 = 0% (equilibrio), 1 = +50%
+      const angle = Math.PI * (1 - norm);
+      const cx = 132;
+      const cy = 78;
+      const r = 54;
+      const nx = cx + Math.cos(angle) * (r - 8);
+      const ny = cy - Math.sin(angle) * (r - 8);
+
+      const targetNorm = (clamp(targetMg, -50, 50) + 50) / 100;
+      const tAngle = Math.PI * (1 - targetNorm);
+      const tx1 = cx + Math.cos(tAngle) * (r - 5);
+      const ty1 = cy - Math.sin(tAngle) * (r - 5);
+      const tx2 = cx + Math.cos(tAngle) * (r + 5);
+      const ty2 = cy - Math.sin(tAngle) * (r + 5);
+      const needleColor = d.marginPct >= targetMg ? '#4ade80' : d.marginPct >= 0 ? '#fbbf24' : '#fb7185';
+
+      svgHtml = `
+        <svg class="fin-chart-svg" viewBox="0 0 264 106" aria-hidden="true">
+          <path d="M 78 78 A 54 54 0 0 1 132 24" fill="none" stroke="#fb7185" stroke-opacity="0.45" stroke-width="10" stroke-linecap="butt"/>
+          <path d="M 132 24 A 54 54 0 0 1 186 78" fill="none" stroke="#4ade80" stroke-opacity="0.45" stroke-width="10" stroke-linecap="butt"/>
+          <line x1="132" y1="18" x2="132" y2="30" stroke="#e2e8f0" stroke-width="1.5"/>
+          <text x="132" y="14" text-anchor="middle" fill="#94a3b8" font-size="7.2" font-family="JetBrains Mono">0% eq.</text>
+          <line x1="${tx1.toFixed(1)}" y1="${ty1.toFixed(1)}" x2="${tx2.toFixed(1)}" y2="${ty2.toFixed(1)}" stroke="#38bdf8" stroke-width="2"/>
+          <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${needleColor}" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="${cx}" cy="${cy}" r="4.2" fill="${needleColor}"/>
+          <text x="68" y="92" text-anchor="end" fill="#fb7185" font-size="7.5" font-family="JetBrains Mono">pérdida</text>
+          <text x="196" y="92" text-anchor="start" fill="#4ade80" font-size="7.5" font-family="JetBrains Mono">ganancia</text>
+          <text x="132" y="98" text-anchor="middle" fill="${needleColor}" font-size="12" font-weight="700" font-family="JetBrains Mono">${escapeHTML(mgFmt)}</text>
+        </svg>
+      `;
+      footerLeft = customSub || `meta: ${targetMg}% · ${d.marginPct >= targetMg ? 'cumplida' : d.marginPct >= 0 ? 'bajo meta' : 'en pérdida'}`;
+    }
+
+    // 6. ANILLO DISTRIBUCIÓN COSTOS VS GANANCIA (DONUT FINANCIERO)
+    else {
+      const r = 34;
+      const circ = 2 * Math.PI * r;
+      const isLoss = d.net < 0;
+      const baseTotal = Math.max(1, isLoss ? d.outflows : d.inflows);
+      const profitShare = isLoss ? 0 : clamp(d.net / baseTotal, 0, 1);
+      const costShare = isLoss ? clamp(d.inflows / baseTotal, 0, 1) : clamp(d.outflows / baseTotal, 0, 1);
+      const lossShare = isLoss ? clamp(Math.abs(d.net) / baseTotal, 0, 1) : 0;
+
+      const seg1 = (isLoss ? costShare : profitShare) * circ;
+      const seg2 = (isLoss ? lossShare : costShare) * circ;
+      const c1 = isLoss ? '#fbbf24' : '#4ade80';
+      const c2 = '#fb7185';
+      const centerTop = isLoss ? 'DÉFICIT' : 'RETENIDO';
+      const centerVal = isLoss
+        ? `-${Math.round(lossShare * 100)}%`
+        : `${Math.round(profitShare * 100)}%`;
+
+      svgHtml = `
+        <svg class="fin-chart-svg" viewBox="0 0 264 106" aria-hidden="true">
+          <circle cx="62" cy="53" r="${r}" fill="none" stroke="#1e252c" stroke-width="11"/>
+          <circle cx="62" cy="53" r="${r}" fill="none" stroke="${c1}" stroke-width="11"
+            stroke-dasharray="${seg1.toFixed(1)} ${circ.toFixed(1)}" transform="rotate(-90 62 53)"/>
+          <circle cx="62" cy="53" r="${r}" fill="none" stroke="${c2}" stroke-width="11"
+            stroke-dasharray="${seg2.toFixed(1)} ${circ.toFixed(1)}" stroke-dashoffset="${(-seg1).toFixed(1)}" transform="rotate(-90 62 53)"/>
+          <text x="62" y="49" text-anchor="middle" fill="#94a3b8" font-size="6.6" font-family="JetBrains Mono">${centerTop}</text>
+          <text x="62" y="61" text-anchor="middle" fill="${isLoss ? '#fb7185' : '#4ade80'}" font-size="10.5" font-weight="700" font-family="JetBrains Mono">${centerVal}</text>
+
+          <rect x="118" y="24" width="7" height="7" rx="1.5" fill="#4ade80"/>
+          <text x="130" y="30.5" fill="#cbd5e1" font-size="8" font-family="JetBrains Mono">Ingresos: ${escapeHTML(compactMoney(d.inflows))}</text>
+
+          <rect x="118" y="47" width="7" height="7" rx="1.5" fill="#fb7185"/>
+          <text x="130" y="53.5" fill="#cbd5e1" font-size="8" font-family="JetBrains Mono">Costos: ${escapeHTML(compactMoney(d.outflows))}</text>
+
+          <rect x="118" y="70" width="7" height="7" rx="1.5" fill="${isLoss ? '#f43f5e' : '#38bdf8'}"/>
+          <text x="130" y="76.5" fill="${isLoss ? '#fda4af' : '#bae6fd'}" font-size="8.2" font-weight="700" font-family="JetBrains Mono">${isLoss ? 'Pérdida' : 'Ganancia'}: ${escapeHTML(compactMoney(d.net))}</text>
+        </svg>
+      `;
+      footerLeft = customSub || `cobertura ${d.coverage.toFixed(2)}x`;
+    }
+
+    return `
+      <div class="fin-card-top">
+        <span class="fin-cell-pill">${escapeHTML(evalEntry.cellRef)}</span>
+        <span class="fin-verdict-pill ${badgeCls}">${d.verdictIcon} ${d.verdictLabel}</span>
+      </div>
+      <div class="fin-card-title text">${escapeHTML(n.text || def?.title || 'Gráfica Financiera')}</div>
+      ${svgHtml}
+      <div class="fin-card-foot">
+        <span class="fin-card-fx">${escapeHTML(footerLeft)}</span>
+        <span class="fin-card-refs">${escapeHTML(scopeLbl)}</span>
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // RENDERIZADO HTML DE CADA NODO FINANCIERO EN EL LIENZO
   // =========================================================================
   function renderFinanceNodeHtml(n) {
     const def = getFinanceNodeDef(n.type);
@@ -1140,7 +1671,12 @@
         upstreamRefs: []
       };
 
-    const catInfo = CATEGORY_MAP.get(def?.cat) || { label: 'finanzas' };
+    if (def?.isChart) {
+      return renderFinanceChartCardHtml(n, def, evalEntry);
+    }
+
+    const catInfo = CATEGORY_MAP.get(def?.cat) || { cardTag: 'finanzas', label: 'finanzas' };
+    const cleanTag = catInfo.cardTag || catInfo.label;
     const valCls = evalEntry.error
       ? 'is-err'
       : def?.tone === 'negative'
@@ -1153,14 +1689,14 @@
 
     const refsLabel = evalEntry.upstreamRefs.length
       ? `← ${evalEntry.upstreamRefs.slice(0, 3).join(',')}${evalEntry.upstreamRefs.length > 3 ? '…' : ''}`
-      : 'entrada';
+      : 'dato';
 
     return `
       <div class="fin-card-top">
         <span class="fin-cell-pill">${escapeHTML(evalEntry.cellRef)}</span>
-        <span class="fin-cat-tag">${escapeHTML(catInfo.label)}</span>
+        <span class="fin-cat-tag">${escapeHTML(cleanTag)}</span>
       </div>
-      <div class="fin-card-title text">${escapeHTML(n.text || def?.title || 'Celda')}</div>
+      <div class="fin-card-title text">${escapeHTML(n.text || def?.title || 'Nodo financiero')}</div>
       <div class="fin-card-val ${valCls}">${escapeHTML(evalEntry.formatted)}</div>
       <div class="fin-card-foot">
         <span class="fin-card-fx">${escapeHTML(evalEntry.fxText)}</span>
@@ -1172,6 +1708,11 @@
   function getFinanceNodeToneClass(type) {
     const def = getFinanceNodeDef(type);
     if (!def) return 'fin-node fin-tone-input';
+    if (def.isChart) {
+      return type === 'fin_verdict_kpi'
+        ? 'fin-node fin-chart-card fin-verdict-card fin-tone-chart'
+        : 'fin-node fin-chart-card fin-tone-chart';
+    }
     return `fin-node fin-tone-${def.tone || 'input'}`;
   }
 
@@ -1230,25 +1771,51 @@
     const cellInput = document.getElementById('finBarCellRef');
     const fxInput = document.getElementById('finBarFormulaInput');
     const resSpan = document.getElementById('finBarResult');
+    const verdictSpan = document.getElementById('finBarVerdict');
     const curSel = document.getElementById('finCurrencySel');
 
     if (curSel && curSel.value !== activeSheetCurrency) {
       curSel.value = activeSheetCurrency;
     }
 
+    const s = lastComputedSheet.summary || {};
+    if (verdictSpan) {
+      if ((s.totalCells || 0) > 0) {
+        const vCls = s.verdict === 'profit' ? 'is-profit' : s.verdict === 'loss' ? 'is-loss' : 'is-even';
+        const vTxt =
+          s.verdict === 'profit'
+            ? `▲ GANANCIA +${compactMoney(s.netBalance)}`
+            : s.verdict === 'loss'
+              ? `▼ PÉRDIDA ${compactMoney(s.netBalance)}`
+              : '● EQUILIBRIO';
+        verdictSpan.className = `fin-bar-verdict ${vCls}`;
+        verdictSpan.textContent = vTxt;
+        verdictSpan.hidden = false;
+      } else {
+        verdictSpan.hidden = true;
+      }
+    }
+
     if (selNode && isFinanceNodeType(selNode.type)) {
       ensureFinanceNodeDefaults(selNode, STATE.nodes);
+      const def = getFinanceNodeDef(selNode.type);
       const computed = lastComputedSheet.byNodeId.get(selNode.id);
       if (cellInput && document.activeElement !== cellInput) {
         cellInput.value = selNode.params.cellRef || 'A1';
         cellInput.disabled = false;
       }
       if (fxInput && document.activeElement !== fxInput) {
-        fxInput.value = selNode.params.formula
-          ? selNode.params.formula
-          : String(selNode.params.value ?? 0);
-        fxInput.disabled = false;
-        fxInput.placeholder = 'Escribe un número o fórmula Excel (ej: =A1-B1, =SUMA(A1:A3), =VNA(12%;B1:B4))';
+        if (def?.isChart) {
+          fxInput.value = selNode.params.subtitle || '';
+          fxInput.disabled = false;
+          fxInput.placeholder = 'Subtítulo opcional de la gráfica financiera...';
+        } else {
+          fxInput.value = selNode.params.formula
+            ? selNode.params.formula
+            : String(selNode.params.value ?? 0);
+          fxInput.disabled = false;
+          fxInput.placeholder = 'Escribe un monto o fórmula (=A1-B1, =SUMA(A1:A3), =VNA(12%;B1:B4))';
+        }
       }
       if (resSpan) {
         resSpan.textContent = computed ? `= ${computed.formatted}` : '= 0';
@@ -1261,17 +1828,17 @@
       if (fxInput && document.activeElement !== fxInput) {
         fxInput.value = '';
         fxInput.disabled = true;
-        fxInput.placeholder = 'Selecciona una celda financiera en el lienzo para editar su valor o fórmula fx...';
+        fxInput.placeholder = 'Selecciona un nodo financiero para editar su monto o fórmula...';
       }
       if (resSpan) {
-        const netFmt = formatFinanceNumber(lastComputedSheet.summary.netBalance, 'currency', null);
+        const netFmt = formatFinanceNumber(s.netBalance || 0, 'currency', null);
         resSpan.textContent = `Neto: ${netFmt}`;
       }
     }
   }
 
   // =========================================================================
-  // PALETA LATERAL DE 54 NODOS FINANCIEROS + BUSCADOR + PLANTILLAS EXCEL
+  // PALETA LATERAL DE NODOS Y GRÁFICAS FINANCIERAS + BUSCADOR
   // =========================================================================
   function populateFinancePaletteDOM() {
     const container = document.getElementById('finCategoriesMount');
@@ -1330,86 +1897,274 @@
     }
   }
 
+  function insertFinanceChartNodeOnCanvas(chartType) {
+    const def = getFinanceNodeDef(chartType);
+    if (!def || typeof createNode !== 'function') return null;
+
+    const existing = Array.isArray(STATE.nodes) ? STATE.nodes : [];
+    let x = 140;
+    let y = 100;
+    if (existing.length > 0) {
+      const maxX = Math.max(...existing.map(it => (it.x || 0) + (it.w || 220)));
+      const minY = Math.min(...existing.map(it => it.y || 60));
+      const existingCharts = existing.filter(it => getFinanceNodeDef(it.type)?.isChart);
+      x = Math.round((maxX + 96) / 12) * 12;
+      y = Math.round((minY + existingCharts.length * 244) / 12) * 12;
+    }
+
+    const node = createNode(chartType, def.title, x, y);
+    node.status = 'done';
+    ensureFinanceNodeDefaults(node, existing);
+    STATE.nodes.push(node);
+    STATE.isBlankCanvas = false;
+    setCanvasDomain('finance', true);
+    if (typeof commitHistory === 'function') commitHistory();
+    evaluateFinanceSheet();
+    if (typeof setSel === 'function') setSel({ kind: 'node', id: node.id });
+    if (typeof renderAll === 'function') renderAll();
+    if (typeof fitView === 'function') requestAnimationFrame(() => fitView());
+    if (typeof showToast === 'function') {
+      showToast(`Gráfica añadida: ${def.title}`, 'ok', 1600);
+    }
+    return node;
+  }
+
   // =========================================================================
-  // INSPECTOR DE PROPIEDADES Y PANEL DE MÉTRICAS FINANCIERAS PROPIAS
+  // MENÚ DE EDICIÓN AVANZADO PARA NODOS Y GRÁFICAS FINANCIERAS
   // =========================================================================
   function renderFinanceNodeInspector(container, n) {
     const def = getFinanceNodeDef(n.type);
     ensureFinanceNodeDefaults(n, STATE.nodes || []);
     evaluateFinanceSheet();
     const res = lastComputedSheet.byNodeId.get(n.id);
+    const isChartNode = Boolean(def?.isChart);
+    const catInfo = CATEGORY_MAP.get(def?.cat) || { cardTag: 'finanzas', label: 'finanzas' };
 
-    const upstreamListHtml =
+    const incomingEdges = (STATE.edges || []).filter(e => e.to === n.id);
+    const outgoingEdges = (STATE.edges || []).filter(e => e.from === n.id);
+
+    const needsRate =
+      def?.rateParam !== undefined ||
+      ['fin_rate', 'fin_npv', 'fin_pv', 'fin_fv', 'fin_pmt', 'fin_ipmt', 'fin_ppmt', 'fin_loan_balance', 'fin_compound_int', 'fin_tax', 'fin_vat_iva', 'fin_markup_price', 'fin_discount', 'fin_payroll_cost', 'fin_fx_rate', 'fin_chart_margin'].includes(n.type);
+
+    const needsPeriods =
+      !isChartNode &&
+      (def?.nperParam !== undefined ||
+        ['fin_periods', 'fin_pv', 'fin_fv', 'fin_cagr', 'fin_pmt', 'fin_ipmt', 'fin_ppmt', 'fin_loan_balance', 'fin_compound_int', 'fin_depreciation'].includes(n.type));
+
+    const needsPeriodIdx = !isChartNode && ['fin_ipmt', 'fin_ppmt', 'fin_loan_balance'].includes(n.type);
+
+    const valToneCls = res?.error
+      ? 'is-loss'
+      : def?.tone === 'negative' || (res && res.value < 0)
+        ? 'is-loss'
+        : 'is-profit';
+
+    const typeOptionsHtml = FINANCE_CATEGORIES.map(cat => {
+      const catItems = FINANCE_NODE_LIST.filter(it => it.cat === cat.id);
+      return `<optgroup label="${escapeHTML(cat.label)}">${catItems
+        .map(
+          it =>
+            `<option value="${escapeHTML(it.type)}" ${it.type === n.type ? 'selected' : ''}>${escapeHTML(it.title)}</option>`
+        )
+        .join('')}</optgroup>`;
+    }).join('');
+
+    const upstreamRefChips =
       res && res.upstreamRefs.length
-        ? `<div style="margin-top:8px;padding:7px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;font-size:9.3px">
-            <div style="font-weight:700;color:var(--tx1);margin-bottom:4px">celdas conectadas (entradas)</div>
+        ? `<div class="insp-chip-row" style="margin-top:5px">
             ${res.upstreamRefs
-              .map(ref => {
-                const v = lastComputedSheet.byCellRef.get(ref) ?? 0;
-                return `<div style="display:flex;justify-content:space-between;padding:2px 0;color:var(--tx2)"><strong style="color:var(--green)">[${escapeHTML(ref)}]</strong><span>${escapeHTML(formatFinanceNumber(v, 'currency', null))}</span></div>`;
-              })
+              .map(
+                ref =>
+                  `<button type="button" class="insp-chip is-accent" data-insert-fx-ref="${escapeHTML(ref)}" title="Insertar ${escapeHTML(ref)} en la fórmula">[${escapeHTML(ref)}]</button>`
+              )
               .join('')}
           </div>`
         : '';
 
-    const needsRate =
-      def?.rateParam !== undefined ||
-      ['fin_rate', 'fin_npv', 'fin_pv', 'fin_fv', 'fin_pmt', 'fin_ipmt', 'fin_ppmt', 'fin_loan_balance', 'fin_compound_int', 'fin_tax', 'fin_vat_iva', 'fin_markup_price', 'fin_discount', 'fin_payroll_cost', 'fin_fx_rate'].includes(n.type);
-
-    const needsPeriods =
-      def?.nperParam !== undefined ||
-      ['fin_periods', 'fin_pv', 'fin_fv', 'fin_cagr', 'fin_pmt', 'fin_ipmt', 'fin_ppmt', 'fin_loan_balance', 'fin_compound_int', 'fin_depreciation'].includes(n.type);
-
-    const needsPeriodIdx = ['fin_ipmt', 'fin_ppmt', 'fin_loan_balance'].includes(n.type);
+    const connectionsHtml =
+      incomingEdges.length || outgoingEdges.length
+        ? `
+        <div class="insp-section">
+          <div class="insp-sec-head">
+            <span>conexiones (${incomingEdges.length} ent · ${outgoingEdges.length} sal)</span>
+          </div>
+          <div class="insp-conn-list">
+            ${incomingEdges
+              .map(ed => {
+                const src = byId(ed.from);
+                const srcLbl = src
+                  ? `${src.params?.cellRef ? `[${src.params.cellRef}] ` : ''}${src.text || src.type}`
+                  : ed.from;
+                return `
+                  <div class="insp-conn-item">
+                    <button type="button" class="insp-conn-jump" data-jump-node="${escapeHTML(ed.from)}" title="Ir al nodo origen">← ${escapeHTML(srcLbl)}</button>
+                    <input type="text" class="insp-conn-lbl" data-edge-lbl="${escapeHTML(ed.id)}" placeholder="etiqueta" value="${escapeHTML(ed.label || '')}">
+                    <button type="button" class="insp-conn-del" data-del-edge="${escapeHTML(ed.id)}" title="Desconectar">×</button>
+                  </div>`;
+              })
+              .join('')}
+            ${outgoingEdges
+              .map(ed => {
+                const dst = byId(ed.to);
+                const dstLbl = dst
+                  ? `${dst.params?.cellRef ? `[${dst.params.cellRef}] ` : ''}${dst.text || dst.type}`
+                  : ed.to;
+                return `
+                  <div class="insp-conn-item">
+                    <button type="button" class="insp-conn-jump" data-jump-node="${escapeHTML(ed.to)}" title="Ir al nodo destino">→ ${escapeHTML(dstLbl)}</button>
+                    <input type="text" class="insp-conn-lbl" data-edge-lbl="${escapeHTML(ed.id)}" placeholder="etiqueta" value="${escapeHTML(ed.label || '')}">
+                    <button type="button" class="insp-conn-del" data-del-edge="${escapeHTML(ed.id)}" title="Desconectar">×</button>
+                  </div>`;
+              })
+              .join('')}
+          </div>
+        </div>`
+        : '';
 
     container.innerHTML = `
-      <h3>celda financiera :: ${escapeHTML(n.params.cellRef)}</h3>
-      <div style="padding:8px 10px;margin-bottom:8px;border-radius:6px;background:rgba(74,222,128,0.07);border:1px solid rgba(134,239,172,0.28);display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:9.5px;color:var(--tx2)">resultado actual</span>
-        <strong style="font-size:13.5px;color:var(--green)">${escapeHTML(res ? res.formatted : '0')}</strong>
-      </div>
-
-      <div style="display:grid;grid-template-columns:78px 1fr;gap:6px">
-        <div>
-          <label>celda</label>
-          <input type="text" id="finPropCellRef" maxlength="4" value="${escapeHTML(n.params.cellRef)}" style="text-transform:uppercase;font-weight:700;color:var(--green)">
+      <div class="insp-shell">
+        <div class="insp-header">
+          <div class="insp-header__meta">
+            <span class="insp-badge is-fin">${escapeHTML(n.params.cellRef)}</span>
+            <span class="insp-type-tag">${escapeHTML(catInfo.cardTag || 'finanzas')}</span>
+            ${n.locked ? '<span class="insp-type-tag is-warn">bloqueado</span>' : ''}
+          </div>
+          <div class="insp-quick-actions">
+            <button type="button" class="insp-act-btn" id="finActCenter" title="Centrar en pantalla">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            </button>
+            <button type="button" class="insp-act-btn" id="finActDup" title="Duplicar nodo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button type="button" class="insp-act-btn ${n.locked ? 'is-on' : ''}" id="finActLock" title="${n.locked ? 'Desbloquear posición' : 'Bloquear posición'}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </button>
+            <button type="button" class="insp-act-btn is-danger" id="finActDel" title="Eliminar nodo">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </button>
+          </div>
         </div>
-        <div>
-          <label>concepto / etiqueta</label>
-          <input type="text" id="finPropTitle" value="${escapeHTML(n.text || '')}">
+
+        <div class="insp-fin-hero ${valToneCls}">
+          <div>
+            <span class="insp-fin-hero__lbl">${isChartNode ? 'indicador en vivo' : 'resultado calculado'}</span>
+            <small class="insp-fin-hero__fx" id="finHeroFx">${escapeHTML(res?.fxText || def?.fxHint || '')}</small>
+          </div>
+          <strong class="insp-fin-hero__val" id="finHeroVal">${escapeHTML(res ? res.formatted : '0')}</strong>
         </div>
+
+        <div class="insp-section">
+          <div class="insp-sec-head"><span>identidad y función</span></div>
+          <div class="insp-grid-2" style="grid-template-columns:76px 1fr">
+            <div>
+              <label>celda</label>
+              <input type="text" id="finPropCellRef" maxlength="4" value="${escapeHTML(n.params.cellRef)}" style="text-transform:uppercase;font-weight:700;color:var(--green)">
+            </div>
+            <div>
+              <label>concepto / título</label>
+              <input type="text" id="finPropTitle" value="${escapeHTML(n.text || '')}" placeholder="Nombre del concepto...">
+            </div>
+          </div>
+          <label>función / tipo de nodo financiero</label>
+          <select id="finPropTypeSwitch">${typeOptionsHtml}</select>
+        </div>
+
+        ${
+          isChartNode
+            ? `
+            <div class="insp-section">
+              <div class="insp-sec-head"><span>origen de datos y visualización</span></div>
+              <label>fuente del cálculo</label>
+              <select id="finPropChartScope">
+                <option value="auto" ${(n.params.dataScope || 'auto') === 'auto' ? 'selected' : ''}>Automático (conectados o planilla completa)</option>
+                <option value="connected" ${n.params.dataScope === 'connected' ? 'selected' : ''}>Solo nodos conectados a esta gráfica</option>
+                <option value="sheet" ${n.params.dataScope === 'sheet' ? 'selected' : ''}>Resumen global de toda la planilla</option>
+              </select>
+              <label>subtítulo personalizado (opcional)</label>
+              <input type="text" id="finPropSubtitle" value="${escapeHTML(n.params.subtitle || '')}" placeholder="Ej: Escenario base Q4...">
+              ${needsRate ? `<label>meta de margen objetivo (%)</label><input type="number" step="any" id="finPropRate" value="${Number(n.params.rate ?? def?.rateParam ?? 25)}">` : ''}
+            </div>
+          `
+            : `
+            <div class="insp-section">
+              <div class="insp-sec-head">
+                <span>valor y fórmula</span>
+                <div class="insp-inline-tools">
+                  <button type="button" class="insp-mini-btn" id="finBtnFlipSign" title="Invertir signo (+/-)">± signo</button>
+                  <button type="button" class="insp-mini-btn" id="finBtnMul1k" title="Multiplicar valor base por 1,000">×1k</button>
+                  <button type="button" class="insp-mini-btn" id="finBtnZero" title="Poner valor base en 0">0</button>
+                </div>
+              </div>
+              <label>monto / valor base</label>
+              <input type="number" step="any" id="finPropValue" value="${Number(n.params.value ?? 0)}">
+
+              <label>fórmula personalizada (opcional)</label>
+              <input type="text" id="finPropFormula" placeholder="Ej: =A1-B1, =SUMA(A1:A4), =VNA(12%;B1:B4)" value="${escapeHTML(n.params.formula || '')}">
+              <div class="insp-chip-row">
+                <button type="button" class="insp-chip" data-fx-tpl="=SUMA()">=SUMA()</button>
+                <button type="button" class="insp-chip" data-fx-tpl="=PROMEDIO()">=PROMEDIO()</button>
+                <button type="button" class="insp-chip" data-fx-tpl="=SI(A1>0;A1;0)">=SI()</button>
+                <button type="button" class="insp-chip" data-fx-tpl="">limpiar fx</button>
+              </div>
+              ${upstreamRefChips}
+            </div>
+
+            <div class="insp-section">
+              <div class="insp-sec-head"><span>formato y parámetros</span></div>
+              <label>formato numérico</label>
+              <select id="finPropFormat">
+                <option value="currency" ${n.params.format === 'currency' ? 'selected' : ''}>Moneda (${getSheetCurrency().code})</option>
+                <option value="percent" ${n.params.format === 'percent' ? 'selected' : ''}>Porcentaje (%)</option>
+                <option value="number" ${n.params.format === 'number' ? 'selected' : ''}>Número decimal</option>
+                <option value="multiple" ${n.params.format === 'multiple' ? 'selected' : ''}>Múltiplo / Ratio (x)</option>
+                <option value="months" ${n.params.format === 'months' ? 'selected' : ''}>Periodos / Meses</option>
+              </select>
+              ${needsRate ? `<label>tasa / porcentaje / factor (%)</label><input type="number" step="any" id="finPropRate" value="${Number(n.params.rate ?? def?.rateParam ?? 12)}">` : ''}
+              ${needsPeriods ? `<label>plazo / n° de periodos (nper)</label><input type="number" step="1" min="1" id="finPropNper" value="${Number(n.params.nper ?? def?.nperParam ?? 12)}">` : ''}
+              ${needsPeriodIdx ? `<label>cuota / periodo a evaluar (k)</label><input type="number" step="1" min="1" id="finPropPeriodIdx" value="${Number(n.params.period ?? 1)}">` : ''}
+            </div>
+          `
+        }
+
+        <div class="insp-section">
+          <div class="insp-sec-head"><span>notas / supuestos</span></div>
+          <textarea id="finPropNotes" rows="2" placeholder="Documenta supuestos, fuente del dato o criterios...">${escapeHTML(n.params.notes || '')}</textarea>
+        </div>
+
+        ${connectionsHtml}
       </div>
-
-      <label>valor numérico base</label>
-      <input type="number" step="any" id="finPropValue" value="${Number(n.params.value ?? 0)}">
-
-      <label>fórmula excel personalizada (opcional)</label>
-      <input type="text" id="finPropFormula" placeholder="Ej: =A1-B1 o =SUMA(A1:A4) o =VNA(12%;B1:B4)" value="${escapeHTML(n.params.formula || '')}">
-      <div style="font-size:8.3px;color:var(--tx3);margin-top:2px">Si se deja vacío usa la fórmula nativa del nodo: <code>${escapeHTML(res?.fxText || def?.fxHint || '')}</code></div>
-
-      ${needsRate ? `<label>tasa / porcentaje / factor (%)</label><input type="number" step="any" id="finPropRate" value="${Number(n.params.rate ?? def?.rateParam ?? 12)}">` : ''}
-      ${needsPeriods ? `<label>plazo / n° de periodos (nper)</label><input type="number" step="1" min="1" id="finPropNper" value="${Number(n.params.nper ?? def?.nperParam ?? 12)}">` : ''}
-      ${needsPeriodIdx ? `<label>cuota / periodo a evaluar (k)</label><input type="number" step="1" min="1" id="finPropPeriodIdx" value="${Number(n.params.period ?? 1)}">` : ''}
-
-      <label>formato de celda</label>
-      <select id="finPropFormat">
-        <option value="currency" ${n.params.format === 'currency' ? 'selected' : ''}>Moneda (${getSheetCurrency().code})</option>
-        <option value="percent" ${n.params.format === 'percent' ? 'selected' : ''}>Porcentaje (%)</option>
-        <option value="number" ${n.params.format === 'number' ? 'selected' : ''}>Número decimal</option>
-        <option value="multiple" ${n.params.format === 'multiple' ? 'selected' : ''}>Múltiplo / Ratio (x)</option>
-        <option value="months" ${n.params.format === 'months' ? 'selected' : ''}>Periodos / Meses</option>
-      </select>
-
-      ${upstreamListHtml}
     `;
 
     const refreshCalc = () => {
       evaluateFinanceSheet();
       renderNodes();
       drawEdges();
+      if (typeof updateNodeQuickBar === 'function') updateNodeQuickBar();
       if (typeof drawMinimap === 'function') drawMinimap();
       if (typeof saveState === 'function') saveState();
+      const updated = lastComputedSheet.byNodeId.get(n.id);
+      const heroVal = document.getElementById('finHeroVal');
+      const heroFx = document.getElementById('finHeroFx');
+      if (heroVal && updated) heroVal.textContent = updated.formatted;
+      if (heroFx && updated) heroFx.textContent = updated.fxText || '';
     };
+
+    document.getElementById('finActCenter')?.addEventListener('click', () => {
+      if (typeof centerOnNode === 'function') centerOnNode(n.id);
+    });
+    document.getElementById('finActDup')?.addEventListener('click', () => {
+      if (typeof duplicateNodeById === 'function') duplicateNodeById(n.id);
+    });
+    document.getElementById('finActLock')?.addEventListener('click', () => {
+      n.locked = !n.locked;
+      commitHistory();
+      refreshCalc();
+      updatePanel();
+    });
+    document.getElementById('finActDel')?.addEventListener('click', () => {
+      if (typeof deleteSelected === 'function') deleteSelected();
+    });
 
     document.getElementById('finPropCellRef')?.addEventListener('change', e => {
       const clean = String(e.target.value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1426,15 +2181,60 @@
       refreshCalc();
     });
 
+    document.getElementById('finPropTypeSwitch')?.addEventListener('change', e => {
+      const nextType = e.target.value;
+      const nextDef = getFinanceNodeDef(nextType);
+      if (!nextDef) return;
+      const prevDef = getFinanceNodeDef(n.type);
+      n.type = nextType;
+      n.params.format = nextDef.format || n.params.format || 'currency';
+      if (!n.text || (prevDef && n.text === prevDef.title)) {
+        n.text = nextDef.title;
+      }
+      commitHistory();
+      refreshCalc();
+      updatePanel();
+    });
+
+    document.getElementById('finPropChartScope')?.addEventListener('change', e => {
+      n.params.dataScope = e.target.value;
+      commitHistory();
+      refreshCalc();
+      updatePanel();
+    });
+
+    document.getElementById('finPropSubtitle')?.addEventListener('input', e => {
+      n.params.subtitle = e.target.value;
+      refreshCalc();
+    });
+
     document.getElementById('finPropValue')?.addEventListener('input', e => {
       n.params.value = parseFloat(e.target.value) || 0;
       refreshCalc();
-      const strongEl = container.querySelector('strong');
-      const updated = lastComputedSheet.byNodeId.get(n.id);
-      if (strongEl && updated) strongEl.textContent = updated.formatted;
     });
 
-    document.getElementById('finPropFormula')?.addEventListener('change', e => {
+    document.getElementById('finBtnFlipSign')?.addEventListener('click', () => {
+      n.params.value = -(Number(n.params.value) || 0);
+      commitHistory();
+      refreshCalc();
+      updatePanel();
+    });
+    document.getElementById('finBtnMul1k')?.addEventListener('click', () => {
+      const cur = Number(n.params.value) || 1;
+      n.params.value = cur * 1000;
+      commitHistory();
+      refreshCalc();
+      updatePanel();
+    });
+    document.getElementById('finBtnZero')?.addEventListener('click', () => {
+      n.params.value = 0;
+      commitHistory();
+      refreshCalc();
+      updatePanel();
+    });
+
+    const fxEl = document.getElementById('finPropFormula');
+    fxEl?.addEventListener('change', e => {
       const raw = e.target.value.trim();
       n.params.formula = raw ? (raw.startsWith('=') ? raw : '=' + raw) : '';
       commitHistory();
@@ -1442,28 +2242,51 @@
       updatePanel();
     });
 
+    container.querySelectorAll('[data-fx-tpl]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tpl = btn.dataset.fxTpl || '';
+        n.params.formula = tpl;
+        commitHistory();
+        refreshCalc();
+        updatePanel();
+        const nextFx = document.getElementById('finPropFormula');
+        if (nextFx && tpl) {
+          nextFx.focus();
+          const parenIdx = tpl.indexOf('()');
+          if (parenIdx >= 0) nextFx.setSelectionRange(parenIdx + 1, parenIdx + 1);
+        }
+      });
+    });
+
+    container.querySelectorAll('[data-insert-fx-ref]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ref = btn.dataset.insertFxRef;
+        const inp = document.getElementById('finPropFormula');
+        if (!inp || !ref) return;
+        let cur = inp.value.trim();
+        if (!cur) cur = `=${ref}`;
+        else if (cur.endsWith('()')) cur = cur.slice(0, -1) + ref + ')';
+        else cur = `${cur}+${ref}`;
+        n.params.formula = cur.startsWith('=') ? cur : '=' + cur;
+        commitHistory();
+        refreshCalc();
+        updatePanel();
+      });
+    });
+
     document.getElementById('finPropRate')?.addEventListener('input', e => {
       n.params.rate = parseFloat(e.target.value) || 0;
       refreshCalc();
-      const strongEl = container.querySelector('strong');
-      const updated = lastComputedSheet.byNodeId.get(n.id);
-      if (strongEl && updated) strongEl.textContent = updated.formatted;
     });
 
     document.getElementById('finPropNper')?.addEventListener('input', e => {
       n.params.nper = Math.max(1, parseInt(e.target.value, 10) || 1);
       refreshCalc();
-      const strongEl = container.querySelector('strong');
-      const updated = lastComputedSheet.byNodeId.get(n.id);
-      if (strongEl && updated) strongEl.textContent = updated.formatted;
     });
 
     document.getElementById('finPropPeriodIdx')?.addEventListener('input', e => {
       n.params.period = Math.max(1, parseInt(e.target.value, 10) || 1);
       refreshCalc();
-      const strongEl = container.querySelector('strong');
-      const updated = lastComputedSheet.byNodeId.get(n.id);
-      if (strongEl && updated) strongEl.textContent = updated.formatted;
     });
 
     document.getElementById('finPropFormat')?.addEventListener('change', e => {
@@ -1472,21 +2295,56 @@
       refreshCalc();
       updatePanel();
     });
+
+    document.getElementById('finPropNotes')?.addEventListener('input', e => {
+      n.params.notes = e.target.value;
+      if (typeof saveState === 'function') saveState();
+    });
+
+    container.querySelectorAll('[data-jump-node]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.dataset.jumpNode;
+        if (typeof setSel === 'function') setSel({ kind: 'node', id: targetId });
+        if (typeof centerOnNode === 'function') centerOnNode(targetId);
+      });
+    });
+
+    container.querySelectorAll('[data-edge-lbl]').forEach(inp => {
+      inp.addEventListener('change', e => {
+        const ed = (STATE.edges || []).find(x => x.id === inp.dataset.edgeLbl);
+        if (ed) {
+          ed.label = e.target.value;
+          commitHistory();
+          drawEdges();
+          saveState();
+        }
+      });
+    });
+
+    container.querySelectorAll('[data-del-edge]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const edId = btn.dataset.delEdge;
+        STATE.edges = (STATE.edges || []).filter(x => x.id !== edId);
+        commitHistory();
+        refreshCalc();
+        updatePanel();
+      });
+    });
   }
 
   function renderFinanceMetricsPanel(container) {
     const sheet = evaluateFinanceSheet();
     const s = sheet.summary;
-    const entries = Array.from(sheet.byNodeId.values()).sort((a, b) =>
-      a.cellRef.localeCompare(b.cellRef, undefined, { numeric: true })
-    );
+    const entries = Array.from(sheet.byNodeId.values())
+      .filter(e => !getFinanceNodeDef(e.type)?.isChart)
+      .sort((a, b) => a.cellRef.localeCompare(b.cellRef, undefined, { numeric: true }));
 
     if (entries.length === 0) {
       container.innerHTML = `
-        <h3>métricas financieras (fx)</h3>
+        <h3>métricas y resultado financiero</h3>
         <div style="padding:12px;border-radius:7px;border:1px dashed var(--line);background:var(--bg2);font-size:9.6px;color:var(--tx2);line-height:1.45">
-          Aún no hay celdas financieras en esta planilla.<br><br>
-          Añade cualquiera de los <b>54 nodos financieros</b> desde el panel izquierdo o carga un modelo pre-armado para ver balances, márgenes, VAN/TIR y auditoría de fórmulas en vivo.
+          Aún no hay nodos financieros en esta planilla.<br><br>
+          Añade nodos o gráficas desde el panel izquierdo o carga una plantilla modelo para evaluar si hay <b>ganancia, pérdida o punto de equilibrio</b> en tiempo real.
         </div>
       `;
       return;
@@ -1494,8 +2352,30 @@
 
     const inFmt = formatFinanceNumber(s.totalInflows, 'currency', null);
     const outFmt = formatFinanceNumber(s.totalOutflows, 'currency', null);
-    const netFmt = formatFinanceNumber(s.netBalance, 'currency', null);
+    const netSignedFmt =
+      (s.netBalance > 0 ? '+' : '') + formatFinanceNumber(s.netBalance, 'currency', null);
     const mgFmt = s.impliedMarginPct !== null ? formatFinanceNumber(s.impliedMarginPct, 'percent', null) : '—';
+    const covFmt = s.coverageRatio !== null ? `${s.coverageRatio.toFixed(2)}x` : '—';
+
+    const vCls = s.verdict === 'profit' ? 'is-profit' : s.verdict === 'loss' ? 'is-loss' : 'is-even';
+    const vTitle =
+      s.verdict === 'profit'
+        ? '▲ OPERACIÓN EN GANANCIA'
+        : s.verdict === 'loss'
+          ? '▼ OPERACIÓN EN PÉRDIDA'
+          : '● PUNTO DE EQUILIBRIO';
+    const vSub =
+      s.verdict === 'profit'
+        ? `Los ingresos superan a los egresos por ${formatFinanceNumber(s.netBalance, 'currency', null)}.`
+        : s.verdict === 'loss'
+          ? `Los costos/salidas exceden los ingresos por ${formatFinanceNumber(Math.abs(s.netBalance), 'currency', null)}.`
+          : 'Los ingresos cubren exactamente los egresos actuales ($0 neto).';
+
+    const maxBar = Math.max(1, s.totalInflows, s.totalOutflows, Math.abs(s.netBalance));
+    const wIn = Math.max(4, Math.round((s.totalInflows / maxBar) * 150));
+    const wOut = Math.max(4, Math.round((s.totalOutflows / maxBar) * 150));
+    const wNet = Math.max(4, Math.round((Math.abs(s.netBalance) / maxBar) * 150));
+    const netStroke = s.verdict === 'profit' ? '#4ade80' : s.verdict === 'loss' ? '#fb7185' : '#fbbf24';
 
     let investHighlights = '';
     if (s.npvValue !== null || s.irrValue !== null || s.roiValue !== null) {
@@ -1509,8 +2389,38 @@
     }
 
     container.innerHTML = `
-      <h3>métricas de planilla (fx)</h3>
+      <h3>diagnóstico y métricas financieras</h3>
       <div class="fin-metrics-wrap">
+        <div class="fin-diag-banner ${vCls}">
+          <div class="fin-diag-banner__top">
+            <span class="fin-verdict-pill ${vCls}">${vTitle}</span>
+            <span class="fin-diag-cov">cobertura ${escapeHTML(covFmt)}</span>
+          </div>
+          <div class="fin-diag-banner__val">${escapeHTML(netSignedFmt)}</div>
+          <div class="fin-diag-banner__desc">${escapeHTML(vSub)}</div>
+        </div>
+
+        <div class="fin-panel-chart-box">
+          <div class="fin-panel-chart-head">
+            <span>comparativa visual de resultado</span>
+            <span>margen: <b>${escapeHTML(mgFmt)}</b></span>
+          </div>
+          <svg viewBox="0 0 260 92" class="fin-panel-svg" aria-hidden="true">
+            <line x1="64" y1="6" x2="64" y2="84" stroke="#2a3138" stroke-width="1"/>
+            <text x="2" y="23" fill="#94a3b8" font-size="8.4" font-family="JetBrains Mono">Ingresos</text>
+            <rect x="65" y="13" width="${wIn}" height="13" rx="3" fill="#4ade80" fill-opacity="0.88"/>
+            <text x="${Math.min(216, 70 + wIn)}" y="23" fill="#dcfce7" font-size="8.2" font-weight="700" font-family="JetBrains Mono">${escapeHTML(compactMoney(s.totalInflows))}</text>
+
+            <text x="2" y="50" fill="#94a3b8" font-size="8.4" font-family="JetBrains Mono">Egresos</text>
+            <rect x="65" y="40" width="${wOut}" height="13" rx="3" fill="#fb7185" fill-opacity="0.88"/>
+            <text x="${Math.min(216, 70 + wOut)}" y="50" fill="#ffe4e6" font-size="8.2" font-weight="700" font-family="JetBrains Mono">${escapeHTML(compactMoney(s.totalOutflows))}</text>
+
+            <text x="2" y="77" fill="#e2e8f0" font-size="8.4" font-weight="700" font-family="JetBrains Mono">${s.verdict === 'loss' ? 'Pérdida' : 'Ganancia'}</text>
+            <rect x="65" y="67" width="${wNet}" height="13" rx="3" fill="${netStroke}"/>
+            <text x="${Math.min(212, 70 + wNet)}" y="77" fill="${netStroke}" font-size="8.4" font-weight="700" font-family="JetBrains Mono">${escapeHTML((s.netBalance > 0 ? '+' : '') + compactMoney(s.netBalance))}</text>
+          </svg>
+        </div>
+
         <div class="fin-kpi-grid">
           <div class="fin-kpi-card">
             <span class="fin-kpi-lbl">ingresos / entradas</span>
@@ -1520,24 +2430,31 @@
             <span class="fin-kpi-lbl">costos / salidas</span>
             <span class="fin-kpi-num is-neg">${escapeHTML(outFmt)}</span>
           </div>
-          <div class="fin-kpi-card is-wide">
-            <span class="fin-kpi-lbl">resultado / flujo neto</span>
-            <span class="fin-kpi-num ${s.netBalance >= 0 ? 'is-pos' : 'is-neg'}">${escapeHTML(netFmt)} <small style="font-weight:500;font-size:9.5px;color:var(--tx2)">(margen: ${escapeHTML(mgFmt)})</small></span>
-          </div>
         </div>
 
         ${investHighlights}
 
+        <div class="fin-insert-charts-box">
+          <span class="fin-insert-charts-lbl">insertar gráfica de resultado en el lienzo</span>
+          <div class="fin-insert-charts-grid">
+            <button type="button" class="btn fin-ins-chart-btn" data-insert-fin-chart="fin_verdict_kpi">+ veredicto</button>
+            <button type="button" class="btn fin-ins-chart-btn" data-insert-fin-chart="fin_chart_pnl">+ barras p&amp;l</button>
+            <button type="button" class="btn fin-ins-chart-btn" data-insert-fin-chart="fin_chart_waterfall">+ cascada</button>
+            <button type="button" class="btn fin-ins-chart-btn" data-insert-fin-chart="fin_chart_margin">+ margen %</button>
+          </div>
+        </div>
+
         <div style="display:flex;justify-content:space-between;padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg2);font-size:9px;color:var(--tx2)">
-          <span>celdas: <b style="color:var(--tx0)">${s.totalCells}</b></span>
+          <span>nodos: <b style="color:var(--tx0)">${s.totalCells}</b></span>
+          <span>gráficas: <b style="color:var(--tx0)">${s.chartCells || 0}</b></span>
           <span>fórmulas: <b style="color:var(--tx0)">${s.formulaCells}</b></span>
           <span>errores: <b style="color:${s.errorCells ? '#fb7185' : '#4ade80'}">${s.errorCells}</b></span>
         </div>
 
         <div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-            <span style="font-size:9.5px;font-weight:700;color:var(--tx1)">libro de celdas en vivo</span>
-            <button type="button" class="btn fin-csv-btn" id="btnPanelExportCsv">.csv excel</button>
+            <span style="font-size:9.5px;font-weight:700;color:var(--tx1)">registro de valores en vivo</span>
+            <button type="button" class="btn fin-csv-btn" id="btnPanelExportCsv">.csv</button>
           </div>
           <div class="fin-sheet-ledger">
             <div class="fin-ledger-head">
@@ -1559,10 +2476,17 @@
       </div>
     `;
 
+    container.querySelectorAll('[data-insert-fin-chart]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        insertFinanceChartNodeOnCanvas(btn.dataset.insertFinChart);
+      });
+    });
+
     container.querySelectorAll('[data-focus-fin-id]').forEach(row => {
       row.addEventListener('click', () => {
         const id = row.dataset.focusFinId;
         if (typeof setSel === 'function') setSel({ kind: 'node', id });
+        if (typeof centerOnNode === 'function') centerOnNode(id);
       });
     });
 
@@ -1570,7 +2494,7 @@
   }
 
   // =========================================================================
-  // EXPORTACIÓN .CSV COMPATIBLE CON MICROSOFT EXCEL / GOOGLE SHEETS
+  // EXPORTACIÓN .CSV DE LA PLANILLA FINANCIERA
   // =========================================================================
   function exportFinanceSheetCSV() {
     const sheet = evaluateFinanceSheet();
@@ -1578,7 +2502,7 @@
       a.cellRef.localeCompare(b.cellRef, undefined, { numeric: true })
     );
     if (!entries.length) {
-      if (typeof showToast === 'function') showToast('No hay celdas financieras para exportar', 'info', 1600);
+      if (typeof showToast === 'function') showToast('No hay datos financieros para exportar', 'info', 1600);
       return;
     }
 
@@ -1603,7 +2527,7 @@
     a.download = `${slug}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    if (typeof showToast === 'function') showToast('Planilla exportada a .CSV (Excel)', 'ok', 1800);
+    if (typeof showToast === 'function') showToast('Planilla exportada a .CSV', 'ok', 1800);
   }
 
   // =========================================================================
@@ -1629,6 +2553,28 @@
 
     if (templateKey === 'fin_blanco') {
       return { nodes: [], edges: [], domain: 'finance', title: 'planilla_financiera' };
+    }
+
+    if (templateKey === 'fin_dashboard_pnl') {
+      const rev = mk('fin_revenue', 'Ingresos por Ventas', 'A1', 128000, 84, 60);
+      const otherIn = mk('fin_cash_in', 'Ingresos Servicios', 'A2', 24000, 84, 240);
+      const cogs = mk('fin_cogs', 'Costo Directo (COGS)', 'B1', 54000, 360, 60);
+      const opex = mk('fin_opex', 'Gastos Operativos', 'B2', 31500, 360, 240);
+      const ebitda = mk('fin_ebitda', 'EBITDA Operativo', 'C1', 0, 636, 60, { formula: '=A1+A2-B1-B2' });
+      const tax = mk('fin_tax', 'Impuestos (10%)', 'C2', 0, 636, 240, { rate: 10 });
+      const net = mk('fin_net_income', 'Utilidad Neta Final', 'D1', 0, 912, 150);
+      const verdict = mk('fin_verdict_kpi', 'Veredicto del Ejercicio', 'E1', 0, 84, 456);
+      const chartPnl = mk('fin_chart_pnl', 'Ingresos vs Costos', 'E2', 0, 384, 456);
+      const chartWf = mk('fin_chart_waterfall', 'Cascada de Rentabilidad', 'E3', 0, 720, 456);
+
+      wire(rev, ebitda, '+'); wire(otherIn, ebitda, '+');
+      wire(cogs, ebitda, '-'); wire(opex, ebitda, '-');
+      wire(ebitda, tax, 'Base');
+      wire(ebitda, net); wire(tax, net, '-Imp');
+      wire(rev, chartPnl); wire(otherIn, chartPnl); wire(cogs, chartPnl); wire(opex, chartPnl); wire(tax, chartPnl); wire(net, chartPnl);
+      wire(rev, chartWf); wire(otherIn, chartWf); wire(cogs, chartWf); wire(opex, chartWf); wire(tax, chartWf);
+      wire(net, verdict);
+      return { nodes: N, edges: E, domain: 'finance', title: 'tablero_ganancia_perdida' };
     }
 
     if (templateKey === 'fin_flujo_caja') {
@@ -1773,8 +2719,11 @@
       const applyBarFormulaOrValue = () => {
         const selNode = STATE.sel && STATE.sel.kind === 'node' ? byId(STATE.sel.id) : null;
         if (!selNode || !isFinanceNodeType(selNode.type)) return;
+        const def = getFinanceNodeDef(selNode.type);
         const raw = fxInput.value.trim();
-        if (raw.startsWith('=')) {
+        if (def?.isChart) {
+          selNode.params.subtitle = raw;
+        } else if (raw.startsWith('=')) {
           selNode.params.formula = raw;
         } else if (raw === '') {
           selNode.params.formula = '';
@@ -1803,6 +2752,14 @@
       fxInput.addEventListener('change', applyBarFormulaOrValue);
     }
 
+    const verdictEl = document.getElementById('finBarVerdict');
+    if (verdictEl) {
+      verdictEl.style.cursor = 'pointer';
+      verdictEl.addEventListener('click', () => {
+        if (typeof setTab === 'function') setTab('stats');
+      });
+    }
+
     if (curSel) {
       curSel.addEventListener('change', e => setSheetCurrency(e.target.value));
     }
@@ -1827,6 +2784,7 @@
   window.renderFinanceNodeHtml = renderFinanceNodeHtml;
   window.renderFinanceNodeInspector = renderFinanceNodeInspector;
   window.renderFinanceMetricsPanel = renderFinanceMetricsPanel;
+  window.insertFinanceChartNodeOnCanvas = insertFinanceChartNodeOnCanvas;
   window.buildFinanceTemplate = buildFinanceTemplate;
   window.loadFinancePresetOntoCanvas = loadFinancePresetOntoCanvas;
   window.exportFinanceSheetCSV = exportFinanceSheetCSV;

@@ -11,7 +11,7 @@
     { id: 'tree_right', label: 'Árbol Lateral (├)', desc: 'Dendrograma expandido hacia la derecha' },
     { id: 'swimlanes_type', label: 'Carriles por Rol/Tipo', desc: 'Agrupa Inicio, Procesos, Decisiones, Datos, IA y Finanzas' },
     { id: 'kanban_status', label: 'Kanban por Estado', desc: 'Columnas: Pendiente · En curso · Hecho · Error' },
-    { id: 'excel_sheet', label: 'Hoja Excel (A1..Zn)', desc: 'Alinea celdas financieras según su columna y fila' },
+    { id: 'excel_sheet', label: 'Planilla (A1..Zn)', desc: 'Alinea celdas financieras según su columna y fila' },
     { id: 'snake_serpentine', label: 'Serpentina (Zig-Zag)', desc: 'Flujo continuo en S para cadenas largas' },
     { id: 'grid_matrix', label: 'Cuadrícula / Matriz', desc: ' Filas y columnas uniformes perfectamente alineadas' },
     { id: 'radial_rings', label: 'Anillos Radiales', desc: 'Núcleo central con anillos concéntricos por nivel' },
@@ -39,8 +39,18 @@
     return Boolean(n && typeof isFinanceNodeType === 'function' && isFinanceNodeType(n.type));
   }
 
+  function isFinVisualChart(n) {
+    return Boolean(
+      n &&
+        typeof n.type === 'string' &&
+        (n.type === 'fin_verdict_kpi' || n.type.startsWith('fin_chart_'))
+    );
+  }
+
   function isChart(n) {
-    return Boolean(n && typeof n.type === 'string' && n.type.startsWith('chart_'));
+    return Boolean(
+      n && typeof n.type === 'string' && (n.type.startsWith('chart_') || isFinVisualChart(n))
+    );
   }
 
   function measureNodeSafe(n) {
@@ -67,7 +77,13 @@
     let minW = 180;
     let minH = Math.max(68, 50 + Math.ceil(textLen / 22) * 16);
 
-    if (isFin(n)) {
+    if (n && n.type === 'fin_verdict_kpi') {
+      minW = 266;
+      minH = 176;
+    } else if (isFinVisualChart(n)) {
+      minW = 298;
+      minH = 228;
+    } else if (isFin(n)) {
       // Las tarjetas financieras incluyen cabecera de celda, título, barra fx, monto principal y referencias
       minW = 228;
       minH = 152 + (textLen > 26 ? 16 : 0);
@@ -559,7 +575,7 @@
     const scale = densityScale(opts.density);
     const wfNodes = nodes.filter(n => !isFin(n) && !isChart(n));
     const chartNodes = nodes.filter(n => isChart(n));
-    const finNodes = nodes.filter(n => isFin(n));
+    const finNodes = nodes.filter(n => isFin(n) && !isFinVisualChart(n));
 
     if (finNodes.length > 0 && wfNodes.length === 0 && chartNodes.length === 0) {
       layoutExcelSheet(finNodes, edges, opts);
@@ -1072,12 +1088,12 @@
     // Si conviven nodos de flujo y finanzas o gráficos, usar separación limpia Flujo ⇄ Finanzas
     let mode = rawOptions.mode || 'auto';
     if (mode === 'auto') {
-      const hasFin = targetNodes.some(isFin);
+      const hasFinCells = targetNodes.some(n => isFin(n) && !isFinVisualChart(n));
       const hasWf = targetNodes.some(n => !isFin(n) && !isChart(n));
       const hasCharts = targetNodes.some(isChart);
-      if ((hasFin && hasWf) || (hasCharts && targetNodes.length > 10)) {
+      if ((hasFinCells && hasWf) || (hasFinCells && hasCharts) || (hasCharts && targetNodes.length > 10)) {
         mode = 'domain_bridge';
-      } else if (hasFin && !hasWf) {
+      } else if (hasFinCells && !hasWf) {
         mode = 'excel_sheet';
       } else {
         mode = 'compact';

@@ -534,14 +534,16 @@ function initHeaderTooltips() {
     'chart_donut': { title: 'gráfico_donut()', desc: 'Distribución porcentual por categorías.' },
     'chart_gauge': { title: 'gráfico_gauge()', desc: 'Velocímetro de cumplimiento de metas y objetivos.' },
     'chart_funnel': { title: 'gráfico_funnel()', desc: 'Embudo de conversión entre etapas del proceso.' },
-    'btnFinExportCsv': { title: 'exportar .csv excel', desc: 'Descarga todas las celdas, fórmulas y montos calculados en un archivo CSV listo para Excel.' }
+    'btnFinExportCsv': { title: 'exportar .csv', desc: 'Descarga todos los nodos, fórmulas y montos calculados en un archivo .CSV.' }
   };
 
   if (typeof FINANCE_NODE_LIST !== 'undefined' && Array.isArray(FINANCE_NODE_LIST)) {
     FINANCE_NODE_LIST.forEach(item => {
       tooltips[item.type] = {
         title: `${item.fn || item.type} · ${item.title}`,
-        desc: `Celda reactiva tipo Excel (${item.fxHint || 'cálculo automático'}).`
+        desc: item.isChart
+          ? `Visualización financiera en vivo (${item.fxHint || 'diagnóstico automático de ganancia/pérdida'}).`
+          : `Nodo financiero reactivo (${item.fxHint || 'cálculo automático'}).`
       };
     });
   }
