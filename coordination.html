@@ -347,16 +347,21 @@
 
     <div class="ai-sidebar" id="aiSidebarView" hidden>
       <div class="ai-topbar">
-        <button type="button" class="ai-provider-pill" id="btnAiProviderPill" title="Configurar conexión IA">
-          <span class="ai-provider-dot" id="aiProviderDot" aria-hidden="true"></span>
-          <span id="aiProviderLabel">Asistente integrado</span>
-        </button>
+        <div class="ai-topbar-left">
+          <button type="button" class="ai-icon-btn ai-sidebar-toggle-btn" id="btnAiSidebarOpen" aria-label="Abrir historial lateral de chats" aria-expanded="false" title="Abrir historial de chats (panel lateral)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+          </button>
+          <button type="button" class="ai-provider-pill" id="btnAiProviderPill" title="Configurar conexión IA">
+            <span class="ai-provider-dot" id="aiProviderDot" aria-hidden="true"></span>
+            <span id="aiProviderLabel">Asistente integrado</span>
+          </button>
+        </div>
         <div class="ai-topbar-actions">
           <button type="button" class="ai-icon-btn" id="btnAiNewChat" aria-label="Crear nuevo chat" title="Crear nuevo chat sin borrar los anteriores">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             <span>nuevo</span>
           </button>
-          <button type="button" class="ai-icon-btn" id="btnAiHistory" aria-label="Historial de chats guardados" aria-expanded="false" title="Ver todos los chats guardados">
+          <button type="button" class="ai-icon-btn" id="btnAiHistory" aria-label="Historial de chats guardados" aria-expanded="false" title="Abrir historial lateral de chats guardados">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="13" y2="13"/></svg>
             <span>chats</span>
             <span class="ai-sessions-badge" id="aiSessionsCount">1</span>
@@ -370,33 +375,52 @@
         </div>
       </div>
 
-      <!-- Barra de sesión activa + registro persistente de todos los chats guardados -->
+      <!-- Barra de sesión activa (clic abre el panel lateral superpuesto de izquierda a derecha) -->
       <div class="ai-session-bar" id="aiSessionBar">
-        <button type="button" class="ai-session-current" id="btnAiSessionCurrent" title="Cambiar de conversación o abrir un chat guardado">
+        <button type="button" class="ai-session-current" id="btnAiSessionCurrent" title="Abrir historial de chats guardados">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           <span class="ai-session-current__title" id="aiActiveSessionTitle">Nuevo chat FlowLab</span>
           <span class="ai-session-current__meta" id="aiActiveSessionMeta">guardado</span>
-          <svg class="ai-session-current__chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="ai-session-current__chev" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
       </div>
 
-      <div class="ai-sessions-drawer" id="aiSessionsDrawer" hidden>
+      <!-- Fondo semitransparente + Ventana lateral de historial (despliegue izquierda -> derecha superpuesta sobre todo el menú IA) -->
+      <div class="ai-sessions-backdrop" id="aiSessionsBackdrop" hidden></div>
+      <aside class="ai-sessions-drawer" id="aiSessionsDrawer" aria-label="Historial de chats guardados" hidden>
         <div class="ai-sessions-head">
-          <div class="ai-sessions-head__title">
-            <span>:: registro de chats guardados</span>
-            <small id="aiSessionsSubtitle">persistente en localStorage</small>
+          <div class="ai-sessions-brand">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+            <span>FlowLab IA</span>
           </div>
-          <button type="button" class="ai-mini-btn ai-sessions-new-btn" id="btnAiDrawerNewChat">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>nuevo chat</span>
+          <button type="button" class="ai-sessions-collapse-btn" id="btnAiCloseSessions" aria-label="Cerrar panel de chats" title="Ocultar historial de chats">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2.5"/><line x1="9" y1="3" x2="9" y2="21"/><polyline points="15 15 12 12 15 9"/></svg>
           </button>
         </div>
-        <div class="ai-sessions-search-wrap" id="aiSessionsSearchWrap" hidden>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="aiSessionSearchInput" placeholder="Buscar conversación guardada..." autocomplete="off">
+
+        <div class="ai-sessions-nav">
+          <button type="button" class="ai-sessions-new-row" id="btnAiDrawerNewChat">
+            <svg width="13.5" height="13.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span>Nuevo chat</span>
+          </button>
+
+          <div class="ai-sessions-search-wrap" id="aiSessionsSearchWrap">
+            <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7.5"/><line x1="20.5" y1="20.5" x2="16.4" y2="16.4"/></svg>
+            <input type="text" id="aiSessionSearchInput" placeholder="Buscar chats..." autocomplete="off">
+            <button type="button" class="ai-sessions-search-clear" id="btnAiClearSessionSearch" aria-label="Limpiar búsqueda" hidden>×</button>
+          </div>
         </div>
+
         <div class="ai-sessions-list" id="aiSessionsList" role="listbox" aria-label="Conversaciones guardadas"></div>
-      </div>
+
+        <div class="ai-sessions-foot">
+          <span class="ai-sessions-foot__avatar" id="aiDrawerUserInitial" aria-hidden="true">F</span>
+          <div class="ai-sessions-foot__info">
+            <strong id="aiDrawerUserName">Espacio local</strong>
+            <small id="aiSessionsSubtitle">1 chat guardado</small>
+          </div>
+        </div>
+      </aside>
 
       <!-- Aviso visual persistente cuando falla la conexión con el proveedor / gateway -->
       <div class="ai-conn-banner" id="aiConnBanner" role="alert" hidden>

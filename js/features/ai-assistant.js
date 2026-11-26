@@ -4953,13 +4953,38 @@
     return AI_SVG.spark;
   }
 
+  let sessionsDrawerHideTimer = null;
+
+  function classifyChatDateBucket(ts) {
+    const t = Number(ts) || Date.now();
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const oneDayMs = 86400000;
+    if (t >= startOfToday) return 'HOY';
+    if (t >= startOfToday - oneDayMs) return 'AYER';
+    if (t >= startOfToday - 7 * oneDayMs) return 'ÚLTIMOS 7 DÍAS';
+    if (t >= startOfToday - 30 * oneDayMs) return 'ÚLTIMOS 30 DÍAS';
+    return 'ANTERIORES';
+  }
+
+  function getSessionRowIcon(session) {
+    const msgs = Array.isArray(session?.messages) ? session.messages : [];
+    const hasActions = msgs.some(m => m && (m.appliedSummary || (m.meta && m.meta.appliedCount > 0)));
+    if (hasActions) return AI_SVG.layers;
+    const hasDocs = msgs.some(m => m && Array.isArray(m.attachments) && m.attachments.length > 0);
+    if (hasDocs) return AI_SVG.book;
+    return AI_SVG.chat;
+  }
+
   function updateAISessionBarUI() {
     const active = getActiveAISession();
     const countBadge = document.getElementById('aiSessionsCount');
     const titleEl = document.getElementById('aiActiveSessionTitle');
     const metaEl = document.getElementById('aiActiveSessionMeta');
     const subEl = document.getElementById('aiSessionsSubtitle');
-    const searchWrap = document.getElementById('aiSessionsSearchWrap');
+    const clearSearchBtn = document.getElementById('btnAiClearSessionSearch');
+    const userInitEl = document.getElementById('aiDrawerUserInitial');
+    const userNameEl = document.getElementById('aiDrawerUserName');
 
     if (countBadge) {
       countBadge.textContent = String(aiSessions.length);
@@ -4969,25 +4994,48 @@
     }
     if (metaEl) {
       const msgCount = Array.isArray(active.messages) ? active.messages.length : 0;
-      metaEl.textContent = msgCount > 0 ? `${msgCount} msj · guardado` : 'nuevo · guardado';
+      metaEl.textContent = msgCount > 0 ? `${msgCount} msj` : 'nuevo';
     }
     if (subEl) {
-      subEl.textContent = `${aiSessions.length} chat${aiSessions.length === 1 ? '' : 's'} guardado${aiSessions.length === 1 ? '' : 's'} en este espacio`;
+      subEl.textContent = `${aiSessions.length} chat${aiSessions.length === 1 ? '' : 's'} guardado${aiSessions.length === 1 ? '' : 's'}`;
     }
-    if (searchWrap) {
-      searchWrap.hidden = aiSessions.length < 3 && !sessionsSearchQuery;
+    if (clearSearchBtn) {
+      clearSearchBtn.hidden = !sessionsSearchQuery;
     }
+
+    if (userInitEl || userNameEl) {
+      const activeUser = typeof window.getActiveUser === 'function' ? window.getActiveUser() : null;
+      const displayLabel = (activeUser && (activeUser.email || activeUser.name)) || 'Espacio local';
+      if (userNameEl) userNameEl.textContent = displayLabel;
+      if (userInitEl) {
+        const ch = String(activeUser?.name || displayLabel || 'F').trim().charAt(0).toUpperCase() || 'F';
+        userInitEl.textContent = ch;
+      }
+    }
+  }
+
+  function isSessionsDrawerOpen() {
+    const drawer = document.getElementById('aiSessionsDrawer');
+    return Boolean(drawer && !drawer.hidden && drawer.classList.contains('is-open'));
   }
 
   function toggleSessionsDrawer(forceState) {
     const drawer = document.getElementById('aiSessionsDrawer');
+    const backdrop = document.getElementById('aiSessionsBackdrop');
     const btnHist = document.getElementById('btnAiHistory');
+    const btnOpen = document.getElementById('btnAiSidebarOpen');
     const btnCur = document.getElementById('btnAiSessionCurrent');
     if (!drawer) return;
 
-    const nextOpen = typeof forceState === 'boolean' ? forceState : drawer.hidden;
+    const currentlyOpen = !drawer.hidden && drawer.classList.contains('is-open');
+    const nextOpen = typeof forceState === 'boolean' ? forceState : !currentlyOpen;
+
+    if (sessionsDrawerHideTimer) {
+      clearTimeout(sessionsDrawerHideTimer);
+      sessionsDrawerHideTimer = null;
+    }
+
     if (nextOpen) {
-      // Cerrar gaveta de conexión si estaba abierta para mantener limpio el panel
       const cfgDrawer = document.getElementById('aiConfigDrawer');
       if (cfgDrawer && !cfgDrawer.hidden) {
         toggleConfigDrawer(false);
@@ -4995,16 +5043,82 @@
       renamingSessionId = null;
       pendingDeleteSessionId = null;
       renderAISessionsList();
+
+      drawer.hidden = false;
+      if (backdrop) backdrop.hidden = false;
+      // Forzar reflujo para animar limpiamente de izquierda -> derecha
+      void drawer.offsetWidth;
+      drawer.classList.add('is-open');
+      if (backdrop) backdrop.classList.add('is-open');
+    } else {
+      drawer.classList.remove('is-open');
+      if (backdrop) backdrop.classList.remove('is-open');
+      sessionsDrawerHideTimer = setTimeout(() => {
+        if (!drawer.classList.contains('is-open')) {
+          drawer.hidden = true;
+          if (backdrop) backdrop.hidden = true;
+        }
+        sessionsDrawerHideTimer = null;
+      }, 220);
     }
 
-    drawer.hidden = !nextOpen;
     if (btnHist) {
       btnHist.classList.toggle('is-active', nextOpen);
       btnHist.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
     }
+    if (btnOpen) {
+      btnOpen.classList.toggle('is-active', nextOpen);
+      btnOpen.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
+    }
     if (btnCur) {
       btnCur.classList.toggle('is-open', nextOpen);
     }
+  }
+
+  function renderSingleSessionRowHtml(session) {
+    const isCurrent = session.id === activeSessionId;
+    const msgCount = Array.isArray(session.messages) ? session.messages.length : 0;
+    const timeStr = formatRelativeChatTime(session.updatedAt);
+
+    if (renamingSessionId === session.id) {
+      return `
+        <div class="ai-session-item ${isCurrent ? 'is-active' : ''} is-editing">
+          <div class="ai-session-rename-row">
+            <input type="text" class="ai-session-rename-input" data-rename-input="${escapeHTML(session.id)}" value="${escapeHTML(session.title)}" maxlength="60" autocomplete="off">
+            <button type="button" class="ai-mini-btn" data-rename-save="${escapeHTML(session.id)}" title="Guardar título">${AI_SVG.check}</button>
+            <button type="button" class="ai-mini-btn" data-rename-cancel="1" title="Cancelar">${AI_SVG.cross}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (pendingDeleteSessionId === session.id) {
+      return `
+        <div class="ai-session-item ${isCurrent ? 'is-active' : ''} is-confirm-del">
+          <span class="ai-session-del-label">¿Eliminar "${escapeHTML(session.title.slice(0, 22))}"?</span>
+          <div class="ai-session-del-btns">
+            <button type="button" class="ai-mini-btn is-danger" data-del-confirm="${escapeHTML(session.id)}">sí</button>
+            <button type="button" class="ai-mini-btn" data-del-cancel="1">no</button>
+          </div>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="ai-session-item ${isCurrent ? 'is-active' : ''}" role="option" aria-selected="${isCurrent ? 'true' : 'false'}">
+        <button type="button" class="ai-session-select" data-select-session="${escapeHTML(session.id)}" title="${escapeHTML(session.title || 'Nuevo chat FlowLab')} · ${msgCount} msj · ${escapeHTML(timeStr)}">
+          <span class="ai-session-icon">${getSessionRowIcon(session)}</span>
+          <span class="ai-session-body">
+            <span class="ai-session-title">${escapeHTML(session.title || 'Nuevo chat FlowLab')}</span>
+            <span class="ai-session-sub">${msgCount} msj · ${escapeHTML(timeStr)}</span>
+          </span>
+        </button>
+        <div class="ai-session-actions">
+          <button type="button" class="ai-session-act-btn" data-start-rename="${escapeHTML(session.id)}" title="Renombrar chat" aria-label="Renombrar chat">${AI_SVG.edit}</button>
+          <button type="button" class="ai-session-act-btn is-del" data-start-del="${escapeHTML(session.id)}" title="Eliminar chat" aria-label="Eliminar chat">${AI_SVG.trash}</button>
+        </div>
+      </div>
+    `;
   }
 
   function renderAISessionsList() {
@@ -5013,9 +5127,10 @@
 
     updateAISessionBarUI();
 
+    const ordered = [...aiSessions].sort((a, b) => (Number(b.updatedAt) || 0) - (Number(a.updatedAt) || 0));
     const q = normalizePlainSpanish(sessionsSearchQuery);
     const filtered = q
-      ? aiSessions.filter(s => {
+      ? ordered.filter(s => {
           const inTitle = normalizePlainSpanish(s.title).includes(q);
           const inProj = normalizePlainSpanish(s.projectTitle).includes(q);
           const inMsgs = Array.isArray(s.messages)
@@ -5023,63 +5138,32 @@
             : false;
           return inTitle || inProj || inMsgs;
         })
-      : aiSessions;
+      : ordered;
 
     if (filtered.length === 0) {
-      listEl.innerHTML = `<div class="ai-sessions-empty">No hay conversaciones que coincidan con "${escapeHTML(sessionsSearchQuery)}".</div>`;
+      listEl.innerHTML = `<div class="ai-sessions-empty">Sin resultados para "${escapeHTML(sessionsSearchQuery)}".</div>`;
       return;
     }
 
-    listEl.innerHTML = filtered
-      .map(session => {
-        const isCurrent = session.id === activeSessionId;
-        const msgCount = Array.isArray(session.messages) ? session.messages.length : 0;
-        const timeStr = formatRelativeChatTime(session.updatedAt);
-        const projStr = session.projectTitle ? ` · ${session.projectTitle}` : '';
+    const bucketOrder = ['HOY', 'AYER', 'ÚLTIMOS 7 DÍAS', 'ÚLTIMOS 30 DÍAS', 'ANTERIORES'];
+    const buckets = new Map(bucketOrder.map(k => [k, []]));
+    filtered.forEach(s => {
+      const b = classifyChatDateBucket(s.updatedAt || s.createdAt);
+      buckets.get(b).push(s);
+    });
 
-        if (renamingSessionId === session.id) {
-          return `
-            <div class="ai-session-item ${isCurrent ? 'is-active' : ''} is-editing">
-              <div class="ai-session-rename-row">
-                <input type="text" class="ai-session-rename-input" data-rename-input="${escapeHTML(session.id)}" value="${escapeHTML(session.title)}" maxlength="60" autocomplete="off">
-                <button type="button" class="ai-mini-btn" data-rename-save="${escapeHTML(session.id)}" title="Guardar título">${AI_SVG.check}</button>
-                <button type="button" class="ai-mini-btn" data-rename-cancel="1" title="Cancelar">${AI_SVG.cross}</button>
-              </div>
-            </div>
-          `;
-        }
-
-        if (pendingDeleteSessionId === session.id) {
-          return `
-            <div class="ai-session-item ${isCurrent ? 'is-active' : ''} is-confirm-del">
-              <span class="ai-session-del-label">¿Eliminar "${escapeHTML(session.title.slice(0, 24))}"?</span>
-              <div class="ai-session-del-btns">
-                <button type="button" class="ai-mini-btn is-danger" data-del-confirm="${escapeHTML(session.id)}">sí</button>
-                <button type="button" class="ai-mini-btn" data-del-cancel="1">no</button>
-              </div>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="ai-session-item ${isCurrent ? 'is-active' : ''}" role="option" aria-selected="${isCurrent ? 'true' : 'false'}">
-            <button type="button" class="ai-session-select" data-select-session="${escapeHTML(session.id)}">
-              <span class="ai-session-icon">${AI_SVG.chat}</span>
-              <span class="ai-session-body">
-                <span class="ai-session-title-row">
-                  <span class="ai-session-title">${escapeHTML(session.title || 'Nuevo chat FlowLab')}</span>
-                  ${isCurrent ? '<span class="ai-session-pill">activo</span>' : ''}
-                </span>
-                <span class="ai-session-sub">${msgCount} msj${msgCount === 1 ? '' : 's'}${escapeHTML(projStr)} · ${escapeHTML(timeStr)}</span>
-              </span>
-            </button>
-            <div class="ai-session-actions">
-              <button type="button" class="ai-session-act-btn" data-start-rename="${escapeHTML(session.id)}" title="Renombrar chat" aria-label="Renombrar chat">${AI_SVG.edit}</button>
-              <button type="button" class="ai-session-act-btn is-del" data-start-del="${escapeHTML(session.id)}" title="Eliminar chat" aria-label="Eliminar chat">${AI_SVG.trash}</button>
-            </div>
+    listEl.innerHTML = bucketOrder
+      .filter(k => buckets.get(k).length > 0)
+      .map(
+        k => `
+        <div class="ai-sessions-group">
+          <div class="ai-sessions-group-label">${escapeHTML(k)}</div>
+          <div class="ai-sessions-group-items">
+            ${buckets.get(k).map(renderSingleSessionRowHtml).join('')}
           </div>
-        `;
-      })
+        </div>
+      `
+      )
       .join('');
 
     listEl.querySelectorAll('[data-select-session]').forEach(btn => {
@@ -5169,7 +5253,7 @@
     if (Array.isArray(active.messages) && active.messages.length === 0) {
       toggleSessionsDrawer(false);
       renderAIMessages(true);
-      if (!window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches) {
+      if (!window.matchMedia?.('(max-width: 768px) and (pointer: coarse)')?.matches) {
         document.getElementById('aiChatInput')?.focus();
       }
       if (typeof showToast === 'function') {
@@ -5196,7 +5280,7 @@
     toggleSessionsDrawer(false);
     renderAIMessages(true);
 
-    if (!window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches) {
+    if (!window.matchMedia?.('(max-width: 768px) and (pointer: coarse)')?.matches) {
       document.getElementById('aiChatInput')?.focus();
     }
     if (typeof showToast === 'function') {
@@ -6277,11 +6361,11 @@
   }
 
   function openAISidebarTab(openConfig = false) {
-    if (typeof openMobileRightPanel === 'function' && window.matchMedia('(max-width: 980px)').matches) {
+    if (typeof openMobileRightPanel === 'function' && window.matchMedia?.('(max-width: 980px)')?.matches) {
       openMobileRightPanel('ai');
     } else {
       const panelEl = document.getElementById('rightPanel') || document.querySelector('aside.panel');
-      if (panelEl && window.matchMedia('(max-width: 980px)').matches) {
+      if (panelEl && window.matchMedia?.('(max-width: 980px)')?.matches) {
         panelEl.classList.add('mobile-open');
       }
       if (typeof switchRightPanelTab === 'function') {
@@ -6291,7 +6375,7 @@
 
     if (openConfig) {
       toggleConfigDrawer(true);
-    } else if (!window.matchMedia('(max-width: 768px) and (pointer: coarse)').matches) {
+    } else if (!window.matchMedia?.('(max-width: 768px) and (pointer: coarse)')?.matches) {
       setTimeout(() => {
         document.getElementById('aiChatInput')?.focus();
       }, 40);
@@ -6311,16 +6395,42 @@
 
     document.getElementById('btnAiNewChat')?.addEventListener('click', () => createNewAISession());
     document.getElementById('btnAiDrawerNewChat')?.addEventListener('click', () => createNewAISession());
+    document.getElementById('btnAiSidebarOpen')?.addEventListener('click', () => toggleSessionsDrawer());
     document.getElementById('btnAiHistory')?.addEventListener('click', () => toggleSessionsDrawer());
     document.getElementById('btnAiSessionCurrent')?.addEventListener('click', () => toggleSessionsDrawer());
+    document.getElementById('btnAiCloseSessions')?.addEventListener('click', () => toggleSessionsDrawer(false));
+    document.getElementById('aiSessionsBackdrop')?.addEventListener('click', () => toggleSessionsDrawer(false));
 
     const searchInput = document.getElementById('aiSessionSearchInput');
+    const clearSearchBtn = document.getElementById('btnAiClearSessionSearch');
     if (searchInput) {
       searchInput.addEventListener('input', e => {
         sessionsSearchQuery = e.target.value || '';
         renderAISessionsList();
       });
     }
+    if (clearSearchBtn) {
+      clearSearchBtn.addEventListener('click', () => {
+        sessionsSearchQuery = '';
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        renderAISessionsList();
+      });
+    }
+
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && isSessionsDrawerOpen()) {
+        if (renamingSessionId || pendingDeleteSessionId) {
+          renamingSessionId = null;
+          pendingDeleteSessionId = null;
+          renderAISessionsList();
+        } else {
+          toggleSessionsDrawer(false);
+        }
+      }
+    });
 
     document.getElementById('btnAiClear')?.addEventListener('click', () => {
       if (!messages || messages.length === 0) {
