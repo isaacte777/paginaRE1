@@ -2613,6 +2613,110 @@
     return det.byCellRef.get(String(cellRefRaw || '').toUpperCase()) ?? 0;
   }
 
+  function deleteSpreadsheetTab(targetKey) {
+    if (!targetKey || targetKey === 'master') return false;
+    captureActiveSheetSnapshot(false);
+
+    // Caso 1: Libro Excel importado (.xlsx / .csv)
+    if (activeFinancialWorkbook && Array.isArray(activeFinancialWorkbook.sheets)) {
+      if (activeFinancialWorkbook.sheets.length <= 1) {
+        STATE.nodes = [];
+        STATE.edges = [];
+        STATE.sel = null;
+        sheetGraphs['sheet:0'] = { nodes: [], edges: [], pan: { x: 80, y: 96 }, zoom: 1, dirty: true };
+        if (typeof evaluateFinanceSheet === 'function') evaluateFinanceSheet();
+        if (typeof commitHistory === 'function') commitHistory();
+        if (typeof renderAll === 'function') renderAll();
+        renderWorkbookSheetsBar();
+        if (typeof showToast === 'function') showToast('Hoja limpiada (debe existir al menos 1 hoja)', 'warn', 1900);
+        return true;
+      }
+
+      const delIdx = Number(String(targetKey).split(':')[1]);
+      if (!Number.isInteger(delIdx) || delIdx < 0 || delIdx >= activeFinancialWorkbook.sheets.length) return false;
+      const removedName = activeFinancialWorkbook.sheets[delIdx].shortLabel || activeFinancialWorkbook.sheets[delIdx].name;
+
+      // Re-indexar grafos en memoria tras eliminar la hoja delIdx
+      const nextGraphs = {};
+      for (let i = 0; i < activeFinancialWorkbook.sheets.length; i++) {
+        if (i === delIdx) continue;
+        const oldKey = `sheet:${i}`;
+        const newKey = `sheet:${i > delIdx ? i - 1 : i}`;
+        if (sheetGraphs[oldKey]) {
+          nextGraphs[newKey] = sheetGraphs[oldKey];
+        }
+      }
+
+      activeFinancialWorkbook.sheets.splice(delIdx, 1);
+      activeFinancialWorkbook.sheets.forEach((sh, idx) => {
+        sh.index = idx;
+      });
+      activeFinancialWorkbook.sheetCount = activeFinancialWorkbook.sheets.length;
+      sheetGraphs = nextGraphs;
+
+      // Recalcular Árbol Maestro sin la hoja eliminada
+      if (activeFinancialWorkbook.sheets.length > 1) {
+        ensureSheetGraphMaterialized('master');
+        syncMasterTreeWithModifiedSheets();
+      }
+
+      let nextActiveKey = activeWorkbookViewKey;
+      if (activeFinancialWorkbook.sheets.length === 1) {
+        nextActiveKey = 'sheet:0';
+      } else if (activeWorkbookViewKey === targetKey) {
+        const fallbackIdx = Math.min(delIdx, activeFinancialWorkbook.sheets.length - 1);
+        nextActiveKey = `sheet:${fallbackIdx}`;
+      } else if (activeWorkbookViewKey.startsWith('sheet:')) {
+        const curIdx = Number(activeWorkbookViewKey.split(':')[1]);
+        if (curIdx > delIdx) nextActiveKey = `sheet:${curIdx - 1}`;
+      }
+
+      switchSpreadsheetTab(nextActiveKey, { skipCapture: true, silentToast: true });
+      if (typeof saveState === 'function') saveState();
+      if (typeof showToast === 'function') showToast(`Hoja "${removedName}" eliminada`, 'ok', 1800);
+      return true;
+    }
+
+    // Caso 2: Hojas nativas creadas en la planilla (Hoja 1, Hoja 2, ...)
+    ensureNativeSpreadsheetBook();
+    if (customTabs.length <= 1) {
+      STATE.nodes = [];
+      STATE.edges = [];
+      STATE.sel = null;
+      const onlyKey = customTabs[0]?.key || 'sheet:0';
+      sheetGraphs[onlyKey] = { nodes: [], edges: [], pan: { x: 80, y: 96 }, zoom: 1, dirty: true };
+      if (typeof evaluateFinanceSheet === 'function') evaluateFinanceSheet();
+      if (typeof commitHistory === 'function') commitHistory();
+      if (typeof renderAll === 'function') renderAll();
+      renderWorkbookSheetsBar();
+      if (typeof showToast === 'function') showToast('Hoja limpiada (debe existir al menos 1 hoja)', 'warn', 1900);
+      return true;
+    }
+
+    const delPos = customTabs.findIndex(t => t.key === targetKey);
+    if (delPos === -1) return false;
+    const removedTab = customTabs[delPos];
+    customTabs.splice(delPos, 1);
+    delete sheetGraphs[targetKey];
+    delete sheetGraphs.master;
+
+    if (customTabs.length > 1) {
+      syncMasterTreeWithModifiedSheets();
+    }
+
+    let nextView = activeWorkbookViewKey;
+    if (customTabs.length === 1) {
+      nextView = customTabs[0].key;
+    } else if (activeWorkbookViewKey === targetKey) {
+      nextView = customTabs[Math.min(delPos, customTabs.length - 1)].key;
+    }
+
+    switchSpreadsheetTab(nextView, { skipCapture: true, silentToast: true });
+    if (typeof saveState === 'function') saveState();
+    if (typeof showToast === 'function') showToast(`Hoja "${removedTab.label}" eliminada`, 'ok', 1800);
+    return true;
+  }
+
   // =========================================================================
   // 8. RENDERIZADO DEL MENÚ INTEGRADO EN LA HOJA DE CÁLCULO (#finWorkbookSheetsBar)
   // =========================================================================
@@ -2642,16 +2746,21 @@
       activeWorkbookViewKey = tabs[0].key;
     }
 
+    const sheetTabsCount = tabs.filter(t => t.key !== 'master').length;
     const displayTitle = activeFinancialWorkbook
       ? activeFinancialWorkbook.title
       : document.getElementById('projTitle')?.value?.trim() || bookTitle || 'Planilla Financiera';
     const curCode = (typeof STATE !== 'undefined' && STATE.financeCurrency) || activeFinancialWorkbook?.currency || 'USD';
 
     const tabsHtml = tabs
-      .map(
-        t =>
-          `<button type="button" class="fin-wb-tab ${activeWorkbookViewKey === t.key ? 'is-active' : ''}" data-wb-view="${t.key}" title="${t.fullName} (doble clic para renombrar)">${t.label}</button>`
-      )
+      .map(t => {
+        const canDelete = t.key !== 'master';
+        const delTitle = sheetTabsCount > 1 ? `Borrar hoja "${t.label}"` : `Limpiar hoja "${t.label}"`;
+        return `<button type="button" class="fin-wb-tab ${activeWorkbookViewKey === t.key ? 'is-active' : ''}" data-wb-view="${t.key}" title="${t.fullName} (doble clic para renombrar)">
+          <span class="fin-wb-tab-lbl">${t.label}</span>
+          ${canDelete ? `<span class="fin-wb-tab-del" role="button" tabindex="0" data-wb-del="${t.key}" title="${delTitle}" aria-label="${delTitle}">×</span>` : ''}
+        </button>`;
+      })
       .join('');
 
     bar.innerHTML = `
@@ -2667,13 +2776,6 @@
         <button type="button" class="fin-wb-add-sheet" id="btnWbAddSheet" title="Agregar nueva hoja de cálculo a este libro">+ hoja</button>
       </div>
       <button type="button" class="fin-wb-nav-btn" id="wbScrollRight" title="Desplazar pestañas a la derecha" aria-label="Siguiente">›</button>
-
-      <div class="fin-wb-live-actions">
-        <button type="button" class="fin-wb-quick-btn is-exp" data-wb-quick="fin_live_expense" title="Agregar nodo de Gasto (Hoy / Mes) conectado automáticamente al árbol">− gasto</button>
-        <button type="button" class="fin-wb-quick-btn is-inc" data-wb-quick="fin_live_income" title="Agregar nodo de Ingreso / Cobro conectado automáticamente al árbol">+ ingreso</button>
-        <button type="button" class="fin-wb-quick-btn is-pay" data-wb-quick="fin_live_payment" title="Registrar abono o pago de cuota conectado a Deudas">− cuota</button>
-        <button type="button" class="fin-wb-quick-btn is-link" data-wb-quick="fin_canvas_link" title="Conectar valores con otra hoja o con otro proyecto/lienzo guardado">⇄ lienzo</button>
-      </div>
     `;
 
     const tabsScroll = bar.querySelector('#finWbTabsScroll');
@@ -2694,18 +2796,28 @@
       { passive: false }
     );
 
+    bar.querySelectorAll('[data-wb-del]').forEach(delEl => {
+      delEl.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteSpreadsheetTab(delEl.getAttribute('data-wb-del'));
+      });
+    });
+
     bar.querySelectorAll('[data-wb-view]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', e => {
+        if (e.target.closest('[data-wb-del]')) return;
         const vk = btn.getAttribute('data-wb-view');
         if (vk && vk !== activeWorkbookViewKey) {
           switchSpreadsheetTab(vk);
         }
       });
       btn.addEventListener('dblclick', e => {
+        if (e.target.closest('[data-wb-del]')) return;
         e.stopPropagation();
         const vk = btn.getAttribute('data-wb-view');
         if (!vk || vk === 'master') return;
-        const currentName = btn.textContent.trim();
+        const currentName = btn.querySelector('.fin-wb-tab-lbl')?.textContent?.trim() || btn.textContent.trim();
         const nextName = typeof prompt === 'function' ? prompt('Nuevo nombre de la hoja:', currentName) : null;
         if (!nextName || !nextName.trim()) return;
         const clean = nextName.trim().slice(0, 28);
@@ -2729,12 +2841,6 @@
 
     bar.querySelector('#btnWbAddSheet')?.addEventListener('click', () => {
       addNewSpreadsheetTab();
-    });
-
-    bar.querySelectorAll('[data-wb-quick]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        insertConnectedLiveNode(btn.getAttribute('data-wb-quick'));
-      });
     });
 
     // Asegurar que la pestaña activa sea visible en el carrusel sin mostrar barra blanca nativa
@@ -2972,6 +3078,12 @@
       });
     }
 
+    document.querySelectorAll('[data-palette-quick-node]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        insertConnectedLiveNode(btn.getAttribute('data-palette-quick-node'));
+      });
+    });
+
     renderWorkbookSheetsBar();
   }
 
@@ -2997,6 +3109,7 @@
     applyWorkbookViewToCanvas,
     switchSpreadsheetTab,
     addNewSpreadsheetTab,
+    deleteSpreadsheetTab,
     insertConnectedLiveNode,
     notifyActiveSheetChanged,
     listLinkableCanvases,
