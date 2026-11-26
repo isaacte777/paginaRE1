@@ -679,6 +679,224 @@
   color: var(--green);
 }
 
+/* =========================================================================
+   ADJUNCIÓN MULTIMODAL DE IMÁGENES / DOCUMENTOS Y SELECTOR DE LAYOUTS EN IA
+   ========================================================================= */
+.ai-composer-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.ai-attach-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 23px;
+  padding: 0 7px;
+  border-radius: 5px;
+  border: 1px solid var(--line2);
+  background: rgba(255, 255, 255, 0.035);
+  color: var(--tx1);
+  font: 600 9.5px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.ai-attach-btn:hover {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(74, 222, 128, 0.09);
+  color: var(--green);
+}
+
+.ai-composer.is-dragover {
+  border-color: var(--green) !important;
+  box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.22) !important;
+  background: rgba(16, 36, 24, 0.55) !important;
+}
+
+.ai-attachments-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 5px 6px 4px;
+  border-bottom: 1px dashed var(--line);
+  max-height: 92px;
+  overflow-y: auto;
+}
+
+.ai-attachments-bar[hidden] {
+  display: none !important;
+}
+
+.ai-att-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid var(--line2);
+  font: 500 9.2px 'JetBrains Mono', monospace;
+  color: var(--tx0);
+}
+
+.ai-att-chip__thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  flex-shrink: 0;
+}
+
+.ai-att-chip__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.ai-att-chip__meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.ai-att-chip__name {
+  font-weight: 600;
+  max-width: 138px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-att-chip__sub {
+  font-size: 8px;
+  color: var(--tx3);
+  max-width: 148px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-att-chip__rm {
+  border: none;
+  background: transparent;
+  color: var(--tx2);
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.ai-att-chip__rm:hover {
+  color: #f87171;
+}
+
+.ai-msg-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 6px;
+}
+
+.ai-msg-att-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font: 600 8.8px 'JetBrains Mono', monospace;
+  color: var(--tx1);
+}
+
+.ai-msg-att-pill img {
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.ai-layout-drawer {
+  margin: 0 8px 6px;
+  padding: 7px;
+  border-radius: 7px;
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+
+.ai-layout-drawer[hidden] {
+  display: none !important;
+}
+
+.ai-layout-drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font: 700 9px 'JetBrains Mono', monospace;
+  color: var(--green);
+  letter-spacing: 0.03em;
+}
+
+.ai-layout-drawer__close {
+  border: none;
+  background: transparent;
+  color: var(--tx2);
+  font-size: 13px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ai-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  max-height: 176px;
+  overflow-y: auto;
+}
+
+.ai-layout-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 5px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  color: var(--tx0);
+  text-align: left;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', monospace;
+  transition: border-color 0.13s ease, background 0.13s ease;
+}
+
+.ai-layout-item:hover {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.ai-layout-item strong {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--tx0);
+}
+
+.ai-layout-item small {
+  font-size: 7.8px;
+  color: var(--tx3);
+  line-height: 1.2;
+}
+
 @media (max-width: 768px) {
   .fin-formula-bar {
     top: 6px;

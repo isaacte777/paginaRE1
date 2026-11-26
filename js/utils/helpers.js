@@ -84,6 +84,11 @@ function getEdgeEndpoints(e) {
   const nt = byId(e.to);
   if (!nf || !nt) return null;
 
+  if (typeof chooseSmartEdgeSides === 'function') {
+    const smart = chooseSmartEdgeSides(e, nf, nt);
+    return { nf, nt, sourceSide: smart.sourceSide, targetSide: smart.targetSide };
+  }
+
   const dx = (nt.x + nt.w / 2) - (nf.x + nf.w / 2);
   const dy = (nt.y + nt.h / 2) - (nf.y + nf.h / 2);
   const isHoriz = Math.abs(dx) >= Math.abs(dy);
@@ -117,7 +122,7 @@ function getEdgeAnchor(e, n, isFrom) {
 
   const idx = sameSideEdges.findIndex(ex => ex.id === e.id);
   const total = sameSideEdges.length;
-  const pct = total <= 1 ? 0.5 : (idx + 1) / (total + 1);
+  const pct = total <= 1 ? 0.5 : 0.2 + (0.6 * idx) / (total - 1);
 
   if (side === 'top') return { x: n.x + n.w * pct, y: n.y, side };
   if (side === 'bottom') return { x: n.x + n.w * pct, y: n.y + n.h, side };
@@ -139,10 +144,12 @@ function getNodePorts(n) {
   }
 
   const ports = [];
+  const usedSides = new Set();
   connectedEdges.forEach(e => {
     const isFrom = (e.from === n.id);
     const anchor = getEdgeAnchor(e, n, isFrom);
     if (!anchor) return;
+    usedSides.add(anchor.side);
 
     let style = '';
     if (anchor.side === 'top' || anchor.side === 'bottom') {
@@ -155,6 +162,12 @@ function getNodePorts(n) {
 
     ports.push({ side: anchor.side, style, edgeId: e.id });
   });
+
+  // Conservar puertos libres en los lados vacíos para que siempre se pueda tirar una nueva conexión
+  if (!usedSides.has('top')) ports.push({ side: 'top', style: 'top: -7px; left: 50%; margin-left: -6px;' });
+  if (!usedSides.has('bottom')) ports.push({ side: 'bottom', style: 'bottom: -7px; left: 50%; margin-left: -6px;' });
+  if (!usedSides.has('left')) ports.push({ side: 'left', style: 'left: -7px; top: 50%; margin-top: -6px;' });
+  if (!usedSides.has('right')) ports.push({ side: 'right', style: 'right: -7px; top: 50%; margin-top: -6px;' });
 
   return ports;
 }
