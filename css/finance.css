@@ -284,6 +284,12 @@
   font-family: 'JetBrains Mono', monospace;
 }
 
+.fin-formula-bar.has-sheets-dock {
+  border-radius: 9px 9px 0 0;
+  border-bottom-color: rgba(134, 239, 172, 0.14);
+  box-shadow: none;
+}
+
 .fin-formula-bar[hidden] {
   display: none !important;
 }
@@ -346,9 +352,10 @@
 }
 
 .fin-currency-sel {
+  min-width: 78px !important;
   width: auto !important;
   height: 24px;
-  padding: 0 6px !important;
+  padding: 0 20px 0 7px !important;
   font: 600 9.5px 'JetBrains Mono', monospace !important;
   background: #101316 !important;
   color: var(--tx1) !important;
@@ -1267,19 +1274,22 @@
 
 .fin-workbook-bar {
   position: absolute;
-  top: 42px;
-  left: 10px;
-  right: 10px;
-  z-index: 26;
+  top: 45px;
+  left: 12px;
+  right: 12px;
+  z-index: 64;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 5px 8px;
-  border-radius: 8px;
-  border: 1px solid var(--line2, #252b33);
-  background: rgba(14, 17, 21, 0.94);
+  gap: 6px;
+  min-height: 33px;
+  padding: 4px 8px;
+  border-radius: 0 0 9px 9px;
+  border: 1px solid rgba(134, 239, 172, 0.28);
+  border-top: none;
+  background: rgba(11, 14, 17, 0.95);
   backdrop-filter: blur(8px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
   font-family: 'JetBrains Mono', monospace;
   overflow: hidden;
 }
@@ -1291,11 +1301,11 @@
 .fin-wb-meta {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding-right: 8px;
-  border-right: 1px solid var(--line, #1f242b);
+  gap: 6px;
+  padding-right: 9px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
-  max-width: 220px;
+  max-width: 235px;
 }
 
 .fin-wb-file-icon {
@@ -1306,8 +1316,8 @@
 }
 
 .fin-wb-filename {
-  font-size: 9.3px;
-  font-weight: 600;
+  font-size: 9.4px;
+  font-weight: 700;
   color: var(--tx0);
   white-space: nowrap;
   overflow: hidden;
@@ -1315,13 +1325,36 @@
 }
 
 .fin-wb-badge {
-  font-size: 8.4px;
+  font-size: 8.2px;
   padding: 1px 5px;
   border-radius: 4px;
   background: rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.28);
   color: var(--green);
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.fin-wb-nav-btn {
+  width: 20px;
+  height: 22px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tx2);
+  font: 700 12px/1 'JetBrains Mono', monospace;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.fin-wb-nav-btn:hover {
+  background: rgba(74, 222, 128, 0.14);
+  color: var(--green);
 }
 
 .fin-wb-tabs {
@@ -1329,23 +1362,31 @@
   align-items: center;
   gap: 4px;
   overflow-x: auto;
-  flex: 1;
-  scrollbar-width: thin;
-  padding-bottom: 1px;
+  flex: 1 1 auto;
+  min-width: 80px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.fin-wb-tabs::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .fin-wb-tab {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 3px 8px;
+  height: 23px;
+  padding: 0 9px;
   border-radius: 5px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(255, 255, 255, 0.03);
   color: var(--tx2);
   font-family: 'JetBrains Mono', monospace;
   font-size: 8.9px;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
@@ -1358,31 +1399,318 @@
 }
 
 .fin-wb-tab.is-active {
-  background: rgba(74, 222, 128, 0.15);
-  border-color: rgba(74, 222, 128, 0.55);
+  background: rgba(74, 222, 128, 0.16);
+  border-color: rgba(74, 222, 128, 0.58);
   color: var(--green);
   font-weight: 700;
 }
 
-.fin-wb-close {
-  width: 20px;
-  height: 20px;
+.fin-wb-add-sheet {
+  display: inline-flex;
+  align-items: center;
+  height: 23px;
+  padding: 0 8px;
   border-radius: 5px;
-  border: 1px solid transparent;
+  border: 1px dashed rgba(134, 239, 172, 0.35);
   background: transparent;
-  color: var(--tx2);
-  font-size: 13px;
-  line-height: 1;
+  color: var(--tx1);
+  font: 600 8.7px 'JetBrains Mono', monospace;
+  white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
+  transition: 0.14s ease;
+}
+
+.fin-wb-add-sheet:hover {
+  border-style: solid;
+  border-color: rgba(74, 222, 128, 0.65);
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--green);
+}
+
+.fin-wb-live-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.fin-wb-quick-btn {
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tx1);
+  font: 700 8.5px 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: 0.14s ease;
+}
+
+.fin-wb-quick-btn.is-exp {
+  color: #fda4af;
+  border-color: rgba(251, 113, 133, 0.32);
+  background: rgba(251, 113, 133, 0.08);
+}
+.fin-wb-quick-btn.is-exp:hover {
+  background: rgba(251, 113, 133, 0.18);
+  border-color: rgba(251, 113, 133, 0.6);
+}
+
+.fin-wb-quick-btn.is-inc {
+  color: #86efac;
+  border-color: rgba(74, 222, 128, 0.34);
+  background: rgba(74, 222, 128, 0.09);
+}
+.fin-wb-quick-btn.is-inc:hover {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: rgba(74, 222, 128, 0.65);
+}
+
+.fin-wb-quick-btn.is-pay {
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.32);
+  background: rgba(251, 191, 36, 0.08);
+}
+.fin-wb-quick-btn.is-pay:hover {
+  background: rgba(251, 191, 36, 0.18);
+}
+
+.fin-wb-quick-btn.is-link {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.34);
+  background: rgba(56, 189, 248, 0.08);
+}
+.fin-wb-quick-btn.is-link:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: rgba(56, 189, 248, 0.65);
+}
+
+/* =========================================================================
+   NODOS INTERACTIVOS DE REGISTRO EN VIVO (HOY / MES) Y PUENTE MULTI-LIENZO
+   ========================================================================= */
+.node.fin-node.fin-live-entry-card,
+.node.fin-node.fin-portal-card {
+  width: 268px;
+  padding: 9px 10px 10px;
+}
+
+.fin-live-badge.is-expense,
+.fin-live-badge.is-payment {
+  color: #fda4af !important;
+  background: rgba(251, 113, 133, 0.14) !important;
+  border-color: rgba(251, 113, 133, 0.35) !important;
+}
+
+.fin-live-badge.is-income {
+  color: #86efac !important;
+  background: rgba(74, 222, 128, 0.14) !important;
+  border-color: rgba(74, 222, 128, 0.38) !important;
+}
+
+.fin-portal-badge {
+  color: #7dd3fc !important;
+  background: rgba(56, 189, 248, 0.13) !important;
+  border-color: rgba(56, 189, 248, 0.36) !important;
+}
+
+.fin-live-form {
+  margin-top: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(7, 10, 13, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fin-live-row1 {
+  display: grid;
+  grid-template-columns: 118px 1fr;
+  gap: 4px;
+}
+
+.fin-live-row2 {
+  display: grid;
+  grid-template-columns: 1fr 80px 24px;
+  gap: 4px;
+}
+
+.fin-live-form input {
+  height: 22px;
+  padding: 1px 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  background: #0d1115 !important;
+  color: var(--tx0) !important;
+  font: 500 8.8px 'JetBrains Mono', monospace !important;
+  min-width: 0;
+}
+
+.fin-live-form input:focus {
+  outline: none;
+  border-color: rgba(134, 239, 172, 0.65) !important;
+}
+
+.fin-live-add-btn {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(74, 222, 128, 0.48);
+  background: rgba(74, 222, 128, 0.18);
+  color: var(--green);
+  font: 700 13px/1 'JetBrains Mono', monospace;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.fin-wb-close:hover {
-  background: rgba(248, 113, 113, 0.14);
-  color: var(--red, #f87171);
+.fin-live-add-btn:hover {
+  background: rgba(74, 222, 128, 0.3);
+}
+
+.fin-live-list {
+  margin-top: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 86px;
+  overflow-y: auto;
+}
+
+.fin-live-item {
+  display: grid;
+  grid-template-columns: 38px 1fr auto 16px;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 8.3px;
+}
+
+.fin-live-date {
+  color: var(--tx2);
+  font-size: 7.9px;
+}
+
+.fin-live-lbl {
+  color: var(--tx1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fin-live-amt {
+  font-size: 8.5px;
+  white-space: nowrap;
+}
+.fin-live-amt.is-pos {
+  color: #4ade80;
+}
+.fin-live-amt.is-neg {
+  color: #fb7185;
+}
+
+.fin-live-del {
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--tx2);
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+.fin-live-del:hover {
+  background: rgba(248, 113, 113, 0.18);
+  color: #f87171;
+}
+
+.fin-live-empty,
+.fin-live-more {
+  margin-top: 5px;
+  font-size: 8px;
+  color: var(--tx2);
+  line-height: 1.35;
+}
+
+.fin-portal-controls {
+  margin-top: 6px;
+  padding: 6px;
+  border-radius: 6px;
+  background: rgba(7, 10, 14, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fin-portal-dir-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fin-portal-dir-btn {
+  flex: 1;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tx2);
+  font: 600 8.2px 'JetBrains Mono', monospace;
+  cursor: pointer;
+}
+
+.fin-portal-dir-btn.is-active {
+  color: #7dd3fc;
+  border-color: rgba(56, 189, 248, 0.55);
+  background: rgba(56, 189, 248, 0.15);
+}
+
+.fin-portal-jump-btn {
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--green);
+  font: 700 8.2px 'JetBrains Mono', monospace;
+  cursor: pointer;
+}
+
+.fin-portal-sel {
+  width: 100% !important;
+  height: 22px;
+  padding: 0 6px !important;
+  border-radius: 4px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: #0d1115 !important;
+  color: var(--tx0) !important;
+  font: 500 8.6px 'JetBrains Mono', monospace !important;
+}
+
+@media (max-width: 760px) {
+  .fin-workbook-bar {
+    top: 74px;
+    left: 6px;
+    right: 6px;
+    flex-wrap: wrap;
+  }
+  .fin-wb-live-actions {
+    border-left: none;
+    padding-left: 0;
+  }
 }
 
 
