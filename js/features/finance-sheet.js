@@ -19,10 +19,12 @@
     inv: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="2,13 8,8 13,10 21,3"/><polyline points="16,3 21,3 21,8"/></svg>',
     loan: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7l9-5 9 5"/><line x1="5" y1="7" x2="5" y2="14"/><line x1="12" y1="7" x2="12" y2="14"/><line x1="19" y1="7" x2="19" y2="14"/><line x1="2" y1="14" x2="22" y2="14"/></svg>',
     ratio: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="14" x2="19" y2="2"/><circle cx="6.5" cy="4.5" r="2"/><circle cx="17.5" cy="11.5" r="2"/></svg>',
-    comm: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2h9l9 8-8 5-10-8V2z"/><circle cx="7.5" cy="6" r="1.3"/></svg>'
+    comm: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2h9l9 8-8 5-10-8V2z"/><circle cx="7.5" cy="6" r="1.3"/></svg>',
+    live: '<svg width="13" height="10" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v12M6 8h12"/><rect x="1" y="1" width="22" height="14" rx="3"/></svg>'
   };
 
   const FINANCE_CATEGORIES = [
+    { id: 'registro_vivo', label: 'registro diario y otros lienzos', cardTag: 'en vivo', icon: FIN_SVGS.live },
     { id: 'graficas_pnl', label: 'gráficas y ganancia / pérdida', cardTag: 'resultado', icon: FIN_SVGS.chart },
     { id: 'entradas', label: 'celdas y datos base', cardTag: 'dato base', icon: FIN_SVGS.cell },
     { id: 'operaciones', label: 'operaciones y cálculos', cardTag: 'cálculo', icon: FIN_SVGS.sum },
@@ -34,8 +36,14 @@
     { id: 'comercial', label: 'impuestos, precios y nómina', cardTag: 'comercial', icon: FIN_SVGS.comm }
   ];
 
-  // 60 Nodos Financieros (54 de cálculo + 6 gráficas/indicadores de ganancia y pérdida)
+  // 64 Nodos Financieros (registro diario interactivo + puente entre lienzos + 54 de cálculo + 6 gráficas)
   const FINANCE_NODE_LIST = [
+    // 00. REGISTRO INTERACTIVO DE MOVIMIENTOS EN VIVO Y PUENTE CON OTROS LIENZOS / HOJAS (4)
+    { type: 'fin_live_expense', cat: 'registro_vivo', fn: 'gasto_en_vivo()', title: 'Registro de Gasto (Hoy / Mes)', format: 'currency', tone: 'negative', isLiveEntry: true, liveRole: 'expense', defaultVal: 0, fxHint: 'Hoy / Mes → -Gasto' },
+    { type: 'fin_live_income', cat: 'registro_vivo', fn: 'ingreso_en_vivo()', title: 'Registro de Ingreso (Hoy / Mes)', format: 'currency', tone: 'positive', isLiveEntry: true, liveRole: 'income', defaultVal: 0, fxHint: 'Hoy / Mes → +Cobro' },
+    { type: 'fin_live_payment', cat: 'registro_vivo', fn: 'abono_deuda_vivo()', title: 'Abono a Deuda / Cuota', format: 'currency', tone: 'negative', isLiveEntry: true, liveRole: 'payment', defaultVal: 0, fxHint: 'Abono → -Saldo Deuda' },
+    { type: 'fin_canvas_link', cat: 'registro_vivo', fn: 'puente_lienzo()', title: 'Vínculo Otro Lienzo / Hoja', format: 'currency', tone: 'formula', isCanvasLink: true, defaultVal: 0, fxHint: '⇄ Hoja / Proyecto' },
+
     // 0. GRÁFICAS Y DIAGNÓSTICO DE GANANCIA / PÉRDIDA (6)
     { type: 'fin_verdict_kpi', cat: 'graficas_pnl', fn: 'veredicto_resultado()', title: 'Veredicto Ganancia / Pérdida', format: 'currency', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Diagnóstico Neto' },
     { type: 'fin_chart_pnl', cat: 'graficas_pnl', fn: 'grafica_ganancia_perdida()', title: 'Gráfica Ingresos vs Costos', format: 'currency', tone: 'chart', isChart: true, defaultVal: 0, fxHint: 'Comparativa P&L' },
@@ -218,6 +226,32 @@
     if (!node.text || node.text === 'paso') {
       node.text = def.title;
     }
+    if (def.isLiveEntry) {
+      if (!Array.isArray(node.params.entries)) node.params.entries = [];
+      if (!node.params.entryDate) {
+        try {
+          node.params.entryDate = new Date().toISOString().slice(0, 10);
+        } catch {
+          node.params.entryDate = '2026-11-25';
+        }
+      }
+      if (node.params.entryPeriod === undefined) {
+        const activeLabel = window.FlowLabWorkbookEngine?.getActiveViewLabel?.() || '';
+        node.params.entryPeriod = activeLabel && !/maestro/i.test(activeLabel) ? activeLabel : '';
+      }
+      const sumEntries = node.params.entries.reduce((acc, it) => acc + (Number(it?.amount) || 0), 0);
+      const baseAmt = Number(node.params.baseAmount) || 0;
+      if (node.params.entries.length > 0 || baseAmt > 0) {
+        node.params.value = baseAmt + sumEntries;
+      }
+    }
+    if (def.isCanvasLink) {
+      if (!node.params.linkDirection) node.params.linkDirection = 'pull';
+      if (node.params.targetScope === undefined) node.params.targetScope = '';
+      if (node.params.targetNodeId === undefined) node.params.targetNodeId = '';
+      if (node.params.targetCellRef === undefined) node.params.targetCellRef = '';
+      if (node.params.targetLabel === undefined) node.params.targetLabel = '';
+    }
     return node;
   }
 
@@ -272,10 +306,24 @@
   }
 
   // =========================================================================
-  // PARSER SEGURO DE FÓRMULAS EXCEL (=A1+B1, =SUMA(A1:A4), =SI(A1>100;A1*0.1;0))
+  // PARSER SEGURO DE FÓRMULAS EXCEL (=A1+B1, =SUMA(A1:A4), ='DEUDAS'!A3)
   // =========================================================================
+  function resolveExternalSheetRefsInFormula(expr) {
+    if (!expr || !expr.includes('!')) return expr;
+    // Soporta ='OCTUBRE 2026'!A5 o =DEUDAS!B3
+    return expr.replace(/(?:'([^']+)'|([A-Za-z0-9_ÁÉÍÓÚáéíóúÑñ]+))\s*!\s*([A-Z]{1,2}\d{1,3})\b/gi, (_, quotedName, plainName, cellRef) => {
+      const sheetName = (quotedName || plainName || '').trim();
+      if (window.FlowLabWorkbookEngine && typeof window.FlowLabWorkbookEngine.resolveCrossSheetCellValue === 'function') {
+        const val = window.FlowLabWorkbookEngine.resolveCrossSheetCellValue(sheetName, cellRef.toUpperCase());
+        if (Number.isFinite(val)) return String(val);
+      }
+      return '0';
+    });
+  }
+
   function expandCellRanges(expr, cellValuesMap) {
-    return expr.replace(/\b([A-Z]{1,2})(\d{1,2})\s*:\s*([A-Z]{1,2})(\d{1,2})\b/gi, (_, c1, r1, c2, r2) => {
+    const withExt = resolveExternalSheetRefsInFormula(expr);
+    return withExt.replace(/\b([A-Z]{1,2})(\d{1,2})\s*:\s*([A-Z]{1,2})(\d{1,2})\b/gi, (_, c1, r1, c2, r2) => {
       const colStart = c1.toUpperCase().charCodeAt(0);
       const colEnd = c2.toUpperCase().charCodeAt(0);
       const rowStart = Math.min(Number(r1), Number(r2));
@@ -510,6 +558,59 @@
   // =========================================================================
   // MOTOR DE CÁLCULO NATIVO PARA CADA UNO DE LOS 54 NODOS FINANCIEROS
   // =========================================================================
+  const LIVE_ADJUST_TYPES = new Set([
+    'fin_live_expense',
+    'fin_live_income',
+    'fin_live_payment',
+    'fin_canvas_link',
+    'workflow_bridge'
+  ]);
+
+  function isLiveAdjustmentEntry(u) {
+    return Boolean(u && LIVE_ADJUST_TYPES.has(u.nodeType));
+  }
+
+  function combineLeafWithLiveAdjustments(targetNode, baseVal, upstreamEntries) {
+    const titleNorm = String(targetNode.text || '').toLowerCase();
+    const isDebtOrGoal =
+      targetNode.type === 'fin_loan_balance' ||
+      /\b(deuda|prestamo|falta|saldo|pendiente|meta|herramienta|tarjeta|cuota)\b/i.test(titleNorm);
+    const isPositiveBucket =
+      targetNode.type === 'fin_revenue' ||
+      targetNode.type === 'fin_cash_in' ||
+      (targetNode.type === 'fin_input' && !isDebtOrGoal) ||
+      /\b(capital|liquidez|efectivo|ahorro|ingreso|ganancia|cobro)\b/i.test(titleNorm);
+    const isExpenseBucket =
+      targetNode.type === 'fin_opex' ||
+      targetNode.type === 'fin_cogs' ||
+      (targetNode.type === 'fin_cash_out' && !isDebtOrGoal);
+
+    let total = baseVal;
+    const fxParts = baseVal !== 0 ? [`${baseVal}`] : [];
+
+    upstreamEntries.forEach(u => {
+      const mag = Number(u.value) || 0;
+      let signed = mag;
+      if (isDebtOrGoal) {
+        if (u.nodeType === 'fin_live_payment') signed = -Math.abs(mag);
+        else if (u.nodeType === 'fin_live_expense') signed = Math.abs(mag);
+      } else if (isPositiveBucket) {
+        if (u.nodeType === 'fin_live_expense' || u.nodeType === 'fin_live_payment') signed = -Math.abs(mag);
+        else if (u.nodeType === 'fin_live_income') signed = Math.abs(mag);
+      } else if (isExpenseBucket) {
+        if (u.nodeType === 'fin_live_expense' || u.nodeType === 'fin_live_payment') signed = Math.abs(mag);
+        else if (u.nodeType === 'fin_live_income') signed = -Math.abs(mag);
+      }
+      total += signed;
+      fxParts.push(`${signed >= 0 && fxParts.length > 0 ? '+' : ''}${signed < 0 ? '-' + u.ref : u.ref}`);
+    });
+
+    return {
+      value: total,
+      fxAuto: `=${fxParts.join('') || '0'}`
+    };
+  }
+
   function computeBuiltInFinanceNode(node, upstreamEntries) {
     const p = node.params || {};
     const baseVal = Number(p.value) || 0;
@@ -519,13 +620,54 @@
     const ins = upstreamEntries.map(u => u.value);
     const hasIn = ins.length > 0;
     const sumIn = ins.reduce((a, b) => a + b, 0);
+    const allUpstreamAreLive = hasIn && upstreamEntries.every(isLiveAdjustmentEntry);
 
     switch (node.type) {
+      case 'fin_live_expense':
+      case 'fin_live_income':
+      case 'fin_live_payment': {
+        const entries = Array.isArray(p.entries) ? p.entries : [];
+        const entriesSum = entries.reduce((acc, it) => acc + (Number(it?.amount) || 0), 0);
+        const baseAmt = Number(p.baseAmount) || 0;
+        const ownVal = entries.length > 0 || baseAmt > 0 ? baseAmt + entriesSum : baseVal;
+        const val = ownVal + (hasIn ? sumIn : 0);
+        p.value = ownVal;
+        const tag = entries.length > 0 ? `${entries.length} mov.` : 'en vivo';
+        return {
+          value: val,
+          fxAuto: hasIn ? `=${ownVal}+SUMA(${upstreamEntries.map(u => u.ref).join(';')})` : `${tag}${p.entryPeriod ? ' · ' + p.entryPeriod : ''}`
+        };
+      }
+
+      case 'fin_canvas_link': {
+        const dir = p.linkDirection || 'pull';
+        if (dir === 'pull') {
+          const remote = window.FlowLabWorkbookEngine?.readRemoteCanvasNodeValue?.(p);
+          const remoteVal = remote && Number.isFinite(remote.value) ? remote.value : baseVal;
+          const total = remoteVal + (hasIn ? sumIn : 0);
+          const srcName = remote?.sourceTitle || p.targetLabel || 'selecciona origen';
+          return {
+            value: total,
+            fxAuto: `← ${srcName}`
+          };
+        } else {
+          const pushVal = hasIn ? sumIn : baseVal;
+          window.FlowLabWorkbookEngine?.pushValueToRemoteCanvasNode?.(p, pushVal, node.id);
+          return {
+            value: pushVal,
+            fxAuto: `→ ${p.targetLabel || 'lienzo destino'}`
+          };
+        }
+      }
+
       case 'fin_input':
       case 'fin_rate':
       case 'fin_periods':
       case 'fin_qty':
       case 'fin_unit_price':
+        if (allUpstreamAreLive && baseVal !== 0) {
+          return combineLeafWithLiveAdjustments(node, baseVal, upstreamEntries);
+        }
         return { value: hasIn ? sumIn : baseVal, fxAuto: hasIn ? `=SUMA(${upstreamEntries.map(u => u.ref).join(';')})` : `${baseVal}` };
 
       case 'fin_fx_rate': {
@@ -535,8 +677,33 @@
       }
 
       case 'fin_formula':
-      case 'fin_sum':
-        return { value: hasIn ? sumIn : baseVal, fxAuto: hasIn ? `=SUMA(${upstreamEntries.map(u => u.ref).join(';')})` : `${baseVal}` };
+      case 'fin_sum': {
+        if (!hasIn) return { value: baseVal, fxAuto: `${baseVal}` };
+        // Si es un agregador de Deuda o Liquidez y recibe nodos de abono/gasto en vivo, aplicar el signo semántico correcto
+        const titleNorm = String(node.text || '').toLowerCase();
+        const isDebtAgg = /\b(deuda\w*|falta\s+pagar|pendiente\w*|saldo\s+total)\b/i.test(titleNorm);
+        const isCashAgg = /\b(liquidez|capital\s+final|saldo\s+en\s+cuenta|efectivo\s+total)\b/i.test(titleNorm);
+        let smartSum = allUpstreamAreLive && baseVal !== 0 ? baseVal : 0;
+        const exprTokens = allUpstreamAreLive && baseVal !== 0 ? [`${baseVal}`] : [];
+        upstreamEntries.forEach(u => {
+          let v = u.value;
+          let neg = false;
+          if (isDebtAgg && u.nodeType === 'fin_live_payment') {
+            v = -Math.abs(u.value);
+            neg = true;
+          } else if (isCashAgg && (u.nodeType === 'fin_live_expense' || u.nodeType === 'fin_live_payment')) {
+            v = -Math.abs(u.value);
+            neg = true;
+          }
+          smartSum += v;
+          exprTokens.push(neg ? `-${u.ref}` : exprTokens.length > 0 ? `+${u.ref}` : `${u.ref}`);
+        });
+        const hasNegToken = exprTokens.some(t => t.startsWith('-'));
+        return {
+          value: smartSum,
+          fxAuto: hasNegToken ? `=${exprTokens.join('')}` : `=SUMA(${upstreamEntries.map(u => u.ref).join(';')})`
+        };
+      }
 
       case 'fin_subtract': {
         if (!hasIn) return { value: baseVal, fxAuto: `${baseVal}` };
@@ -600,6 +767,9 @@
 
       // Estado de resultados P&L (inteligente con nodos de ingreso vs costo conectados)
       case 'fin_revenue': {
+        if (allUpstreamAreLive && baseVal !== 0) {
+          return combineLeafWithLiveAdjustments(node, baseVal, upstreamEntries);
+        }
         // Si entran Cantidad y Precio Unitario, multiplicarlos automáticamente; si no, sumar fuentes de ingreso
         const hasQtyAndPrice =
           upstreamEntries.length === 2 &&
@@ -619,6 +789,9 @@
       case 'fin_cash_in':
       case 'fin_cash_out':
       case 'fin_capex':
+        if (allUpstreamAreLive && baseVal !== 0) {
+          return combineLeafWithLiveAdjustments(node, baseVal, upstreamEntries);
+        }
         return { value: hasIn ? sumIn : baseVal, fxAuto: hasIn ? `=SUMA(${upstreamEntries.map(u => u.ref).join(';')})` : `${baseVal}` };
 
       case 'fin_depreciation': {
@@ -642,7 +815,8 @@
         // El primer nodo positivo/ingreso menos los nodos de costo/salida secundarios
         const costTypes = new Set([
           'fin_cogs', 'fin_opex', 'fin_depreciation', 'fin_tax',
-          'fin_cash_out', 'fin_capex', 'fin_pmt', 'fin_ipmt', 'fin_payroll_cost'
+          'fin_cash_out', 'fin_capex', 'fin_pmt', 'fin_ipmt', 'fin_payroll_cost',
+          'fin_live_expense', 'fin_live_payment'
         ]);
         let total = 0;
         const parts = [];
@@ -976,10 +1150,16 @@
       }
     };
 
+    const allNodeMap = new Map((STATE.nodes || []).map(n => [n.id, n]));
+    const incomingWorkflow = new Map(finNodes.map(n => [n.id, []]));
+
     (STATE.edges || []).forEach(e => {
       if (finMap.has(e.from) && finMap.has(e.to) && e.from !== e.to) {
         incoming.get(e.to).push(e.from);
         addTopoDep(e.from, e.to);
+      } else if (!finMap.has(e.from) && finMap.has(e.to)) {
+        const wfNode = allNodeMap.get(e.from);
+        if (wfNode) incomingWorkflow.get(e.to).push(wfNode);
       }
     });
 
@@ -1043,6 +1223,25 @@
           };
         })
         .filter(Boolean);
+
+      // Si un nodo de Flujo de Trabajo (tarea/proceso) se conectó a este nodo financiero, extraer su costo/valor numérico
+      (incomingWorkflow.get(id) || []).forEach((wfNode, wfIdx) => {
+        const pVal = wfNode.params?.value ?? wfNode.params?.cost ?? wfNode.params?.budget;
+        let numVal = pVal !== undefined && pVal !== '' ? Number(pVal) : NaN;
+        if (!Number.isFinite(numVal)) {
+          const m = String(wfNode.text || '').replace(/\./g, '').match(/-?\d+(?:,\d+)?/);
+          numVal = m ? Number(m[0].replace(',', '.')) : 0;
+        }
+        if (Number.isFinite(numVal)) {
+          upstreamEntries.push({
+            id: wfNode.id,
+            ref: `WF${wfIdx + 1}`,
+            nodeType: 'workflow_bridge',
+            value: numVal,
+            error: null
+          });
+        }
+      });
 
       const upstreamErr = upstreamEntries.find(u => u.error);
       let value = 0;
@@ -1125,10 +1324,11 @@
     let irrValue = null;
     let roiValue = null;
 
-    const inflowTypes = new Set(['fin_revenue', 'fin_cash_in']);
+    const inflowTypes = new Set(['fin_revenue', 'fin_cash_in', 'fin_live_income']);
     const outflowTypes = new Set([
       'fin_cogs', 'fin_opex', 'fin_depreciation', 'fin_tax',
-      'fin_cash_out', 'fin_capex', 'fin_payroll_cost', 'fin_pmt'
+      'fin_cash_out', 'fin_capex', 'fin_payroll_cost', 'fin_pmt',
+      'fin_live_expense', 'fin_live_payment'
     ]);
     const netPriorityMap = {
       fin_net_income: 1,
@@ -1675,6 +1875,14 @@
       return renderFinanceChartCardHtml(n, def, evalEntry);
     }
 
+    if (def?.isLiveEntry) {
+      return renderFinanceLiveEntryCardHtml(n, def, evalEntry);
+    }
+
+    if (def?.isCanvasLink) {
+      return renderFinanceCanvasLinkCardHtml(n, def, evalEntry);
+    }
+
     const catInfo = CATEGORY_MAP.get(def?.cat) || { cardTag: 'finanzas', label: 'finanzas' };
     const cleanTag = catInfo.cardTag || catInfo.label;
     const valCls = evalEntry.error
@@ -1705,6 +1913,119 @@
     `;
   }
 
+  function renderFinanceLiveEntryCardHtml(n, def, evalEntry) {
+    const p = n.params || {};
+    const entries = Array.isArray(p.entries) ? p.entries : [];
+    const role = def.liveRole || 'expense';
+    const badgeLabel =
+      role === 'income' ? '+ ingreso vivo' : role === 'payment' ? '− abono deuda' : '− gasto vivo';
+    const valCls = role === 'income' ? 'is-pos' : 'is-neg';
+    const conceptPlaceholder =
+      role === 'income'
+        ? 'Cliente o concepto...'
+        : role === 'payment'
+          ? 'Cuota / préstamo...'
+          : 'En qué gastaste...';
+    const recent = entries.slice(-4).reverse();
+
+    const entriesHtml = recent.length
+      ? `<div class="fin-live-list fin-interactive-zone">
+          ${recent
+            .map(
+              it => `
+              <div class="fin-live-item">
+                <span class="fin-live-date">${escapeHTML(String(it.date || '').slice(5) || 'hoy')}</span>
+                <span class="fin-live-lbl" title="${escapeHTML(it.label || '')}">${escapeHTML(it.label || 'Movimiento')}</span>
+                <b class="fin-live-amt ${valCls}">${escapeHTML(formatFinanceNumber(Number(it.amount) || 0, 'currency', null))}</b>
+                <button type="button" class="fin-live-del" data-fin-del-entry="${escapeHTML(it.id)}" data-node-id="${escapeHTML(n.id)}" title="Quitar movimiento">×</button>
+              </div>
+            `
+            )
+            .join('')}
+          ${entries.length > 4 ? `<div class="fin-live-more">+${entries.length - 4} movimiento(s) más en propiedades</div>` : ''}
+        </div>`
+      : `<div class="fin-live-empty">Ingresa fecha, concepto y monto para recalcular el árbol en vivo</div>`;
+
+    return `
+      <div class="fin-card-top">
+        <span class="fin-cell-pill">${escapeHTML(evalEntry.cellRef)}</span>
+        <span class="fin-cat-tag fin-live-badge is-${role}">${escapeHTML(badgeLabel)}</span>
+      </div>
+      <div class="fin-card-title text">${escapeHTML(n.text || def.title)}</div>
+      <div class="fin-card-val ${valCls}">${escapeHTML(evalEntry.formatted)}</div>
+      <div class="fin-live-form fin-interactive-zone" data-live-node="${escapeHTML(n.id)}">
+        <div class="fin-live-row1">
+          <input type="date" class="fin-live-date-inp" data-fin-live-date="${escapeHTML(n.id)}" value="${escapeHTML(p.entryDate || '2026-11-25')}" title="Fecha del movimiento">
+          <input type="text" class="fin-live-period-inp" data-fin-live-period="${escapeHTML(n.id)}" value="${escapeHTML(p.entryPeriod || '')}" placeholder="Mes / Hoja" title="Etiqueta de mes o periodo">
+        </div>
+        <div class="fin-live-row2">
+          <input type="text" class="fin-live-concept-inp" data-fin-live-concept="${escapeHTML(n.id)}" placeholder="${escapeHTML(conceptPlaceholder)}">
+          <input type="text" inputmode="decimal" class="fin-live-amount-inp" data-fin-live-amount="${escapeHTML(n.id)}" placeholder="Monto">
+          <button type="button" class="fin-live-add-btn" data-fin-add-entry="${escapeHTML(n.id)}" title="Registrar movimiento y recalcular árbol">+</button>
+        </div>
+      </div>
+      ${entriesHtml}
+      <div class="fin-card-foot">
+        <span class="fin-card-fx">${escapeHTML(evalEntry.fxText)}</span>
+        <span class="fin-card-refs">${entries.length} reg.</span>
+      </div>
+    `;
+  }
+
+  function renderFinanceCanvasLinkCardHtml(n, def, evalEntry) {
+    const p = n.params || {};
+    const dir = p.linkDirection || 'pull';
+    const catalog = window.FlowLabWorkbookEngine?.listLinkableCanvases?.() || { scopes: [], nodesByScope: {} };
+    const scopes = catalog.scopes || [];
+    const activeScope = p.targetScope || (scopes[0] ? scopes[0].id : '');
+    const targetNodes = (activeScope && catalog.nodesByScope && catalog.nodesByScope[activeScope]) || [];
+
+    const scopeOptions = scopes.length
+      ? scopes
+          .map(
+            sc =>
+              `<option value="${escapeHTML(sc.id)}" ${sc.id === activeScope ? 'selected' : ''}>${escapeHTML(sc.group ? `${sc.group}: ${sc.label}` : sc.label)}</option>`
+          )
+          .join('')
+      : `<option value="">(Guarda otro proyecto o agrega otra hoja)</option>`;
+
+    const nodeOptions = targetNodes.length
+      ? `<option value="">— Selecciona nodo —</option>` +
+        targetNodes
+          .map(
+            tn =>
+              `<option value="${escapeHTML(tn.id)}" ${tn.id === p.targetNodeId || (tn.cellRef && tn.cellRef === p.targetCellRef) ? 'selected' : ''}>${escapeHTML(tn.cellRef ? `[${tn.cellRef}] ${tn.label}` : tn.label)}</option>`
+          )
+          .join('')
+      : `<option value="">— Sin nodos en destino —</option>`;
+
+    return `
+      <div class="fin-card-top">
+        <span class="fin-cell-pill">${escapeHTML(evalEntry.cellRef)}</span>
+        <span class="fin-cat-tag fin-portal-badge">${dir === 'pull' ? '← trae de lienzo' : '→ envía a lienzo'}</span>
+      </div>
+      <div class="fin-card-title text">${escapeHTML(n.text || def.title)}</div>
+      <div class="fin-card-val">${escapeHTML(evalEntry.formatted)}</div>
+      <div class="fin-portal-controls fin-interactive-zone" data-portal-node="${escapeHTML(n.id)}">
+        <div class="fin-portal-dir-row">
+          <button type="button" class="fin-portal-dir-btn ${dir === 'pull' ? 'is-active' : ''}" data-portal-dir="pull" data-node-id="${escapeHTML(n.id)}" title="Traer valor en vivo desde otra hoja o proyecto">← recibir</button>
+          <button type="button" class="fin-portal-dir-btn ${dir === 'push' ? 'is-active' : ''}" data-portal-dir="push" data-node-id="${escapeHTML(n.id)}" title="Enviar este valor hacia otra hoja o proyecto">→ enviar</button>
+          ${activeScope ? `<button type="button" class="fin-portal-jump-btn" data-portal-jump="${escapeHTML(n.id)}" title="Ir a la hoja o lienzo vinculado">ir ↗</button>` : ''}
+        </div>
+        <select class="fin-portal-sel" data-portal-scope="${escapeHTML(n.id)}" title="Seleccionar otra hoja de cálculo u otro proyecto guardado">
+          ${scopeOptions}
+        </select>
+        <select class="fin-portal-sel" data-portal-target="${escapeHTML(n.id)}" title="Seleccionar nodo específico del otro lienzo u hoja">
+          ${nodeOptions}
+        </select>
+      </div>
+      <div class="fin-card-foot">
+        <span class="fin-card-fx">${escapeHTML(evalEntry.fxText)}</span>
+        <span class="fin-card-refs">⇄ multi-lienzo</span>
+      </div>
+    `;
+  }
+
   function getFinanceNodeToneClass(type) {
     const def = getFinanceNodeDef(type);
     if (!def) return 'fin-node fin-tone-input';
@@ -1712,6 +2033,12 @@
       return type === 'fin_verdict_kpi'
         ? 'fin-node fin-chart-card fin-verdict-card fin-tone-chart'
         : 'fin-node fin-chart-card fin-tone-chart';
+    }
+    if (def.isLiveEntry) {
+      return `fin-node fin-live-entry-card fin-tone-${def.tone || 'input'}`;
+    }
+    if (def.isCanvasLink) {
+      return 'fin-node fin-portal-card fin-tone-formula';
     }
     return `fin-node fin-tone-${def.tone || 'input'}`;
   }
@@ -1847,7 +2174,7 @@
 
     container.innerHTML = FINANCE_CATEGORIES.map((cat, idx) => {
       const items = FINANCE_NODE_LIST.filter(n => n.cat === cat.id);
-      const collapsedClass = idx >= 3 ? 'is-collapsed' : '';
+      const collapsedClass = idx >= 4 ? 'is-collapsed' : '';
       return `
         <div class="fin-cat-group ${collapsedClass}" data-fin-cat="${cat.id}">
           <button type="button" class="fin-cat-head" data-fin-cat-toggle="${cat.id}">
@@ -2638,7 +2965,6 @@
   }
 
   function loadFinancePresetOntoCanvas(presetKey) {
-    window.FlowLabWorkbookEngine?.clearActiveWorkbook?.();
     const built = buildFinanceTemplate(presetKey);
     STATE.nodes = built.nodes;
     STATE.edges = built.edges;
@@ -2655,6 +2981,7 @@
     if (pTitle) pTitle.value = built.title;
     if (pTitleMob) pTitleMob.value = built.title;
 
+    window.FlowLabWorkbookEngine?.initNativeSpreadsheetBook?.(built.title, 'Hoja 1');
     setCanvasDomain('finance', true);
     evaluateFinanceSheet();
     if (typeof commitHistory === 'function') commitHistory();
@@ -2770,7 +3097,224 @@
       btnCsv.addEventListener('click', exportFinanceSheetCSV);
     }
 
+    bindInteractiveFinanceNodeEvents();
+
     setCanvasDomain(STATE.canvasDomain || 'workflow', true);
+  }
+
+  function parseFlexibleMoneyInput(raw) {
+    if (raw === null || raw === undefined) return NaN;
+    let s = String(raw).replace(/[₲$€£R\s]/gi, '').trim();
+    if (!s) return NaN;
+    // Soportar "150.000" o "1.250.000" (miles con puntos en PY/LATAM) y "150,000"
+    if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) {
+      s = s.replace(/\./g, '');
+    } else if (/^-?\d{1,3}(,\d{3})+$/.test(s)) {
+      s = s.replace(/,/g, '');
+    } else if (s.includes(',') && !s.includes('.')) {
+      s = s.replace(',', '.');
+    } else {
+      s = s.replace(/,/g, '');
+    }
+    const n = Number(s);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  function submitLiveMovementFromCard(nodeId, refocusSelector) {
+    const n = typeof byId === 'function' ? byId(nodeId) : null;
+    if (!n) return;
+    ensureFinanceNodeDefaults(n, STATE.nodes || []);
+    const worldEl = document.getElementById('world');
+    const cardRoot = worldEl ? worldEl.querySelector(`[data-live-node="${CSS.escape(nodeId)}"]`) : null;
+    if (!cardRoot) return;
+
+    const dateInp = cardRoot.querySelector(`[data-fin-live-date="${CSS.escape(nodeId)}"]`);
+    const perInp = cardRoot.querySelector(`[data-fin-live-period="${CSS.escape(nodeId)}"]`);
+    const conceptInp = cardRoot.querySelector(`[data-fin-live-concept="${CSS.escape(nodeId)}"]`);
+    const amtInp = cardRoot.querySelector(`[data-fin-live-amount="${CSS.escape(nodeId)}"]`);
+
+    const amt = parseFlexibleMoneyInput(amtInp ? amtInp.value : '');
+    if (!Number.isFinite(amt) || Math.abs(amt) <= 0) {
+      if (typeof showToast === 'function') showToast('Ingresa un monto válido (ej: 150000 o 150.000)', 'warn', 1700);
+      amtInp?.focus();
+      return;
+    }
+
+    const entryDate = (dateInp && dateInp.value) || n.params.entryDate || new Date().toISOString().slice(0, 10);
+    const entryPeriod = (perInp && perInp.value.trim()) || n.params.entryPeriod || '';
+    const label = (conceptInp && conceptInp.value.trim()) || (n.type === 'fin_live_income' ? 'Cobro registrado' : n.type === 'fin_live_payment' ? 'Abono cuota' : 'Gasto registrado');
+
+    n.params.entryDate = entryDate;
+    n.params.entryPeriod = entryPeriod;
+    if (!Array.isArray(n.params.entries)) n.params.entries = [];
+    n.params.entries.push({
+      id: 'mv_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 5),
+      date: entryDate,
+      period: entryPeriod,
+      label,
+      amount: Math.abs(amt)
+    });
+    n.params.value = (Number(n.params.baseAmount) || 0) + n.params.entries.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+    n.status = 'done';
+
+    if (typeof commitHistory === 'function') commitHistory();
+    evaluateFinanceSheet();
+    window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
+    if (typeof renderAll === 'function') renderAll();
+    if (typeof saveState === 'function') saveState();
+
+    if (refocusSelector) {
+      requestAnimationFrame(() => {
+        const nextInp = document.querySelector(refocusSelector);
+        if (nextInp) nextInp.focus();
+      });
+    }
+  }
+
+  let liveNodeEventsBound = false;
+  function bindInteractiveFinanceNodeEvents() {
+    if (liveNodeEventsBound) return;
+    const worldEl = document.getElementById('world');
+    if (!worldEl) return;
+    liveNodeEventsBound = true;
+
+    worldEl.addEventListener('click', e => {
+      const addBtn = e.target.closest('[data-fin-add-entry]');
+      if (addBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const nodeId = addBtn.getAttribute('data-fin-add-entry');
+        submitLiveMovementFromCard(nodeId, `[data-fin-live-concept="${CSS.escape(nodeId)}"]`);
+        return;
+      }
+
+      const delBtn = e.target.closest('[data-fin-del-entry]');
+      if (delBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const entryId = delBtn.getAttribute('data-fin-del-entry');
+        const nodeId = delBtn.getAttribute('data-node-id');
+        const n = typeof byId === 'function' ? byId(nodeId) : null;
+        if (n && Array.isArray(n.params?.entries)) {
+          n.params.entries = n.params.entries.filter(x => x.id !== entryId);
+          n.params.value = (Number(n.params.baseAmount) || 0) + n.params.entries.reduce((s, it) => s + (Number(it.amount) || 0), 0);
+          if (typeof commitHistory === 'function') commitHistory();
+          evaluateFinanceSheet();
+          window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
+          if (typeof renderAll === 'function') renderAll();
+          if (typeof saveState === 'function') saveState();
+        }
+        return;
+      }
+
+      const dirBtn = e.target.closest('[data-portal-dir]');
+      if (dirBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const nodeId = dirBtn.getAttribute('data-node-id');
+        const dir = dirBtn.getAttribute('data-portal-dir');
+        const n = typeof byId === 'function' ? byId(nodeId) : null;
+        if (n && n.params) {
+          n.params.linkDirection = dir;
+          if (typeof commitHistory === 'function') commitHistory();
+          evaluateFinanceSheet();
+          window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
+          if (typeof renderAll === 'function') renderAll();
+        }
+        return;
+      }
+
+      const jumpBtn = e.target.closest('[data-portal-jump]');
+      if (jumpBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const nodeId = jumpBtn.getAttribute('data-portal-jump');
+        const n = typeof byId === 'function' ? byId(nodeId) : null;
+        if (n && window.FlowLabWorkbookEngine?.navigateToLinkedCanvasNode) {
+          window.FlowLabWorkbookEngine.navigateToLinkedCanvasNode(n.params);
+        }
+      }
+    });
+
+    worldEl.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const amtInp = e.target.closest('[data-fin-live-amount]');
+      const conceptInp = e.target.closest('[data-fin-live-concept]');
+      if (amtInp) {
+        e.preventDefault();
+        e.stopPropagation();
+        const nodeId = amtInp.getAttribute('data-fin-live-amount');
+        submitLiveMovementFromCard(nodeId, `[data-fin-live-concept="${CSS.escape(nodeId)}"]`);
+      } else if (conceptInp) {
+        e.preventDefault();
+        e.stopPropagation();
+        const nodeId = conceptInp.getAttribute('data-fin-live-concept');
+        const nextAmt = worldEl.querySelector(`[data-fin-live-amount="${CSS.escape(nodeId)}"]`);
+        if (nextAmt) nextAmt.focus();
+      }
+    });
+
+    worldEl.addEventListener('change', e => {
+      const dateInp = e.target.closest('[data-fin-live-date]');
+      if (dateInp) {
+        const n = typeof byId === 'function' ? byId(dateInp.getAttribute('data-fin-live-date')) : null;
+        if (n && n.params) {
+          n.params.entryDate = dateInp.value;
+          if (typeof saveState === 'function') saveState();
+        }
+        return;
+      }
+
+      const perInp = e.target.closest('[data-fin-live-period]');
+      if (perInp) {
+        const n = typeof byId === 'function' ? byId(perInp.getAttribute('data-fin-live-period')) : null;
+        if (n && n.params) {
+          n.params.entryPeriod = perInp.value.trim();
+          evaluateFinanceSheet();
+          if (typeof saveState === 'function') saveState();
+        }
+        return;
+      }
+
+      const scopeSel = e.target.closest('[data-portal-scope]');
+      if (scopeSel) {
+        const nodeId = scopeSel.getAttribute('data-portal-scope');
+        const n = typeof byId === 'function' ? byId(nodeId) : null;
+        if (n && n.params) {
+          n.params.targetScope = scopeSel.value;
+          const catalog = window.FlowLabWorkbookEngine?.listLinkableCanvases?.() || { nodesByScope: {} };
+          const firstTarget = (catalog.nodesByScope?.[scopeSel.value] || [])[0];
+          n.params.targetNodeId = firstTarget ? firstTarget.id : '';
+          n.params.targetCellRef = firstTarget ? firstTarget.cellRef || '' : '';
+          n.params.targetLabel = firstTarget ? firstTarget.label : '';
+          if (typeof commitHistory === 'function') commitHistory();
+          evaluateFinanceSheet();
+          window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
+          if (typeof renderAll === 'function') renderAll();
+        }
+        return;
+      }
+
+      const targetSel = e.target.closest('[data-portal-target]');
+      if (targetSel) {
+        const nodeId = targetSel.getAttribute('data-portal-target');
+        const n = typeof byId === 'function' ? byId(nodeId) : null;
+        if (n && n.params) {
+          const catalog = window.FlowLabWorkbookEngine?.listLinkableCanvases?.() || { scopes: [], nodesByScope: {} };
+          const sc = n.params.targetScope || catalog.scopes?.[0]?.id || '';
+          n.params.targetScope = sc;
+          const list = catalog.nodesByScope?.[sc] || [];
+          const chosen = list.find(x => x.id === targetSel.value);
+          n.params.targetNodeId = chosen ? chosen.id : targetSel.value;
+          n.params.targetCellRef = chosen ? chosen.cellRef || '' : '';
+          n.params.targetLabel = chosen ? chosen.label : '';
+          if (typeof commitHistory === 'function') commitHistory();
+          evaluateFinanceSheet();
+          window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
+          if (typeof renderAll === 'function') renderAll();
+        }
+      }
+    });
   }
 
   // Registrar tipos inmediatamente al cargar el script

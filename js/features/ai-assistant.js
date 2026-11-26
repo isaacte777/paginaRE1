@@ -932,6 +932,7 @@
       '   - Flujo / Tareas: `start`, `io`, `process`, `decision` (`¿...?` con salidas `"Sí"` y `"No"`), `db`, `api`, `hook`, `ai`, `human`, `tryc`, `err`, `parallel`, `loop`, `delay`, `end`.\n' +
       '   - Gráficos conectados: `chart_bar`, `chart_donut`, `chart_gauge`, `chart_funnel`.\n' +
       '   - Planilla Financiera (`fx`): `fin_input`, `fin_rate`, `fin_periods`, `fin_qty`, `fin_unit_price`, `fin_formula`, `fin_sum`, `fin_subtract`, `fin_multiply`, `fin_divide`, `fin_revenue`, `fin_cogs`, `fin_gross_profit`, `fin_opex`, `fin_ebitda`, `fin_tax`, `fin_net_income`, `fin_ocf`, `fin_capex`, `fin_fcf`, `fin_npv`, `fin_irr`, `fin_roi`, `fin_pmt`, `fin_gross_margin`, `fin_net_margin`, `fin_breakeven`.\n' +
+      '   - Nodos Interactivos de Registro Diario en Vivo y Vínculo entre Lienzos/Hojas: `fin_live_expense` (registro vivo de gastos hoy/mes con entradas interactivas), `fin_live_income` (registro vivo de cobros/ingresos hoy/mes), `fin_live_payment` (abono interactivo a deuda/cuota), `fin_canvas_link` (puente en vivo para traer o enviar valores hacia otra hoja o hacia otro proyecto/lienzo guardado).\n' +
       '   - Gráficas y Veredicto Financiero (ganancia / pérdida / rentabilidad): `fin_verdict_kpi`, `fin_chart_pnl`, `fin_chart_waterfall`, `fin_chart_cashflow`, `fin_chart_margin`, `fin_chart_breakdown`.\n' +
       '   - Conexión entre Flujo y Finanzas: puedes enlazar un nodo de flujo (`process`, `db`, `api`) con una celda financiera (`fin_revenue`, `fin_cogs`, `fin_opex`, etc.) usando `add_edge`; el enrutador ortogonal inteligente trazará un puente limpio `flujo→fx` sin cruzar nodos.\n' +
       '4. GRAFO BIEN CONECTADO: Conecta todos los nodos creados con `add_edge`. Estados válidos (`status`): `pending`, `progress`, `done`, `error`.\n\n' +
@@ -3108,6 +3109,78 @@
           `${attLines.join('\n')}\n\n` +
           `También puedes pedirme reorganizar estos nodos en cualquier arquitectura (*«ordénalo de forma vertical»*, *«en horizontal»*, *«modo kanban»*, *«en carriles por tipo»* o *«separa flujo y finanzas»*).`,
         actions: docSynth.actions
+      };
+    }
+
+    // 0B-LIVE. Registro rápido en lenguaje natural de gasto/ingreso/abono conectado al árbol actual (ej: "hoy gasté 150000 en súper")
+    if (/\b(hoy\s+gast\w*|gast\w*\s+\d|cobr\w*\s+\d|ingres\w*\s+\d|abon\w*\s+\d|pagu\w*\s+\d|nodo\s+de\s+gasto\s+vivo|conectar\s+con\s+otro\s+lienzo|puente\s+entre\s+lienzos)\b/i.test(norm)) {
+      if (/\b(otro\s+lienzo|puente\s+entre\s+lienzos|otra\s+hoja)\b/i.test(norm)) {
+        return {
+          cleanReply:
+            'He agregado un nodo **`Vínculo Otro Lienzo / Hoja`** (`fin_canvas_link`). Desde el propio nodo puedes elegir **← recibir** o **→ enviar** valores hacia cualquier otra hoja del libro o proyecto guardado.',
+          actions: {
+            summary: 'Agregar puente multi-lienzo',
+            operations: [{ op: 'add_node', ref: 'portal_1', type: 'fin_canvas_link', text: 'Vínculo Otro Lienzo / Hoja', status: 'progress' }]
+          }
+        };
+      }
+
+      const amtMatch = userPrompt.replace(/\./g, '').match(/\b(\d{2,12})\b/);
+      const amount = amtMatch ? Number(amtMatch[1]) : 0;
+      const isIncome = /\b(cobr\w*|ingres\w*|recib\w*|gan\w*)\b/i.test(norm) && !/\bgast\w*\b/i.test(norm);
+      const isDebtPay = /\b(abon\w*|cuota|deuda)\b/i.test(norm) && !isIncome;
+      const liveType = isIncome ? 'fin_live_income' : isDebtPay ? 'fin_live_payment' : 'fin_live_expense';
+      const todayIso = new Date().toISOString().slice(0, 10);
+
+      let targetAgg = null;
+      const nodesNow = STATE.nodes || [];
+      if (liveType === 'fin_live_expense') {
+        targetAgg =
+          nodesNow.find(n => n.type === 'fin_sum' && /\b(total\s+gastos|gastos\s+reales|egresos)\b/i.test(n.text || '')) ||
+          nodesNow.find(n => n.type === 'fin_opex') ||
+          nodesNow.find(n => n.type === 'fin_net_income' || n.type === 'fin_ocf');
+      } else if (liveType === 'fin_live_income') {
+        targetAgg =
+          nodesNow.find(n => n.type === 'fin_sum' && /\b(total\s+ingresos|ingresos\s+reales)\b/i.test(n.text || '')) ||
+          nodesNow.find(n => n.type === 'fin_revenue') ||
+          nodesNow.find(n => n.type === 'fin_net_income' || n.type === 'fin_ocf');
+      } else {
+        targetAgg = nodesNow.find(n => /\b(falta|deuda)\b/i.test(n.text || ''));
+      }
+
+      const ops = [
+        {
+          op: 'add_node',
+          ref: 'live_mv_1',
+          type: liveType,
+          text: isIncome ? 'Ingresos / Cobros Hoy' : isDebtPay ? 'Abono a Deuda Hoy' : 'Gastos del Día / Mes',
+          status: 'done',
+          params: {
+            value: amount,
+            entryDate: todayIso,
+            entries:
+              amount > 0
+                ? [{ id: 'mv_ai_' + Date.now().toString(36), date: todayIso, label: userPrompt.slice(0, 36), amount }]
+                : []
+          }
+        }
+      ];
+      if (targetAgg) {
+        ops.push({
+          op: 'add_edge',
+          from: 'live_mv_1',
+          to: targetAgg.id,
+          label: liveType === 'fin_live_income' ? '+' : '-'
+        });
+      }
+
+      return {
+        cleanReply:
+          `Listo: creé el nodo interactivo **\`${ops[0].text}\`**${amount > 0 ? ` con **${amount.toLocaleString('es-PY')}** registrado hoy` : ''}${targetAgg ? ` y lo conecté directamente a **\`${targetAgg.text}\`** para que todo el árbol se recalcule automáticamente` : ''}. Puedes seguir agregando más movimientos desde los campos internos del propio nodo.`,
+        actions: {
+          summary: 'Registrar movimiento en vivo conectado al árbol',
+          operations: ops
+        }
       };
     }
 

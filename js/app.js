@@ -751,7 +751,9 @@ function registerEventListeners() {
       e.target.closest('#minimap') ||
       e.target.closest('#mobileNodeBar') ||
       e.target.closest('#nodeQuickBar') ||
-      e.target.closest('#finFormulaBar')
+      e.target.closest('#finFormulaBar') ||
+      e.target.closest('#finWorkbookSheetsBar') ||
+      e.target.closest('.fin-interactive-zone')
     ) {
       return;
     }
@@ -970,6 +972,12 @@ function registerEventListeners() {
   });
 
   DOM.vp.addEventListener('dblclick', e => {
+    if (
+      e.target.closest('.fin-interactive-zone') ||
+      e.target.closest('#finWorkbookSheetsBar')
+    ) {
+      return;
+    }
     const nEl = e.target.closest('.node');
     if (nEl) {
       startEdit(nEl, e);

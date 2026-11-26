@@ -27,7 +27,8 @@ function storagePayload() {
     financeCurrency: STATE.financeCurrency || 'USD',
     title: document.getElementById('projTitle')?.value || '',
     isBlankCanvas: STATE.isBlankCanvas === true,
-    activeProjectId: STATE.activeProjectId || null
+    activeProjectId: STATE.activeProjectId || null,
+    workbookSession: window.FlowLabWorkbookEngine?.serializeWorkbookSession?.() || null
   };
 }
 
@@ -98,6 +99,9 @@ function loadState() {
           if (tEl) tEl.value = data.title;
           if (tMobEl) tMobEl.value = data.title;
         }
+        if (data.workbookSession && window.FlowLabWorkbookEngine?.restoreWorkbookSession) {
+          window.FlowLabWorkbookEngine.restoreWorkbookSession(data.workbookSession);
+        }
         restoredProject = true;
       }
     }
@@ -128,6 +132,7 @@ function exportJSON() {
     canvasDomain: STATE.canvasDomain || 'workflow',
     financeCurrency: STATE.financeCurrency || 'USD',
     title: titleVal,
+    workbookSession: window.FlowLabWorkbookEngine?.serializeWorkbookSession?.() || null,
     exported: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -178,6 +183,11 @@ function importProjectFile(file) {
           const pTitleMob = document.getElementById('projTitleMobile');
           if (pTitle) pTitle.value = data.title;
           if (pTitleMob) pTitleMob.value = data.title;
+        }
+        if (data.workbookSession && window.FlowLabWorkbookEngine?.restoreWorkbookSession) {
+          window.FlowLabWorkbookEngine.restoreWorkbookSession(data.workbookSession);
+        } else if (STATE.canvasDomain === 'finance') {
+          window.FlowLabWorkbookEngine?.initNativeSpreadsheetBook?.(data.title || 'Planilla Financiera', 'Hoja 1');
         }
         STATE.history = [];
         STATE.hPtr = -1;

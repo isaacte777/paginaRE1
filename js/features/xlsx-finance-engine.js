@@ -1900,128 +1900,984 @@
   }
 
   // =========================================================================
-  // 6. BARRA INTERACTIVA DE HOJAS EXCEL E IMPORTACIÓN DIRECTA EN FINANZAS
+  // 6. HOJA DE CÁLCULO MULTI-PESTAÑA NATIVA, NODOS EN VIVO Y PUENTE MULTI-LIENZO
   // =========================================================================
-  function renderWorkbookSheetsBar() {
-    const bar = document.getElementById('finWorkbookSheetsBar');
-    if (!bar) return;
+  let sheetGraphs = {}; // viewKey ('master' | 'sheet:0' | ...) -> { nodes, edges, pan, zoom, dirty }
+  let customTabs = [];  // [{ key: 'sheet:0', label: 'Hoja 1', fullName: 'Hoja 1' }] cuando no proviene de .xlsx
+  let bookTitle = 'Planilla Financiera';
+  let isApplyingView = false;
+  let lastPushCache = new Map();
 
-    const inFinance = typeof isFinanceWorkspaceActive === 'function' ? isFinanceWorkspaceActive() : true;
-    if (!activeFinancialWorkbook || !inFinance) {
-      bar.hidden = true;
-      return;
+  function cloneGraphData(obj) {
+    try {
+      return JSON.parse(JSON.stringify(obj));
+    } catch {
+      return obj;
     }
-
-    bar.hidden = false;
-    const wb = activeFinancialWorkbook;
-    const tabsHtml = [
-      ...(wb.sheets.length > 1
-        ? [
-            `<button type="button" class="fin-wb-tab ${activeWorkbookViewKey === 'master' ? 'is-active' : ''}" data-wb-view="master" title="Ver árbol consolidado conectando las ${wb.sheetCount} hojas">Árbol Maestro (${wb.sheetCount})</button>`
-          ]
-        : []),
-      ...wb.sheets.map(
-        (sh, idx) =>
-          `<button type="button" class="fin-wb-tab ${activeWorkbookViewKey === `sheet:${idx}` ? 'is-active' : ''}" data-wb-view="sheet:${idx}" title="${sh.name}">${sh.shortLabel || sh.name}</button>`
-      )
-    ].join('');
-
-    bar.innerHTML = `
-      <div class="fin-wb-meta">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-        <strong title="${wb.fileName}">${wb.title.slice(0, 28)}</strong>
-        <span class="fin-wb-cur">${wb.currency}</span>
-      </div>
-      <div class="fin-wb-tabs" role="tablist" aria-label="Hojas del archivo Excel">${tabsHtml}</div>
-      <button type="button" class="fin-wb-close" id="btnCloseWorkbookBar" title="Ocultar barra de hojas Excel" aria-label="Ocultar barra de hojas">×</button>
-    `;
-
-    bar.querySelectorAll('[data-wb-view]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        applyWorkbookViewToCanvas(wb, btn.dataset.wbView);
-      });
-    });
-
-    bar.querySelector('#btnCloseWorkbookBar')?.addEventListener('click', () => {
-      activeFinancialWorkbook = null;
-      bar.hidden = true;
-    });
   }
 
-  function applyOperationsSynchronouslyToCanvas(treeResult, wbTitle) {
-    if (!treeResult || !Array.isArray(treeResult.operations)) return;
+  function ensureNativeSpreadsheetBook(defaultTitle, firstTabLabel) {
+    const pTitle = document.getElementById('projTitle')?.value?.trim();
+    if (defaultTitle) bookTitle = defaultTitle;
+    else if (pTitle) bookTitle = pTitle;
 
-    if (typeof setWorkspaceDomain === 'function') {
-      setWorkspaceDomain('finance', { silent: true });
+    if (!activeFinancialWorkbook && customTabs.length === 0) {
+      const tabLbl = firstTabLabel || 'Hoja 1';
+      customTabs = [{ key: 'sheet:0', label: tabLbl, fullName: tabLbl }];
+      activeWorkbookViewKey = 'sheet:0';
+      sheetGraphs['sheet:0'] = {
+        nodes: cloneGraphData(STATE.nodes || []),
+        edges: cloneGraphData(STATE.edges || []),
+        pan: { ...(STATE.pan || { x: 80, y: 80 }) },
+        zoom: STATE.zoom || 1,
+        dirty: false
+      };
     }
+  }
 
-    STATE.nodes = [];
-    STATE.edges = [];
-    STATE.sel = null;
-    STATE.isBlankCanvas = false;
+  function initNativeSpreadsheetBook(title, firstSheetName = 'Hoja 1') {
+    activeFinancialWorkbook = null;
+    sheetGraphs = {};
+    lastPushCache.clear();
+    bookTitle = title || document.getElementById('projTitle')?.value?.trim() || 'Planilla Financiera';
+    customTabs = [{ key: 'sheet:0', label: firstSheetName, fullName: firstSheetName }];
+    activeWorkbookViewKey = 'sheet:0';
+    sheetGraphs['sheet:0'] = {
+      nodes: cloneGraphData(STATE.nodes || []),
+      edges: cloneGraphData(STATE.edges || []),
+      pan: { ...(STATE.pan || { x: 80, y: 80 }) },
+      zoom: STATE.zoom || 1,
+      dirty: false
+    };
+    renderWorkbookSheetsBar();
+  }
 
+  function captureActiveSheetSnapshot(markDirty = false) {
+    if (isApplyingView || typeof STATE === 'undefined') return;
+    if (!activeWorkbookViewKey) activeWorkbookViewKey = 'sheet:0';
+    const prev = sheetGraphs[activeWorkbookViewKey] || {};
+    sheetGraphs[activeWorkbookViewKey] = {
+      nodes: cloneGraphData(STATE.nodes || []),
+      edges: cloneGraphData(STATE.edges || []),
+      pan: { ...(STATE.pan || { x: 80, y: 80 }) },
+      zoom: STATE.zoom || 1,
+      dirty: Boolean(markDirty || prev.dirty)
+    };
+  }
+
+  // Evalúa un grafo desconectado en memoria (otra hoja u otro proyecto) con guardia contra recursión cruzada
+  let detachedEvalDepth = 0;
+  function evaluateDetachedGraph(nodesList, edgesList) {
+    if (detachedEvalDepth >= 3) {
+      return { summary: { totalInflows: 0, totalOutflows: 0, netBalance: 0 }, byNodeId: new Map(), byCellRef: new Map(), nodes: nodesList || [] };
+    }
+    const savedNodes = STATE.nodes;
+    const savedEdges = STATE.edges;
+    const savedSel = STATE.sel;
+    detachedEvalDepth++;
+    try {
+      STATE.nodes = cloneGraphData(nodesList || []);
+      STATE.edges = cloneGraphData(edgesList || []);
+      STATE.sel = null;
+      const computed = typeof evaluateFinanceSheet === 'function' ? evaluateFinanceSheet() : null;
+      const valuesByNodeId = new Map();
+      const valuesByCellRef = new Map();
+      if (computed && computed.byNodeId) {
+        computed.byNodeId.forEach((v, k) => valuesByNodeId.set(k, v));
+      }
+      if (computed && computed.byCellRef) {
+        computed.byCellRef.forEach((v, k) => valuesByCellRef.set(String(k).toUpperCase(), v));
+      }
+      return {
+        summary: computed?.summary || { totalInflows: 0, totalOutflows: 0, netBalance: 0 },
+        byNodeId: valuesByNodeId,
+        byCellRef: valuesByCellRef,
+        nodes: STATE.nodes
+      };
+    } finally {
+      detachedEvalDepth--;
+      STATE.nodes = savedNodes;
+      STATE.edges = savedEdges;
+      STATE.sel = savedSel;
+    }
+  }
+
+  // Materializa los nodos de una vista del libro Excel sin cambiar la pantalla activa
+  function ensureSheetGraphMaterialized(viewKey) {
+    if (sheetGraphs[viewKey] && Array.isArray(sheetGraphs[viewKey].nodes) && sheetGraphs[viewKey].nodes.length > 0) {
+      return sheetGraphs[viewKey];
+    }
+    if (!activeFinancialWorkbook) return sheetGraphs[viewKey] || null;
+    const tree = buildWorkbookTreeActions(activeFinancialWorkbook, viewKey);
+    if (!tree || !Array.isArray(tree.operations)) return null;
+
+    const nodes = [];
+    const edges = [];
     const refMap = new Map();
-    const addedNodes = [];
 
-    treeResult.operations.forEach((op, idx) => {
-      if (op.op === 'set_currency' && typeof window.setSheetCurrency === 'function') {
-        window.setSheetCurrency(op.currency);
-      } else if (op.op === 'add_node') {
+    tree.operations.forEach((op, idx) => {
+      if (op.op === 'add_node') {
         const nodeObj = createNode(op.type, op.text, 0, 0);
         if (op.note) nodeObj.note = op.note;
         if (op.params) nodeObj.params = { ...op.params };
         if (typeof ensureFinanceNodeDefaults === 'function') {
-          ensureFinanceNodeDefaults(nodeObj);
+          ensureFinanceNodeDefaults(nodeObj, nodes);
         }
-        STATE.nodes.push(nodeObj);
-        addedNodes.push(nodeObj);
+        nodes.push(nodeObj);
         refMap.set(op.ref || `r_${idx}`, nodeObj.id);
       } else if (op.op === 'add_edge') {
         const fromId = refMap.get(op.from);
         const toId = refMap.get(op.to);
         if (fromId && toId && fromId !== toId) {
-          STATE.edges.push(createEdge(fromId, toId, op.label || '', 'normal'));
+          edges.push(createEdge(fromId, toId, op.label || '', 'normal'));
         }
       }
     });
 
-    if (wbTitle) {
-      const pTitle = document.getElementById('projTitle');
-      const pTitleMob = document.getElementById('projTitleMobile');
-      if (pTitle) pTitle.value = wbTitle.slice(0, 42);
-      if (pTitleMob) pTitleMob.value = wbTitle.slice(0, 42);
+    if (typeof runSmartGraphLayoutEngine === 'function' && nodes.length > 0) {
+      runSmartGraphLayoutEngine(nodes, edges, { mode: 'tree_lr', density: 'normal', originX: 110, originY: 96 });
     }
 
-    if (typeof evaluateFinanceSheet === 'function') evaluateFinanceSheet();
-    if (typeof renderNodes === 'function') renderNodes();
-    if (typeof runSmartGraphLayoutEngine === 'function' && STATE.nodes.length > 0) {
-      runSmartGraphLayoutEngine(STATE.nodes, STATE.edges, { mode: 'tree_lr', density: 'normal', originX: 110, originY: 74 });
+    sheetGraphs[viewKey] = {
+      nodes,
+      edges,
+      pan: { x: 80, y: 96 },
+      zoom: 0.85,
+      dirty: false
+    };
+    return sheetGraphs[viewKey];
+  }
+
+  // Sincroniza automáticamente los cambios hechos en hojas individuales (ej: nuevos gastos/ingresos/abonos) hacia el Árbol Maestro
+  function syncMasterTreeWithModifiedSheets() {
+    if (activeFinancialWorkbook) {
+      const masterGraph = ensureSheetGraphMaterialized('master');
+      if (!masterGraph) return;
+
+      activeFinancialWorkbook.sheets.forEach((sh, idx) => {
+        const key = `sheet:${idx}`;
+        const g = sheetGraphs[key];
+        if (!g || !g.dirty) return;
+
+        const det = evaluateDetachedGraph(g.nodes, g.edges);
+        const findValByText = regex => {
+          const hit = det.nodes.find(n => regex.test(String(n.text || '')));
+          return hit ? det.byNodeId.get(hit.id)?.value : undefined;
+        };
+
+        if (sh.archetype === 'monthly_budget') {
+          const shortTag = sh.shortLabel.replace(/\s*20\d\d\s*/g, '').trim();
+          const incVal = findValByText(/^Total Ingresos/i);
+          const expVal = findValByText(/^Total Gastos/i);
+          const netVal = findValByText(/^Resultado Neto/i);
+          const capVal = findValByText(/^Capital Final en Cuenta/i);
+
+          masterGraph.nodes.forEach(mn => {
+            const mt = String(mn.text || '');
+            if (incVal !== undefined && mt === `Ingresos ${shortTag}`) mn.params.value = incVal;
+            if (expVal !== undefined && mt === `Gastos ${shortTag}`) mn.params.value = expVal;
+            if (netVal !== undefined && mt === `Flujo Neto ${shortTag}`) mn.params.value = netVal;
+            if (capVal !== undefined && idx === 0 && mt.startsWith('Capital Actual')) mn.params.value = capVal;
+          });
+        } else if (sh.archetype === 'debt_blocks') {
+          det.nodes.forEach(dn => {
+            if (/^Falta:\s+/i.test(dn.text || '')) {
+              const debtTitle = dn.text.replace(/^Falta:\s+/i, '').trim();
+              const newSaldo = det.byNodeId.get(dn.id)?.value;
+              const masterDebt = masterGraph.nodes.find(mn => mn.text === `Deuda: ${debtTitle}`);
+              if (masterDebt && Number.isFinite(newSaldo)) {
+                masterDebt.params.value = Math.max(0, newSaldo);
+              }
+            }
+          });
+        } else if (sh.archetype === 'asset_goals') {
+          const paidVal = findValByText(/^Total Ya Pagado/i);
+          const goalVal = findValByText(/^Total /i);
+          masterGraph.nodes.forEach(mn => {
+            if (paidVal !== undefined && mn.text === 'Pagado en Equipamiento') mn.params.value = paidVal;
+            if (goalVal !== undefined && mn.text === 'Meta Herramientas / Equipos') mn.params.value = goalVal;
+          });
+        }
+      });
+      return;
     }
+
+    // Libro multi-hoja nativo creado por el usuario (Hoja 1, Hoja 2, ...)
+    if (customTabs.length > 1) {
+      const nodes = [];
+      const edges = [];
+      const incRefs = [];
+      const outRefs = [];
+
+      customTabs.forEach((tab, idx) => {
+        const g = sheetGraphs[tab.key];
+        const det = g ? evaluateDetachedGraph(g.nodes, g.edges) : { summary: { totalInflows: 0, totalOutflows: 0, netBalance: 0 } };
+        const nIn = createNode('fin_revenue', `Ingresos (${tab.label})`, 120, 100 + idx * 170);
+        nIn.params = { value: det.summary.totalInflows || 0, format: 'currency' };
+        ensureFinanceNodeDefaults(nIn, nodes);
+        nodes.push(nIn);
+        incRefs.push(nIn.id);
+
+        const nOut = createNode('fin_opex', `Egresos (${tab.label})`, 120, 180 + idx * 170);
+        nOut.params = { value: det.summary.totalOutflows || 0, format: 'currency' };
+        ensureFinanceNodeDefaults(nOut, nodes);
+        nodes.push(nOut);
+        outRefs.push(nOut.id);
+      });
+
+      const totIn = createNode('fin_sum', 'Ingresos Consolidados', 420, 140);
+      ensureFinanceNodeDefaults(totIn, nodes);
+      nodes.push(totIn);
+      incRefs.forEach(id => edges.push(createEdge(id, totIn.id, '+', 'normal')));
+
+      const totOut = createNode('fin_sum', 'Egresos Consolidados', 420, 280);
+      ensureFinanceNodeDefaults(totOut, nodes);
+      nodes.push(totOut);
+      outRefs.forEach(id => edges.push(createEdge(id, totOut.id, '+', 'normal')));
+
+      const netNode = createNode('fin_net_income', 'Resultado Consolidado', 700, 210);
+      ensureFinanceNodeDefaults(netNode, nodes);
+      nodes.push(netNode);
+      edges.push(createEdge(totIn.id, netNode.id, '+', 'normal'));
+      edges.push(createEdge(totOut.id, netNode.id, '-', 'normal'));
+
+      const verdictNode = createNode('fin_verdict_kpi', 'Veredicto Consolidado', 980, 150);
+      ensureFinanceNodeDefaults(verdictNode, nodes);
+      nodes.push(verdictNode);
+      edges.push(createEdge(netNode.id, verdictNode.id, '=', 'normal'));
+
+      const chartNode = createNode('fin_chart_pnl', 'Comparativa Multi-Hoja', 980, 340);
+      ensureFinanceNodeDefaults(chartNode, nodes);
+      nodes.push(chartNode);
+      edges.push(createEdge(totIn.id, chartNode.id, '+', 'normal'));
+      edges.push(createEdge(totOut.id, chartNode.id, '-', 'normal'));
+
+      if (typeof runSmartGraphLayoutEngine === 'function') {
+        runSmartGraphLayoutEngine(nodes, edges, { mode: 'tree_lr', density: 'normal', originX: 110, originY: 96 });
+      }
+      sheetGraphs.master = { nodes, edges, pan: { x: 80, y: 96 }, zoom: 0.9, dirty: false };
+    }
+  }
+
+  function notifyActiveSheetChanged() {
+    if (isApplyingView) return;
+    captureActiveSheetSnapshot(true);
+    if (activeWorkbookViewKey !== 'master') {
+      syncMasterTreeWithModifiedSheets();
+    }
+  }
+
+  function getWorkbookTabDescriptors() {
+    if (activeFinancialWorkbook && Array.isArray(activeFinancialWorkbook.sheets)) {
+      const wb = activeFinancialWorkbook;
+      const list = [];
+      if (wb.sheets.length > 1) {
+        list.push({
+          key: 'master',
+          label: `Árbol Maestro (${wb.sheetCount})`,
+          fullName: `Árbol Maestro consolidado (${wb.sheetCount} hojas)`
+        });
+      }
+      wb.sheets.forEach((sh, idx) => {
+        list.push({
+          key: `sheet:${idx}`,
+          label: sh.shortLabel || sh.name,
+          fullName: sh.name
+        });
+      });
+      return list;
+    }
+
+    ensureNativeSpreadsheetBook();
+    const list = [];
+    if (customTabs.length > 1) {
+      list.push({
+        key: 'master',
+        label: `Árbol Maestro (${customTabs.length})`,
+        fullName: `Consolidado de las ${customTabs.length} hojas`
+      });
+    }
+    customTabs.forEach(t => list.push(t));
+    return list;
+  }
+
+  function getActiveViewLabel() {
+    const tabs = getWorkbookTabDescriptors();
+    const hit = tabs.find(t => t.key === activeWorkbookViewKey);
+    return hit ? hit.label : '';
+  }
+
+  // Inserta un nodo interactivo en vivo (Gasto, Ingreso, Abono o Puente otro lienzo) conectado automáticamente al árbol actual
+  function insertConnectedLiveNode(nodeType = 'fin_live_expense') {
+    if (typeof createNode !== 'function') return null;
+    if (typeof setWorkspaceDomain === 'function' && STATE.canvasDomain !== 'finance') {
+      setWorkspaceDomain('finance', { silent: true });
+    }
+    ensureNativeSpreadsheetBook();
+
+    const existing = Array.isArray(STATE.nodes) ? STATE.nodes : [];
+    let targetAggregator = null;
+    let edgeLabel = '+';
+
+    if (nodeType === 'fin_live_expense') {
+      targetAggregator =
+        existing.find(n => n.type === 'fin_sum' && /\b(total\s+gastos|gastos\s+reales|egresos\s+consolidados)\b/i.test(n.text || '')) ||
+        existing.find(n => n.type === 'fin_opex' && /\b(gastos|opex)\b/i.test(n.text || '')) ||
+        existing.find(n => n.type === 'fin_net_income' || n.type === 'fin_ocf');
+      if (targetAggregator && (targetAggregator.type === 'fin_net_income' || targetAggregator.type === 'fin_ocf')) {
+        edgeLabel = '-';
+      }
+    } else if (nodeType === 'fin_live_income') {
+      targetAggregator =
+        existing.find(n => n.type === 'fin_sum' && /\b(total\s+ingresos|ingresos\s+reales|ingresos\s+consolidados)\b/i.test(n.text || '')) ||
+        existing.find(n => n.type === 'fin_revenue' || n.type === 'fin_cash_in') ||
+        existing.find(n => n.type === 'fin_net_income' || n.type === 'fin_ocf');
+    } else if (nodeType === 'fin_live_payment') {
+      targetAggregator =
+        existing.find(n => /\b(saldo\s+total\s+falta|total\s+deudas|falta\s+meta|falta\s+pagar)\b/i.test(n.text || '')) ||
+        existing.find(n => n.type === 'fin_loan_balance' || (n.type === 'fin_cash_out' && /deuda/i.test(n.text || '')));
+      edgeLabel = '-';
+    }
+
+    let posX = 110;
+    let posY = 120;
+    if (targetAggregator) {
+      posX = Math.max(48, Math.round((targetAggregator.x - 310) / 12) * 12);
+      const siblings = existing.filter(n => n.type.startsWith('fin_live_') || n.type === 'fin_canvas_link');
+      posY = Math.round((targetAggregator.y + siblings.length * 190) / 12) * 12;
+    } else if (existing.length > 0) {
+      const minX = Math.min(...existing.map(n => n.x || 80));
+      const maxY = Math.max(...existing.map(n => (n.y || 80) + (n.h || 90)));
+      posX = Math.round(minX / 12) * 12;
+      posY = Math.round((maxY + 48) / 12) * 12;
+    }
+
+    const titles = {
+      fin_live_expense: 'Gastos del Mes / Hoy',
+      fin_live_income: 'Ingresos / Cobros Nuevos',
+      fin_live_payment: 'Abonos a Deuda / Cuota',
+      fin_canvas_link: 'Vínculo Otro Lienzo / Hoja'
+    };
+
+    const newNode = createNode(nodeType, titles[nodeType] || 'Movimiento en Vivo', posX, posY);
+    newNode.status = 'progress';
+    if (typeof ensureFinanceNodeDefaults === 'function') {
+      ensureFinanceNodeDefaults(newNode, existing);
+    }
+    STATE.nodes.push(newNode);
+    STATE.isBlankCanvas = false;
+
+    if (targetAggregator && typeof createEdge === 'function') {
+      STATE.edges.push(createEdge(newNode.id, targetAggregator.id, edgeLabel, 'normal'));
+    }
+
     if (typeof commitHistory === 'function') commitHistory();
+    if (typeof evaluateFinanceSheet === 'function') evaluateFinanceSheet();
+    notifyActiveSheetChanged();
+    if (typeof setSel === 'function') setSel({ kind: 'node', id: newNode.id });
     if (typeof renderAll === 'function') renderAll();
-    if (typeof fitView === 'function' && STATE.nodes.length > 0) {
-      requestAnimationFrame(() => fitView());
+    if (typeof centerOnNode === 'function') centerOnNode(newNode.id);
+
+    if (nodeType !== 'fin_canvas_link') {
+      requestAnimationFrame(() => {
+        const inp = document.querySelector(`[data-fin-live-concept="${CSS.escape(newNode.id)}"]`);
+        if (inp) inp.focus();
+      });
     }
+
+    if (typeof showToast === 'function') {
+      showToast(
+        targetAggregator
+          ? `Conectado automáticamente a "${targetAggregator.text}"`
+          : `Nodo "${newNode.text}" agregado al lienzo`,
+        'ok',
+        2100
+      );
+    }
+    return newNode;
+  }
+
+  function addNewSpreadsheetTab() {
+    captureActiveSheetSnapshot(false);
+    if (activeFinancialWorkbook) {
+      const nextIdx = activeFinancialWorkbook.sheets.length;
+      const newName = `HOJA ${nextIdx + 1}`;
+      activeFinancialWorkbook.sheets.push({
+        index: nextIdx,
+        name: newName,
+        shortLabel: newName,
+        archetype: 'general_table',
+        currency: activeFinancialWorkbook.currency || STATE.financeCurrency || 'USD',
+        inflows: [],
+        outflows: [],
+        neutralItems: [],
+        totals: { inflows: 0, outflows: 0 }
+      });
+      activeFinancialWorkbook.sheetCount = activeFinancialWorkbook.sheets.length;
+      const newKey = `sheet:${nextIdx}`;
+      const seedIn = createNode('fin_live_income', `Ingresos (${newName})`, 120, 130);
+      const seedOut = createNode('fin_live_expense', `Gastos (${newName})`, 120, 340);
+      const seedNet = createNode('fin_net_income', `Resultado Neto (${newName})`, 460, 220);
+      const seedVerdict = createNode('fin_verdict_kpi', `Veredicto (${newName})`, 760, 200);
+      [seedIn, seedOut, seedNet, seedVerdict].forEach(n => ensureFinanceNodeDefaults?.(n, [seedIn, seedOut, seedNet, seedVerdict]));
+      const nodes = [seedIn, seedOut, seedNet, seedVerdict];
+      const edges = [
+        createEdge(seedIn.id, seedNet.id, '+', 'normal'),
+        createEdge(seedOut.id, seedNet.id, '-', 'normal'),
+        createEdge(seedNet.id, seedVerdict.id, '=', 'normal')
+      ];
+      sheetGraphs[newKey] = { nodes, edges, pan: { x: 80, y: 96 }, zoom: 0.92, dirty: true };
+      switchSpreadsheetTab(newKey);
+      return;
+    }
+
+    ensureNativeSpreadsheetBook();
+    const nextNum = customTabs.length + 1;
+    const newKey = `sheet:${Date.now().toString(36)}`;
+    const newLabel = `Hoja ${nextNum}`;
+    customTabs.push({ key: newKey, label: newLabel, fullName: newLabel });
+
+    const seedIn = createNode('fin_live_income', `Ingresos (${newLabel})`, 120, 130);
+    const seedOut = createNode('fin_live_expense', `Gastos (${newLabel})`, 120, 340);
+    const seedNet = createNode('fin_net_income', `Resultado Neto (${newLabel})`, 460, 220);
+    const seedVerdict = createNode('fin_verdict_kpi', `Veredicto (${newLabel})`, 760, 200);
+    const nodes = [seedIn, seedOut, seedNet, seedVerdict];
+    nodes.forEach(n => ensureFinanceNodeDefaults?.(n, nodes));
+    const edges = [
+      createEdge(seedIn.id, seedNet.id, '+', 'normal'),
+      createEdge(seedOut.id, seedNet.id, '-', 'normal'),
+      createEdge(seedNet.id, seedVerdict.id, '=', 'normal')
+    ];
+    sheetGraphs[newKey] = { nodes, edges, pan: { x: 80, y: 96 }, zoom: 0.92, dirty: true };
+    switchSpreadsheetTab(newKey);
+  }
+
+  function switchSpreadsheetTab(targetKey, opts = {}) {
+    if (!targetKey) return;
+    if (!opts.skipCapture) {
+      captureActiveSheetSnapshot(false);
+    }
+
+    if (targetKey === 'master') {
+      syncMasterTreeWithModifiedSheets();
+    }
+
+    let targetGraph = sheetGraphs[targetKey];
+    if (!targetGraph && activeFinancialWorkbook) {
+      targetGraph = ensureSheetGraphMaterialized(targetKey);
+    }
+    if (!targetGraph) return;
+
+    isApplyingView = true;
+    try {
+      activeWorkbookViewKey = targetKey;
+      if (typeof setWorkspaceDomain === 'function') {
+        setWorkspaceDomain('finance', { silent: true });
+      }
+      STATE.nodes = cloneGraphData(targetGraph.nodes || []);
+      STATE.edges = cloneGraphData(targetGraph.edges || []);
+      STATE.sel = null;
+      STATE.isBlankCanvas = STATE.nodes.length === 0;
+      if (targetGraph.pan) STATE.pan = { ...targetGraph.pan };
+      if (targetGraph.zoom) STATE.zoom = targetGraph.zoom;
+
+      if (typeof evaluateFinanceSheet === 'function') evaluateFinanceSheet();
+      if (typeof commitHistory === 'function') commitHistory();
+      if (typeof renderAll === 'function') renderAll();
+      if (!opts.keepViewport && typeof fitView === 'function' && STATE.nodes.length > 0) {
+        requestAnimationFrame(() => fitView());
+      }
+    } finally {
+      isApplyingView = false;
+    }
+
+    renderWorkbookSheetsBar();
+    if (!opts.silentToast && typeof showToast === 'function') {
+      showToast(`${getActiveViewLabel()}: ${STATE.nodes.length} nodos activos`, 'ok', 1700);
+    }
+  }
+
+  // =========================================================================
+  // 7. REGISTRO UNIVERSAL DE LIENZOS Y PROYECTOS PARA VÍNCULOS ENTRE NODOS
+  // =========================================================================
+  function readSavedProjectsFromStorage() {
+    try {
+      const storageKey =
+        typeof getUserStorageKey === 'function'
+          ? getUserStorageKey('projects')
+          : (typeof CONFIG !== 'undefined' && CONFIG.PROJECTS_KEY) || 'paginaRE_flowlab_projects_v1';
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed.filter(p => p && p.id && p.data) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function listLinkableCanvases() {
+    const scopes = [];
+    const nodesByScope = {};
+
+    // 1. Otras hojas dentro del libro de cálculo actual
+    const tabs = getWorkbookTabDescriptors();
+    tabs.forEach(tab => {
+      if (tab.key === activeWorkbookViewKey) return;
+      const scopeId = `wb:${tab.key}`;
+      scopes.push({ id: scopeId, group: 'Hoja', label: tab.label });
+      const g = ensureSheetGraphMaterialized(tab.key) || sheetGraphs[tab.key];
+      nodesByScope[scopeId] = ((g && g.nodes) || []).map(n => ({
+        id: n.id,
+        cellRef: n.params?.cellRef || '',
+        label: n.text || n.type
+      }));
+    });
+
+    // 2. Otros proyectos / lienzos guardados (Finanzas y Flujo de Trabajo)
+    const savedProjects = readSavedProjectsFromStorage();
+    savedProjects.forEach(proj => {
+      if (STATE.activeProjectId && proj.id === STATE.activeProjectId) return;
+      const scopeId = `proj:${proj.id}`;
+      const domTag = proj.data?.canvasDomain === 'finance' ? 'Lienzo Fx' : 'Lienzo Flujo';
+      scopes.push({ id: scopeId, group: domTag, label: proj.name || 'Proyecto sin título' });
+      const pNodes = Array.isArray(proj.data?.nodes) ? proj.data.nodes : [];
+      nodesByScope[scopeId] = pNodes.map(n => ({
+        id: n.id,
+        cellRef: n.params?.cellRef || '',
+        label: n.text || n.type
+      }));
+    });
+
+    return { scopes, nodesByScope };
+  }
+
+  function readRemoteCanvasNodeValue(linkParams) {
+    if (!linkParams || !linkParams.targetScope) return null;
+    const scope = String(linkParams.targetScope);
+    const targetId = linkParams.targetNodeId;
+    const targetRef = String(linkParams.targetCellRef || '').toUpperCase();
+
+    if (scope.startsWith('wb:')) {
+      const viewKey = scope.slice(3);
+      if (viewKey === activeWorkbookViewKey) return null;
+      const g = ensureSheetGraphMaterialized(viewKey) || sheetGraphs[viewKey];
+      if (!g || !Array.isArray(g.nodes)) return null;
+      const det = evaluateDetachedGraph(g.nodes, g.edges);
+      const hitNode =
+        g.nodes.find(n => n.id === targetId) ||
+        (targetRef ? g.nodes.find(n => String(n.params?.cellRef || '').toUpperCase() === targetRef) : null) ||
+        g.nodes[0];
+      if (!hitNode) return null;
+      const val = det.byNodeId.get(hitNode.id)?.value ?? (Number(hitNode.params?.value) || 0);
+      const tabLbl = getWorkbookTabDescriptors().find(t => t.key === viewKey)?.label || viewKey;
+      return {
+        value: val,
+        sourceTitle: `${tabLbl}!${hitNode.params?.cellRef || hitNode.text}`
+      };
+    }
+
+    if (scope.startsWith('proj:')) {
+      const projId = scope.slice(5);
+      const proj = readSavedProjectsFromStorage().find(p => p.id === projId);
+      if (!proj || !proj.data) return null;
+      const pNodes = Array.isArray(proj.data.nodes) ? proj.data.nodes : [];
+      const pEdges = Array.isArray(proj.data.edges) ? proj.data.edges : [];
+      const hitNode =
+        pNodes.find(n => n.id === targetId) ||
+        (targetRef ? pNodes.find(n => String(n.params?.cellRef || '').toUpperCase() === targetRef) : null) ||
+        pNodes[0];
+      if (!hitNode) return null;
+
+      let val = 0;
+      if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(hitNode.type)) {
+        const det = evaluateDetachedGraph(pNodes, pEdges);
+        val = det.byNodeId.get(hitNode.id)?.value ?? (Number(hitNode.params?.value) || 0);
+      } else {
+        const rawV = hitNode.params?.value ?? hitNode.params?.cost ?? hitNode.params?.budget ?? hitNode.progress;
+        val = Number(rawV) || 0;
+      }
+      return {
+        value: val,
+        sourceTitle: `${(proj.name || 'Proyecto').slice(0, 14)}!${hitNode.params?.cellRef || hitNode.text}`
+      };
+    }
+    return null;
+  }
+
+  function pushValueToRemoteCanvasNode(linkParams, value, sourceNodeId) {
+    if (!linkParams || !linkParams.targetScope || !Number.isFinite(value)) return false;
+    const cacheKey = `${sourceNodeId}->${linkParams.targetScope}:${linkParams.targetNodeId || linkParams.targetCellRef}`;
+    if (lastPushCache.get(cacheKey) === value) return true;
+    lastPushCache.set(cacheKey, value);
+
+    const scope = String(linkParams.targetScope);
+    const targetId = linkParams.targetNodeId;
+    const targetRef = String(linkParams.targetCellRef || '').toUpperCase();
+
+    if (scope.startsWith('wb:')) {
+      const viewKey = scope.slice(3);
+      if (viewKey === activeWorkbookViewKey) return false;
+      const g = ensureSheetGraphMaterialized(viewKey) || sheetGraphs[viewKey];
+      if (!g || !Array.isArray(g.nodes)) return false;
+      const hit =
+        g.nodes.find(n => n.id === targetId) ||
+        (targetRef ? g.nodes.find(n => String(n.params?.cellRef || '').toUpperCase() === targetRef) : null);
+      if (!hit) return false;
+      if (!hit.params) hit.params = {};
+      hit.params.value = value;
+      g.dirty = true;
+      return true;
+    }
+
+    if (scope.startsWith('proj:')) {
+      const projId = scope.slice(5);
+      const storageKey =
+        typeof getUserStorageKey === 'function'
+          ? getUserStorageKey('projects')
+          : (typeof CONFIG !== 'undefined' && CONFIG.PROJECTS_KEY) || 'paginaRE_flowlab_projects_v1';
+      const list = readSavedProjectsFromStorage();
+      const proj = list.find(p => p.id === projId);
+      if (!proj || !Array.isArray(proj.data?.nodes)) return false;
+      const hit =
+        proj.data.nodes.find(n => n.id === targetId) ||
+        (targetRef ? proj.data.nodes.find(n => String(n.params?.cellRef || '').toUpperCase() === targetRef) : null);
+      if (!hit) return false;
+      if (!hit.params) hit.params = {};
+      hit.params.value = value;
+      proj.updatedAt = Date.now();
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(list));
+      } catch {}
+      return true;
+    }
+    return false;
+  }
+
+  function navigateToLinkedCanvasNode(linkParams) {
+    if (!linkParams || !linkParams.targetScope) return;
+    const scope = String(linkParams.targetScope);
+    if (scope.startsWith('wb:')) {
+      const viewKey = scope.slice(3);
+      switchSpreadsheetTab(viewKey, { keepViewport: false });
+      const target =
+        STATE.nodes.find(n => n.id === linkParams.targetNodeId) ||
+        STATE.nodes.find(n => String(n.params?.cellRef || '').toUpperCase() === String(linkParams.targetCellRef || '').toUpperCase());
+      if (target) {
+        if (typeof setSel === 'function') setSel({ kind: 'node', id: target.id });
+        if (typeof centerOnNode === 'function') centerOnNode(target.id);
+      }
+      return;
+    }
+    if (scope.startsWith('proj:')) {
+      const projId = scope.slice(5);
+      const proj = readSavedProjectsFromStorage().find(p => p.id === projId);
+      if (!proj || !proj.data) return;
+      STATE.nodes = cloneGraphData(proj.data.nodes || []);
+      STATE.edges = cloneGraphData(proj.data.edges || []);
+      STATE.activeProjectId = proj.id;
+      if (proj.data.financeCurrency && typeof window.setSheetCurrency === 'function') {
+        window.setSheetCurrency(proj.data.financeCurrency);
+      }
+      if (typeof setWorkspaceDomain === 'function') {
+        setWorkspaceDomain(proj.data.canvasDomain || 'workflow', { silent: true });
+      }
+      const pTitle = document.getElementById('projTitle');
+      if (pTitle) pTitle.value = proj.name || '';
+      if (typeof renderAll === 'function') renderAll();
+      const target = STATE.nodes.find(n => n.id === linkParams.targetNodeId);
+      if (target) {
+        if (typeof setSel === 'function') setSel({ kind: 'node', id: target.id });
+        if (typeof centerOnNode === 'function') centerOnNode(target.id);
+      } else if (typeof fitView === 'function') {
+        requestAnimationFrame(() => fitView());
+      }
+      if (typeof showToast === 'function') showToast(`Lienzo abierto: ${proj.name}`, 'ok', 1800);
+    }
+  }
+
+  function resolveCrossSheetCellValue(sheetNameRaw, cellRefRaw) {
+    const query = normPlain(sheetNameRaw);
+    const tabs = getWorkbookTabDescriptors();
+    const hitTab = tabs.find(
+      t =>
+        normPlain(t.label) === query ||
+        normPlain(t.fullName) === query ||
+        normPlain(t.fullName).includes(query) ||
+        normPlain(t.label).includes(query)
+    );
+    if (!hitTab) return 0;
+    if (hitTab.key === activeWorkbookViewKey) return 0;
+    const g = ensureSheetGraphMaterialized(hitTab.key) || sheetGraphs[hitTab.key];
+    if (!g) return 0;
+    const det = evaluateDetachedGraph(g.nodes, g.edges);
+    return det.byCellRef.get(String(cellRefRaw || '').toUpperCase()) ?? 0;
+  }
+
+  // =========================================================================
+  // 8. RENDERIZADO DEL MENÚ INTEGRADO EN LA HOJA DE CÁLCULO (#finWorkbookSheetsBar)
+  // =========================================================================
+  function renderWorkbookSheetsBar() {
+    const bar = document.getElementById('finWorkbookSheetsBar');
+    const fxBar = document.getElementById('finFormulaBar');
+    if (!bar) return;
+
+    const selNode = typeof STATE !== 'undefined' && STATE.sel && STATE.sel.kind === 'node' && typeof byId === 'function' ? byId(STATE.sel.id) : null;
+    const hasFinNodes = typeof STATE !== 'undefined' && Array.isArray(STATE.nodes) && typeof isFinanceNodeType === 'function' && STATE.nodes.some(n => isFinanceNodeType(n.type));
+    const showSpreadsheet =
+      typeof STATE !== 'undefined' &&
+      (STATE.canvasDomain === 'finance' || Boolean(selNode && typeof isFinanceNodeType === 'function' && isFinanceNodeType(selNode.type)) || hasFinNodes);
+
+    if (!showSpreadsheet) {
+      bar.hidden = true;
+      fxBar?.classList.remove('has-sheets-dock');
+      return;
+    }
+
+    ensureNativeSpreadsheetBook();
+    bar.hidden = false;
+    fxBar?.classList.add('has-sheets-dock');
+
+    const tabs = getWorkbookTabDescriptors();
+    if (!tabs.some(t => t.key === activeWorkbookViewKey) && tabs[0]) {
+      activeWorkbookViewKey = tabs[0].key;
+    }
+
+    const displayTitle = activeFinancialWorkbook
+      ? activeFinancialWorkbook.title
+      : document.getElementById('projTitle')?.value?.trim() || bookTitle || 'Planilla Financiera';
+    const curCode = (typeof STATE !== 'undefined' && STATE.financeCurrency) || activeFinancialWorkbook?.currency || 'USD';
+
+    const tabsHtml = tabs
+      .map(
+        t =>
+          `<button type="button" class="fin-wb-tab ${activeWorkbookViewKey === t.key ? 'is-active' : ''}" data-wb-view="${t.key}" title="${t.fullName} (doble clic para renombrar)">${t.label}</button>`
+      )
+      .join('');
+
+    bar.innerHTML = `
+      <div class="fin-wb-meta" title="${activeFinancialWorkbook ? activeFinancialWorkbook.fileName : displayTitle}">
+        <svg class="fin-wb-file-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+        <span class="fin-wb-filename">${displayTitle}</span>
+        <span class="fin-wb-badge">${curCode}</span>
+      </div>
+
+      <button type="button" class="fin-wb-nav-btn" id="wbScrollLeft" title="Desplazar pestañas a la izquierda" aria-label="Anterior">‹</button>
+      <div class="fin-wb-tabs" id="finWbTabsScroll" role="tablist" aria-label="Hojas de la planilla financiera">
+        ${tabsHtml}
+        <button type="button" class="fin-wb-add-sheet" id="btnWbAddSheet" title="Agregar nueva hoja de cálculo a este libro">+ hoja</button>
+      </div>
+      <button type="button" class="fin-wb-nav-btn" id="wbScrollRight" title="Desplazar pestañas a la derecha" aria-label="Siguiente">›</button>
+
+      <div class="fin-wb-live-actions">
+        <button type="button" class="fin-wb-quick-btn is-exp" data-wb-quick="fin_live_expense" title="Agregar nodo de Gasto (Hoy / Mes) conectado automáticamente al árbol">− gasto</button>
+        <button type="button" class="fin-wb-quick-btn is-inc" data-wb-quick="fin_live_income" title="Agregar nodo de Ingreso / Cobro conectado automáticamente al árbol">+ ingreso</button>
+        <button type="button" class="fin-wb-quick-btn is-pay" data-wb-quick="fin_live_payment" title="Registrar abono o pago de cuota conectado a Deudas">− cuota</button>
+        <button type="button" class="fin-wb-quick-btn is-link" data-wb-quick="fin_canvas_link" title="Conectar valores con otra hoja o con otro proyecto/lienzo guardado">⇄ lienzo</button>
+      </div>
+    `;
+
+    const tabsScroll = bar.querySelector('#finWbTabsScroll');
+    bar.querySelector('#wbScrollLeft')?.addEventListener('click', () => {
+      tabsScroll?.scrollBy({ left: -210, behavior: 'smooth' });
+    });
+    bar.querySelector('#wbScrollRight')?.addEventListener('click', () => {
+      tabsScroll?.scrollBy({ left: 210, behavior: 'smooth' });
+    });
+    tabsScroll?.addEventListener(
+      'wheel',
+      e => {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          tabsScroll.scrollLeft += e.deltaY;
+        }
+      },
+      { passive: false }
+    );
+
+    bar.querySelectorAll('[data-wb-view]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const vk = btn.getAttribute('data-wb-view');
+        if (vk && vk !== activeWorkbookViewKey) {
+          switchSpreadsheetTab(vk);
+        }
+      });
+      btn.addEventListener('dblclick', e => {
+        e.stopPropagation();
+        const vk = btn.getAttribute('data-wb-view');
+        if (!vk || vk === 'master') return;
+        const currentName = btn.textContent.trim();
+        const nextName = typeof prompt === 'function' ? prompt('Nuevo nombre de la hoja:', currentName) : null;
+        if (!nextName || !nextName.trim()) return;
+        const clean = nextName.trim().slice(0, 28);
+        if (activeFinancialWorkbook && vk.startsWith('sheet:')) {
+          const idx = Number(vk.split(':')[1]);
+          if (activeFinancialWorkbook.sheets[idx]) {
+            activeFinancialWorkbook.sheets[idx].shortLabel = clean;
+            activeFinancialWorkbook.sheets[idx].name = clean;
+          }
+        } else {
+          const hit = customTabs.find(t => t.key === vk);
+          if (hit) {
+            hit.label = clean;
+            hit.fullName = clean;
+          }
+        }
+        renderWorkbookSheetsBar();
+        if (typeof saveState === 'function') saveState();
+      });
+    });
+
+    bar.querySelector('#btnWbAddSheet')?.addEventListener('click', () => {
+      addNewSpreadsheetTab();
+    });
+
+    bar.querySelectorAll('[data-wb-quick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        insertConnectedLiveNode(btn.getAttribute('data-wb-quick'));
+      });
+    });
+
+    // Asegurar que la pestaña activa sea visible en el carrusel sin mostrar barra blanca nativa
+    requestAnimationFrame(() => {
+      const activeBtn = bar.querySelector('.fin-wb-tab.is-active');
+      if (activeBtn && typeof activeBtn.scrollIntoView === 'function') {
+        try {
+          activeBtn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        } catch {}
+      }
+    });
   }
 
   function setActiveWorkbook(wb, viewKey = 'master') {
     activeFinancialWorkbook = wb;
-    activeWorkbookViewKey = viewKey || 'master';
+    customTabs = [];
+    sheetGraphs = {};
+    lastPushCache.clear();
+    activeWorkbookViewKey = viewKey || (wb && wb.sheets.length > 1 ? 'master' : 'sheet:0');
+    if (wb) bookTitle = wb.title;
     renderWorkbookSheetsBar();
   }
 
-  function applyWorkbookViewToCanvas(wb, viewKey = 'master') {
-    if (!wb) return null;
-    const tree = buildWorkbookTreeActions(wb, viewKey);
-    if (!tree) return null;
-    activeFinancialWorkbook = wb;
-    activeWorkbookViewKey = tree.viewKey;
-    applyOperationsSynchronouslyToCanvas(tree, `${wb.title} · ${tree.viewLabel}`);
+  function clearActiveWorkbook() {
+    activeFinancialWorkbook = null;
+    sheetGraphs = {};
+    customTabs = [];
+    lastPushCache.clear();
     renderWorkbookSheetsBar();
-    if (typeof showToast === 'function') {
-      showToast(`${tree.viewLabel}: ${STATE.nodes.length} nodos financieros reactivos`, 'ok', 2300);
+  }
+
+  function applyWorkbookViewToCanvas(wb, viewKey = 'master', opts = {}) {
+    if (!wb) return null;
+    if (activeFinancialWorkbook !== wb) {
+      activeFinancialWorkbook = wb;
+      customTabs = [];
+      sheetGraphs = {};
+      lastPushCache.clear();
+      bookTitle = wb.title;
+      if (wb.currency && typeof window.setSheetCurrency === 'function') {
+        window.setSheetCurrency(wb.currency);
+      }
+    } else if (!opts.skipCapture) {
+      captureActiveSheetSnapshot(false);
     }
-    return tree;
+
+    const resolvedKey =
+      viewKey === 'master' || String(viewKey).startsWith('sheet:')
+        ? viewKey
+        : resolveRequestedWorkbookView(wb, viewKey);
+
+    if (resolvedKey === 'master') {
+      syncMasterTreeWithModifiedSheets();
+    }
+
+    const targetGraph = ensureSheetGraphMaterialized(resolvedKey);
+    if (!targetGraph) return null;
+
+    isApplyingView = true;
+    try {
+      activeWorkbookViewKey = resolvedKey;
+      if (typeof setWorkspaceDomain === 'function') {
+        setWorkspaceDomain('finance', { silent: true });
+      }
+      STATE.nodes = cloneGraphData(targetGraph.nodes || []);
+      STATE.edges = cloneGraphData(targetGraph.edges || []);
+      STATE.sel = null;
+      STATE.isBlankCanvas = STATE.nodes.length === 0;
+
+      const viewLbl = getActiveViewLabel();
+      const fullTitle = `${wb.title} · ${viewLbl}`.slice(0, 44);
+      const pTitle = document.getElementById('projTitle');
+      const pTitleMob = document.getElementById('projTitleMobile');
+      if (pTitle) pTitle.value = fullTitle;
+      if (pTitleMob) pTitleMob.value = fullTitle;
+
+      if (typeof evaluateFinanceSheet === 'function') evaluateFinanceSheet();
+      if (typeof renderNodes === 'function') renderNodes();
+      if (typeof commitHistory === 'function') commitHistory();
+      if (typeof renderAll === 'function') renderAll();
+      if (typeof fitView === 'function' && STATE.nodes.length > 0) {
+        requestAnimationFrame(() => fitView());
+      }
+    } finally {
+      isApplyingView = false;
+    }
+
+    renderWorkbookSheetsBar();
+    if (!opts.silentToast && typeof showToast === 'function') {
+      showToast(`${getActiveViewLabel()}: ${STATE.nodes.length} nodos financieros reactivos`, 'ok', 2200);
+    }
+    return { viewKey: resolvedKey, viewLabel: getActiveViewLabel() };
+  }
+
+  function serializeWorkbookSession() {
+    captureActiveSheetSnapshot(false);
+    if (!activeFinancialWorkbook && customTabs.length <= 1) return null;
+    return {
+      bookTitle,
+      activeViewKey: activeWorkbookViewKey,
+      customTabs: cloneGraphData(customTabs),
+      sheetGraphs: cloneGraphData(sheetGraphs),
+      wbMeta: activeFinancialWorkbook
+        ? {
+            fileName: activeFinancialWorkbook.fileName,
+            title: activeFinancialWorkbook.title,
+            currency: activeFinancialWorkbook.currency,
+            sheetCount: activeFinancialWorkbook.sheetCount,
+            totalFormulas: activeFinancialWorkbook.totalFormulas,
+            sheets: activeFinancialWorkbook.sheets.map(s => ({
+              index: s.index,
+              name: s.name,
+              shortLabel: s.shortLabel,
+              archetype: s.archetype
+            }))
+          }
+        : null
+    };
+  }
+
+  function restoreWorkbookSession(serialized) {
+    if (!serialized || typeof serialized !== 'object') return;
+    bookTitle = serialized.bookTitle || 'Planilla Financiera';
+    activeWorkbookViewKey = serialized.activeViewKey || 'sheet:0';
+    customTabs = Array.isArray(serialized.customTabs) ? cloneGraphData(serialized.customTabs) : [];
+    sheetGraphs = serialized.sheetGraphs && typeof serialized.sheetGraphs === 'object' ? cloneGraphData(serialized.sheetGraphs) : {};
+    if (serialized.wbMeta && Array.isArray(serialized.wbMeta.sheets)) {
+      activeFinancialWorkbook = {
+        ...serialized.wbMeta,
+        sheets: serialized.wbMeta.sheets.map(s => ({
+          ...s,
+          kpis: {},
+          incomeItems: [],
+          expenseCategories: [],
+          receivables: { items: [] },
+          activeBlocks: [],
+          blocks: [],
+          cards: [],
+          schedules: []
+        }))
+      };
+    }
+    renderWorkbookSheetsBar();
   }
 
   async function importFinancialWorkbookFile(file, targetView = 'master') {
@@ -2036,7 +2892,8 @@
       wb = await parseWorkbookFromBuffer(buf, file.name);
     }
     if (wb && wb.sheets.length > 0) {
-      applyWorkbookViewToCanvas(wb, targetView);
+      const initialView = wb.sheets.length > 1 ? targetView : 'sheet:0';
+      applyWorkbookViewToCanvas(wb, initialView, { skipCapture: true });
     }
     return wb;
   }
@@ -2049,7 +2906,7 @@
     const buf = await resp.arrayBuffer();
     const wb = await parseWorkbookFromBuffer(buf, REPO_SAMPLE_XLSX_NAME);
     if (applyToCanvas) {
-      applyWorkbookViewToCanvas(wb, promptOrView);
+      applyWorkbookViewToCanvas(wb, promptOrView, { skipCapture: true });
     } else {
       setActiveWorkbook(wb, resolveRequestedWorkbookView(wb, promptOrView));
     }
@@ -2096,7 +2953,6 @@
       });
     }
 
-    // Soportar arrastrar y soltar archivos .xlsx / .csv directamente sobre el lienzo (#viewport)
     const vp = document.getElementById('viewport');
     if (vp) {
       vp.addEventListener('dragover', e => {
@@ -2115,6 +2971,8 @@
         }
       });
     }
+
+    renderWorkbookSheetsBar();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
@@ -2131,8 +2989,22 @@
     importFinancialWorkbookFile,
     loadRepositorySampleWorkbook,
     setActiveWorkbook,
+    clearActiveWorkbook,
+    initNativeSpreadsheetBook,
     getActiveWorkbook: () => activeFinancialWorkbook,
+    getActiveViewLabel,
     renderWorkbookSheetsBar,
-    applyWorkbookViewToCanvas
+    applyWorkbookViewToCanvas,
+    switchSpreadsheetTab,
+    addNewSpreadsheetTab,
+    insertConnectedLiveNode,
+    notifyActiveSheetChanged,
+    listLinkableCanvases,
+    readRemoteCanvasNodeValue,
+    pushValueToRemoteCanvasNode,
+    navigateToLinkedCanvasNode,
+    resolveCrossSheetCellValue,
+    serializeWorkbookSession,
+    restoreWorkbookSession
   };
 })();

@@ -7,6 +7,7 @@ function commitHistory() {
   STATE.history.push(snapshot);
   if (STATE.history.length > CONFIG.HISTORY_LIMIT) STATE.history.shift();
   STATE.hPtr = STATE.history.length - 1;
+  window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
 }
 
 function restore(snapshot) {
@@ -17,6 +18,7 @@ function restore(snapshot) {
   STATE.sel = null;
   STATE.circuit = null;
   STATE.circuitHighlight = false;
+  window.FlowLabWorkbookEngine?.notifyActiveSheetChanged?.();
   renderAll();
 }
 
