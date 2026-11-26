@@ -600,7 +600,7 @@
   ];
 
   const FLOWLAB_SCOPE_REGEX =
-    /\b(flowlab|lienzo|canvas|nodo|nodos|conexion|conexiones|conectar|conectado|arista|aristas|puerto|puertos|flujo|flujos|diagrama|diagramas|workflow|pipeline|mapa|plantilla|plantillas|inspector|propiedades|props|stats|estadistica|estadisticas|metrica|metricas|kpi|roi|grafico|chart|donut|gauge|funnel|barra|barras|consola|terminal|powershell|cmd|comando|puente|bridge|exportar|importar|mermaid|markdown|json|svg|png|proyecto|proyectos|espacio|workspace|usuario|perfil|sesion|sesiones|guardar|guardado|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simular|simulacion|ejecutar|velocidad|bloqueado|bloquear|circuito|atajo|atajos|panel|paleta|cabecera|header|boton|dropdown|selector|chat|chats|historial|inicio|start|fin|end|proceso|procesos|process|decision|condicion|bifurcacion|rama|ramas|entrada|salida|bucle|loop|iteracion|paralelo|subproceso|base de datos|bd|db|sql|postgres|mysql|mongo|variable|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error|errores|excepcion|espera|delay|timeout|agente|ia|ai|llm|modelo|modelos|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatizacion|automatizar|orquestador|etapa|etapas|paso|pasos|secuencia|cuello de botella|optimizar|validar|validacion|autenticacion|login|registro|checkout|pago|pagos|venta|ventas|pedido|pedidos|onboarding|inventario|logistica|soporte|ticket|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
+    /\b(flowlab|lienzo|canvas|nodo|nodos|conexion|conexiones|conectar|conectado|arista|aristas|puerto|puertos|flujo|flujos|diagrama|diagramas|workflow|pipeline|mapa|plantilla|plantillas|ordenar|ordena|organizar|organiza|acomodar|acomoda|alinear|alinea|compactar|compacta|reordenar|arregla|arreglar|distancia|distancias|espaciado|inspector|propiedades|props|stats|estadistica|estadisticas|metrica|metricas|kpi|roi|grafico|chart|donut|gauge|funnel|barra|barras|consola|terminal|powershell|cmd|comando|puente|bridge|exportar|importar|mermaid|markdown|json|svg|png|proyecto|proyectos|espacio|workspace|usuario|perfil|sesion|sesiones|guardar|guardado|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simular|simulacion|ejecutar|velocidad|bloqueado|bloquear|circuito|atajo|atajos|panel|paleta|cabecera|header|boton|dropdown|selector|chat|chats|historial|inicio|start|fin|end|proceso|procesos|process|decision|condicion|bifurcacion|rama|ramas|entrada|salida|bucle|loop|iteracion|paralelo|subproceso|base de datos|bd|db|sql|postgres|mysql|mongo|variable|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error|errores|excepcion|espera|delay|timeout|agente|ia|ai|llm|modelo|modelos|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatizacion|automatizar|orquestador|etapa|etapas|paso|pasos|secuencia|cuello de botella|optimizar|validar|validacion|autenticacion|login|registro|checkout|pago|pagos|venta|ventas|pedido|pedidos|onboarding|inventario|logistica|soporte|ticket|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
 
   const FLOWLAB_GREETING_OR_META_REGEX =
     /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal|saludos|gracias|muchas gracias|ok|okay|vale|perfecto|entendido|genial|excelente)\b|\b(que puedes hacer|para que sirves|quien eres|que eres|como funcionas|ayuda|ayudame|como uso|como se usa|explicame)\b/i;
@@ -876,37 +876,56 @@
       : '\n\n(El usuario desactivó temporalmente el envío del contexto del lienzo).';
 
     return (
-      'Eres el Asistente IA exclusivo de la plataforma web FlowLab (sistema visual de diagramas de flujo, nodos y arquitectura). ' +
+      'Eres el Arquitecto y Asistente IA exclusivo de la plataforma web FlowLab (sistema visual de diagramas de flujo, nodos y arquitectura). ' +
       'Hablas en español de forma clara, técnica y directa.\n\n' +
       'REGLA ESTRICTA E INQUEBRANTABLE DE ÁMBITO (SOLO FLOWLAB):\n' +
-      '- Estás preparado ÚNICA Y EXCLUSIVAMENTE para asistir en el uso de FlowLab, creación/edición/análisis de flujos de nodos, arquitectura de procesos o software en el lienzo, uso de plantillas, proyectos guardados, perfiles de espacio de trabajo, exportación (.json, .md, Mermaid, PNG, SVG) y terminal integrada.\n' +
+      '- Estás preparado ÚNICA Y EXCLUSIVAMENTE para asistir en el uso de FlowLab, creación/edición/análisis/organización de flujos de nodos, arquitectura de procesos o software en el lienzo, uso de plantillas, proyectos guardados, perfiles de espacio de trabajo, exportación (.json, .md, Mermaid, PNG, SVG) y terminal integrada.\n' +
       '- Si el usuario hace cualquier pregunta ajena a FlowLab (por ejemplo: recetas de cocina como cocinar arroz, deportes, clima, chistes, poemas, medicina, historia general, entretenimiento o tareas no vinculadas a diagramas en FlowLab), NO respondas la pregunta ajena bajo ninguna circunstancia. Indica amablemente que estás preparado exclusivamente para trabajar dentro de la página FlowLab.\n\n' +
-      'CAPACIDAD DE CREAR Y EDITAR NODOS EN EL LIENZO:\n' +
-      'Cuando el usuario te pida crear nodos, diseñar un flujo, expandir pasos, conectar bloques, cambiar estados o modificar el diagrama, ' +
-      'debes explicar brevemente tu propuesta y añadir AL FINAL de tu mensaje un único bloque de código con la etiqueta ```flowlab-actions con JSON válido.\n\n' +
-      'Tipos de nodo válidos (type): start, end, process, decision, loop, parallel, io, db, varset, api, hook, tryc, err, delay, ai, human, metrics, chart_line, chart_bar, chart_donut, chart_gauge, chart_funnel.\n' +
-      'Estados válidos (status): pending, progress, done, error.\n\n' +
-      'Formato exacto del bloque ```flowlab-actions:\n' +
+      'REGLAS DE CALIDAD ARQUITECTÓNICA AL CREAR O EDITAR NODOS (`flowlab-actions`):\n' +
+      '1. NUNCA incluyas coordenadas `x` ni `y` en los nodos. El motor geométrico jerárquico de FlowLab posiciona y compacta automáticamente los nodos sin colisiones ni grandes distancias.\n' +
+      '2. TEXTOS CONCISOS Y LEGIBLES: El campo `"text"` de cada nodo debe ser corto y directo (de 2 a 6 palabras, máximo 44 caracteres). No escribas párrafos largos dentro del nodo.\n' +
+      '3. TIPADO SEMÁNTICO PRECISO: Elige siempre el `type` más representativo:\n' +
+      '   - `start`: único punto de inicio del flujo\n' +
+      '   - `io`: recepción o salida de datos / formularios\n' +
+      '   - `process`: transformación o tarea de negocio\n' +
+      '   - `decision`: condición lógica con pregunta `¿...?` y dos salidas etiquetadas (`"Sí"` y `"No"`)\n' +
+      '   - `db`: lectura/escritura en base de datos o caché\n' +
+      '   - `api`: llamada HTTP / microservicio externo\n' +
+      '   - `hook`: webhook, evento, correo o notificación\n' +
+      '   - `ai`: clasificación, agente o inferencia LLM\n' +
+      '   - `human`: revisión o aprobación manual\n' +
+      '   - `tryc` / `err`: captura y manejo de errores\n' +
+      '   - `parallel` / `loop` / `delay`: concurrencia, iteración controlada o espera\n' +
+      '   - `metrics` / `chart_bar` / `chart_line` / `chart_donut` / `chart_gauge` / `chart_funnel`: paneles KPI\n' +
+      '   - `end`: cierre limpio del flujo\n' +
+      '4. GRAFO BIEN CONECTADO Y COMPACTO: Conecta todos los nodos creados con `add_edge` de principio (`start`) a fin (`end`). No dejes nodos sueltos ni crees ciclos innecesarios hacia `start`.\n' +
+      '5. CUÁNDO CONECTAR AL NODO SELECCIONADO: Solo conecta al nodo `selected.id` si el usuario pide explícitamente expandir, continuar o agregar a partir de ese nodo. Si pide "crea un flujo de...", diseña un flujo limpio e independiente con su propio `start` y `end`.\n' +
+      '6. Estados válidos (`status`): `pending`, `progress`, `done`, `error`.\n\n' +
+      'Formato exacto del bloque AL FINAL de tu respuesta cuando debas crear/editar/ordenar en el lienzo:\n' +
       '```flowlab-actions\n' +
       '{\n' +
       '  "summary": "Descripción corta de los cambios",\n' +
       '  "operations": [\n' +
-      '    { "op": "add_node", "ref": "p1", "type": "start", "text": "Inicio", "status": "pending" },\n' +
-      '    { "op": "add_node", "ref": "p2", "type": "decision", "text": "¿Datos válidos?", "after": "p1" },\n' +
-      '    { "op": "add_node", "ref": "p3", "type": "db", "text": "Guardar registro", "after": "p2" },\n' +
-      '    { "op": "add_node", "ref": "p4", "type": "err", "text": "Notificar error", "after": "p2" },\n' +
+      '    { "op": "add_node", "ref": "p1", "type": "start", "text": "Inicio solicitud", "status": "pending" },\n' +
+      '    { "op": "add_node", "ref": "p2", "type": "io", "text": "Validar datos entrada" },\n' +
+      '    { "op": "add_node", "ref": "p3", "type": "decision", "text": "¿Datos válidos?" },\n' +
+      '    { "op": "add_node", "ref": "p4", "type": "db", "text": "Guardar en BD" },\n' +
+      '    { "op": "add_node", "ref": "p5", "type": "err", "text": "Notificar rechazo" },\n' +
+      '    { "op": "add_node", "ref": "p6", "type": "end", "text": "Proceso finalizado" },\n' +
       '    { "op": "add_edge", "from": "p1", "to": "p2", "label": "" },\n' +
-      '    { "op": "add_edge", "from": "p2", "to": "p3", "label": "Sí" },\n' +
-      '    { "op": "add_edge", "from": "p2", "to": "p4", "label": "No" }\n' +
+      '    { "op": "add_edge", "from": "p2", "to": "p3", "label": "" },\n' +
+      '    { "op": "add_edge", "from": "p3", "to": "p4", "label": "Sí" },\n' +
+      '    { "op": "add_edge", "from": "p3", "to": "p5", "label": "No" },\n' +
+      '    { "op": "add_edge", "from": "p4", "to": "p6", "label": "OK" }\n' +
       '  ]\n' +
       '}\n' +
       '```\n' +
-      'También puedes usar:\n' +
+      'Operaciones adicionales disponibles:\n' +
+      '- `{ "op": "organize_canvas" }` (si el usuario pide ordenar, alinear, acomodar o juntar los nodos existentes).\n' +
       '- `{ "op": "update_node", "id": "<id_existente>", "text": "Nuevo texto", "status": "done" }`\n' +
       '- `{ "op": "delete_node", "id": "<id_existente>" }`\n' +
-      '- `{ "op": "clear_canvas" }` (SOLO si el usuario pide explícitamente borrar/reemplazar todo el lienzo).\n' +
-      '- Si el usuario dice "a partir de este nodo" o hay un nodo seleccionado (`selected.id`), conecta desde ese `id` existente usando `"after": "<selected.id>"` y `{ "op": "add_edge", "from": "<selected.id>", "to": "p1" }`.\n' +
-      '- Si el usuario SOLO hace una pregunta sobre FlowLab o pide analizar el diagrama sin pedir cambios, responde normalmente SIN incluir ```flowlab-actions.' +
+      '- `{ "op": "clear_canvas" }` (SOLO si el usuario pide borrar/reemplazar todo el lienzo o empezar desde cero).\n' +
+      '- Si el usuario SOLO hace una pregunta sobre FlowLab o pide analizar el diagrama sin modificarlo, responde normalmente SIN incluir ```flowlab-actions.' +
       ctxBlock
     );
   }
@@ -973,8 +992,6 @@
             type: n.type || 'process',
             text: n.text || n.label || n.name || 'Paso ' + (idx + 1),
             status: n.status || 'pending',
-            x: n.x,
-            y: n.y,
             after: n.after
           });
         });
@@ -998,8 +1015,422 @@
   }
 
   // =========================================================================
-  // MOTOR DE AUTO-LAYOUT Y APLICACIÓN DE OPERACIONES AL LIENZO
+  // MOTOR JERÁRQUICO COMPACTO ANTI-CICLOS Y AUTO-LAYOUT (SUGIYAMA COMPACTO)
   // =========================================================================
+  function snapToGridVal(v) {
+    const g = (typeof CONFIG !== 'undefined' && CONFIG.SNAP_GRID) || 12;
+    return Math.round(v / g) * g;
+  }
+
+  function sanitizeAINodeText(rawText, type) {
+    let clean = String(rawText || CONFIG.NODE_TYPES[type] || 'Paso')
+      .replace(/[*`#]+/g, '')
+      .replace(/\r/g, '')
+      .trim();
+
+    if (!clean) clean = CONFIG.NODE_TYPES[type] || 'Paso';
+
+    const fullOriginal = clean;
+    const lines = clean
+      .split('\n')
+      .map(l => l.trim())
+      .filter(Boolean);
+
+    // Si es una sola línea demasiado larga, partirla en 2 líneas cortas y legibles
+    if (lines.length === 1 && lines[0].length > 34) {
+      const words = lines[0].split(/\s+/);
+      const line1 = [];
+      const line2 = [];
+      let len1 = 0;
+      for (const w of words) {
+        if (len1 + w.length + 1 <= 28 || line1.length === 0) {
+          line1.push(w);
+          len1 += w.length + 1;
+        } else {
+          line2.push(w);
+        }
+      }
+      let second = line2.join(' ');
+      if (second.length > 34) second = second.slice(0, 33).trimEnd() + '…';
+      clean = second ? `${line1.join(' ')}\n${second}` : line1.join(' ');
+    } else if (lines.length > 3) {
+      clean = lines
+        .slice(0, 3)
+        .map(l => (l.length > 36 ? l.slice(0, 35).trimEnd() + '…' : l))
+        .join('\n');
+    }
+
+    return {
+      displayText: clean,
+      overflowNotes: fullOriginal.length > clean.length ? fullOriginal : ''
+    };
+  }
+
+  function estimateNodeBoxSize(node) {
+    const type = node.type || 'process';
+    if (type === 'metrics') return { w: 312, h: 156 };
+    if (type.startsWith('chart_')) return { w: 280, h: 164 };
+
+    const lines = String(node.text || '')
+      .split('\n')
+      .filter(Boolean);
+    const maxChars = Math.max(8, ...lines.map(l => l.length));
+    const lineCount = Math.max(1, lines.length);
+
+    if (type === 'decision' || type === 'loop') {
+      return {
+        w: clamp(Math.round(126 + maxChars * 5.2), 152, 224),
+        h: clamp(Math.round(74 + (lineCount - 1) * 16), 78, 118)
+      };
+    }
+
+    return {
+      w: clamp(Math.round(112 + maxChars * 5.6), 148, 236),
+      h: clamp(Math.round(48 + (lineCount - 1) * 16), 52, 108)
+    };
+  }
+
+  function getReliableNodeSize(node) {
+    const est = estimateNodeBoxSize(node);
+    const domW = Number(node.w) || 0;
+    const domH = Number(node.h) || 0;
+    // Si el DOM ya midió dimensiones reales (> 80px), respetar el máximo seguro para evitar solapamientos
+    const w = domW > 80 ? Math.max(domW, Math.round(est.w * 0.85)) : est.w;
+    const h = domH > 34 ? Math.max(domH, Math.round(est.h * 0.85)) : est.h;
+    node.w = w;
+    node.h = h;
+    return { w, h };
+  }
+
+  function classifyBranchSideWeight(edgeLabel, childNode) {
+    const lbl = normalizePlainSpanish(edgeLabel || '');
+    if (/\b(si|ok|valido|aprobado|exito|true|activo|correcto)\b/.test(lbl)) return -1;
+    if (/\b(no|error|fallo|rechazado|invalido|false|excepcion|cancelado)\b/.test(lbl)) return 1;
+    if (childNode && (childNode.type === 'err' || childNode.type === 'tryc')) return 1;
+    return 0;
+  }
+
+  /**
+   * Posiciona cualquier conjunto de nodos en una jerarquía compacta, simétrica y libre de ciclos.
+   * Nunca permite distancias enormes aunque existan bucles/reintentos o muchos pasos seguidos.
+   */
+  function layoutNodesHierarchically(targetNodes, edgesPool, options = {}) {
+    if (!Array.isArray(targetNodes) || targetNodes.length === 0) {
+      return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    }
+
+    const ROW_GAP = 48; // Espacio limpio vertical entre filas (borde inferior -> borde superior)
+    const NODE_H_GAP = 44; // Espacio limpio horizontal entre hermanos de la misma fila
+    const COMP_H_GAP = 92; // Espacio entre componentes o columnas plegadas
+    const MAX_ROWS_PER_COL = 7; // Plegado automático en columnas si el flujo supera 7 niveles
+
+    targetNodes.forEach(n => getReliableNodeSize(n));
+
+    const targetIds = new Set(targetNodes.map(n => n.id));
+    const nodeByIdMap = new Map(targetNodes.map(n => [n.id, n]));
+    const orderIndexMap = new Map(targetNodes.map((n, idx) => [n.id, idx]));
+
+    const internalEdges = (edgesPool || []).filter(
+      e => e && targetIds.has(e.from) && targetIds.has(e.to) && e.from !== e.to
+    );
+
+    // 1. Dividir en componentes débilmente conexas para no apilar flujos independientes en vertical
+    const undirectedAdj = new Map(targetNodes.map(n => [n.id, new Set()]));
+    internalEdges.forEach(e => {
+      undirectedAdj.get(e.from).add(e.to);
+      undirectedAdj.get(e.to).add(e.from);
+    });
+
+    const visitedComp = new Set();
+    const components = [];
+
+    targetNodes.forEach(n => {
+      if (visitedComp.has(n.id)) return;
+      const compIds = [];
+      const q = [n.id];
+      visitedComp.add(n.id);
+      while (q.length > 0) {
+        const cur = q.shift();
+        compIds.push(cur);
+        undirectedAdj.get(cur).forEach(nb => {
+          if (!visitedComp.has(nb)) {
+            visitedComp.add(nb);
+            q.push(nb);
+          }
+        });
+      }
+      compIds.sort((a, b) => (orderIndexMap.get(a) || 0) - (orderIndexMap.get(b) || 0));
+      components.push(compIds);
+    });
+
+    // Ordenar: primero componentes grandes con flujos reales, al final notas sueltas
+    components.sort((a, b) => b.length - a.length);
+
+    let compCursorX = typeof options.originX === 'number' ? options.originX : 120;
+    const baseOriginY = typeof options.originY === 'number' ? options.originY : 60;
+
+    components.forEach(compIds => {
+      const compSet = new Set(compIds);
+      const compEdges = internalEdges.filter(e => compSet.has(e.from) && compSet.has(e.to));
+
+      // 2. Detectar y aislar aristas de retroceso (ciclos / reintentos) mediante DFS de 3 colores
+      const outAdj = new Map(compIds.map(id => [id, []]));
+      const rawInDeg = new Map(compIds.map(id => [id, 0]));
+      compEdges.forEach(e => {
+        outAdj.get(e.from).push(e);
+        rawInDeg.set(e.to, (rawInDeg.get(e.to) || 0) + 1);
+      });
+
+      const candidateRoots = compIds.filter(id => {
+        const n = nodeByIdMap.get(id);
+        return n && n.type === 'start';
+      });
+      compIds.forEach(id => {
+        if ((rawInDeg.get(id) || 0) === 0 && !candidateRoots.includes(id)) {
+          candidateRoots.push(id);
+        }
+      });
+      if (candidateRoots.length === 0 && compIds.length > 0) {
+        candidateRoots.push(compIds[0]);
+      }
+
+      const dfsColor = new Map(); // 0=no visitado, 1=en pila activa, 2=cerrado
+      const backEdgeIds = new Set();
+
+      function dfsBreakCycles(u) {
+        dfsColor.set(u, 1);
+        const edgesOut = outAdj.get(u) || [];
+        edgesOut.forEach(edge => {
+          const v = edge.to;
+          const vNode = nodeByIdMap.get(v);
+          if (dfsColor.get(v) === 1 || (vNode && vNode.type === 'start' && v !== u)) {
+            backEdgeIds.add(edge);
+          } else if (!dfsColor.get(v)) {
+            dfsBreakCycles(v);
+          }
+        });
+        dfsColor.set(u, 2);
+      }
+
+      candidateRoots.forEach(r => {
+        if (!dfsColor.get(r)) dfsBreakCycles(r);
+      });
+      compIds.forEach(id => {
+        if (!dfsColor.get(id)) dfsBreakCycles(id);
+      });
+
+      // 3. Asignación de niveles sobre el DAG acíclico (algoritmo de Kahn, visita única garantizada)
+      const dagParents = new Map(compIds.map(id => [id, []]));
+      const dagChildren = new Map(compIds.map(id => [id, []]));
+      const dagInDeg = new Map(compIds.map(id => [id, 0]));
+      const edgeLabelLookup = new Map();
+
+      compEdges.forEach(edge => {
+        if (backEdgeIds.has(edge)) return;
+        dagChildren.get(edge.from).push(edge.to);
+        dagParents.get(edge.to).push(edge.from);
+        dagInDeg.set(edge.to, (dagInDeg.get(edge.to) || 0) + 1);
+        edgeLabelLookup.set(`${edge.from}->${edge.to}`, edge.label || '');
+      });
+
+      const rankMap = new Map();
+      const kahnQueue = [];
+      compIds.forEach(id => {
+        if ((dagInDeg.get(id) || 0) === 0) {
+          rankMap.set(id, 0);
+          kahnQueue.push(id);
+        }
+      });
+
+      if (kahnQueue.length === 0 && compIds.length > 0) {
+        rankMap.set(compIds[0], 0);
+        kahnQueue.push(compIds[0]);
+      }
+
+      const processed = new Set();
+      while (kahnQueue.length > 0) {
+        const u = kahnQueue.shift();
+        processed.add(u);
+        const uRank = rankMap.get(u) || 0;
+        (dagChildren.get(u) || []).forEach(v => {
+          const nextR = uRank + 1;
+          if (!rankMap.has(v) || nextR > rankMap.get(v)) {
+            rankMap.set(v, nextR);
+          }
+          const left = (dagInDeg.get(v) || 1) - 1;
+          dagInDeg.set(v, left);
+          if (left <= 0 && !processed.has(v) && !kahnQueue.includes(v)) {
+            kahnQueue.push(v);
+          }
+        });
+      }
+
+      compIds.forEach(id => {
+        if (!rankMap.has(id)) rankMap.set(id, 0);
+      });
+
+      // Empujar nodos tipo 'end' sin hijos al último nivel de su componente
+      const maxAssignedRank = Math.max(0, ...Array.from(rankMap.values()));
+      compIds.forEach(id => {
+        const n = nodeByIdMap.get(id);
+        if (n && n.type === 'end' && (dagChildren.get(id) || []).length === 0 && maxAssignedRank > 0) {
+          rankMap.set(id, Math.max(rankMap.get(id) || 0, maxAssignedRank));
+        }
+      });
+
+      // Comprimir niveles vacíos consecutivos (0, 1, 2, ..., K-1)
+      const distinctRanks = Array.from(new Set(rankMap.values())).sort((a, b) => a - b);
+      const denseRankIndex = new Map(distinctRanks.map((r, i) => [r, i]));
+      const rows = distinctRanks.map(() => []);
+
+      compIds.forEach(id => {
+        const rIdx = denseRankIndex.get(rankMap.get(id)) || 0;
+        rows[rIdx].push(nodeByIdMap.get(id));
+      });
+
+      // 4. Ordenamiento baricéntrico por fila para evitar cruces de aristas (Sí a la izq, No/Error a la der)
+      const horizOrderScore = new Map();
+      rows.forEach((rowNodes, rIdx) => {
+        if (rIdx === 0) {
+          rowNodes.sort((a, b) => (orderIndexMap.get(a.id) || 0) - (orderIndexMap.get(b.id) || 0));
+        } else {
+          rowNodes.sort((a, b) => {
+            const pA = dagParents.get(a.id) || [];
+            const pB = dagParents.get(b.id) || [];
+            const baryA = pA.length
+              ? pA.reduce((acc, pid) => acc + (horizOrderScore.get(pid) ?? 0), 0) / pA.length
+              : orderIndexMap.get(a.id) || 0;
+            const baryB = pB.length
+              ? pB.reduce((acc, pid) => acc + (horizOrderScore.get(pid) ?? 0), 0) / pB.length
+              : orderIndexMap.get(b.id) || 0;
+
+            if (Math.abs(baryA - baryB) > 0.01) return baryA - baryB;
+
+            const sideA = pA.length ? classifyBranchSideWeight(edgeLabelLookup.get(`${pA[0]}->${a.id}`), a) : 0;
+            const sideB = pB.length ? classifyBranchSideWeight(edgeLabelLookup.get(`${pB[0]}->${b.id}`), b) : 0;
+            if (sideA !== sideB) return sideA - sideB;
+
+            return (orderIndexMap.get(a.id) || 0) - (orderIndexMap.get(b.id) || 0);
+          });
+        }
+        rowNodes.forEach((n, idx) => horizOrderScore.set(n.id, idx));
+      });
+
+      // 5. Plegado en columnas equilibradas si hay más de MAX_ROWS_PER_COL niveles
+      const columnChunks = [];
+      if (rows.length <= MAX_ROWS_PER_COL) {
+        columnChunks.push(rows);
+      } else {
+        const numCols = Math.ceil(rows.length / MAX_ROWS_PER_COL);
+        const rowsPerCol = Math.ceil(rows.length / numCols);
+        for (let i = 0; i < rows.length; i += rowsPerCol) {
+          columnChunks.push(rows.slice(i, i + rowsPerCol));
+        }
+      }
+
+      columnChunks.forEach(chunkRows => {
+        const rowWidths = chunkRows.map(
+          rNodes =>
+            rNodes.reduce((sum, n) => sum + n.w, 0) + Math.max(0, rNodes.length - 1) * NODE_H_GAP
+        );
+        const colWidth = Math.max(160, ...rowWidths);
+        const colCenterX =
+          options.centerFirstColumnX !== undefined && columnChunks.length === 1 && components.length === 1
+            ? options.centerFirstColumnX
+            : compCursorX + colWidth / 2;
+
+        let curY = baseOriginY;
+        chunkRows.forEach((rNodes, idxInChunk) => {
+          const rW = rowWidths[idxInChunk];
+          const rMaxH = Math.max(54, ...rNodes.map(n => n.h));
+          let curX = colCenterX - rW / 2;
+
+          rNodes.forEach(n => {
+            n.x = snapToGridVal(curX);
+            n.y = snapToGridVal(curY + (rMaxH - n.h) / 2);
+            curX += n.w + NODE_H_GAP;
+          });
+
+          curY += rMaxH + ROW_GAP;
+        });
+
+        compCursorX = Math.max(compCursorX, colCenterX + colWidth / 2) + COMP_H_GAP;
+      });
+    });
+
+    const minX = Math.min(...targetNodes.map(n => n.x));
+    const minY = Math.min(...targetNodes.map(n => n.y));
+    const maxX = Math.max(...targetNodes.map(n => n.x + n.w));
+    const maxY = Math.max(...targetNodes.map(n => n.y + n.h));
+    return { minX, minY, maxX, maxY };
+  }
+
+  function shiftNodeGroup(nodesGroup, dx, dy) {
+    nodesGroup.forEach(n => {
+      n.x = snapToGridVal(n.x + dx);
+      n.y = snapToGridVal(n.y + dy);
+    });
+  }
+
+  function groupOverlapsExisting(newNodes, staticNodes, pad = 28) {
+    for (const a of newNodes) {
+      for (const b of staticNodes) {
+        const noOverlap =
+          a.x + a.w + pad <= b.x ||
+          b.x + b.w + pad <= a.x ||
+          a.y + a.h + pad <= b.y ||
+          b.y + b.h + pad <= a.y;
+        if (!noOverlap) return true;
+      }
+    }
+    return false;
+  }
+
+  function isCanvasAbnormallyScattered(nodesList) {
+    if (!Array.isArray(nodesList) || nodesList.length < 2) return false;
+    const minX = Math.min(...nodesList.map(n => n.x));
+    const maxX = Math.max(...nodesList.map(n => n.x + (n.w || 150)));
+    const minY = Math.min(...nodesList.map(n => n.y));
+    const maxY = Math.max(...nodesList.map(n => n.y + (n.h || 60)));
+    const spanX = maxX - minX;
+    const spanY = maxY - minY;
+    const maxReasonableSpan = Math.max(1750, nodesList.length * 195);
+    return spanX > maxReasonableSpan || spanY > maxReasonableSpan;
+  }
+
+  /**
+   * Reorganiza todos los nodos actuales del lienzo en una estructura limpia y compacta.
+   */
+  function autoOrganizeCanvas(silent = false) {
+    if (!STATE.nodes || STATE.nodes.length === 0) {
+      if (!silent && typeof showToast === 'function') {
+        showToast('No hay nodos en el lienzo para organizar', 'info', 1600);
+      }
+      return false;
+    }
+
+    if (typeof renderNodes === 'function') {
+      try { renderNodes(); } catch {}
+    }
+
+    layoutNodesHierarchically(STATE.nodes, STATE.edges, {
+      originX: 120,
+      originY: 60
+    });
+
+    if (typeof commitHistory === 'function') commitHistory();
+    if (typeof renderAll === 'function') renderAll();
+    focusNodesOnCanvas(STATE.nodes.map(n => n.id));
+
+    if (!silent && typeof showToast === 'function') {
+      showToast(`Lienzo organizado (${STATE.nodes.length} nodos compactados)`, 'ok', 2000);
+    }
+    if (typeof log === 'function') {
+      log('agent', `Auto-layout compacto aplicado a ${STATE.nodes.length} nodo(s).`);
+    }
+    return true;
+  }
+
   function resolveRefOrNodeId(token, refMap) {
     if (!token) return null;
     if (token === 'SELECTED' && STATE.sel && STATE.sel.kind === 'node') {
@@ -1011,26 +1442,9 @@
     return null;
   }
 
-  function findFreePosition(x, y, w = 150, h = 60) {
-    let cx = Math.round(x / CONFIG.SNAP_GRID) * CONFIG.SNAP_GRID;
-    let cy = Math.round(y / CONFIG.SNAP_GRID) * CONFIG.SNAP_GRID;
-    let guard = 0;
-    while (
-      guard < 30 &&
-      STATE.nodes.some(
-        n => Math.abs(n.x - cx) < (n.w + w) * 0.48 && Math.abs(n.y - cy) < (n.h + h) * 0.65
-      )
-    ) {
-      cx += 36;
-      cy += 24;
-      guard++;
-    }
-    return { x: cx, y: cy };
-  }
-
   function applyAIGraphActions(actionPayload) {
     if (!actionPayload || !Array.isArray(actionPayload.operations)) {
-      return { addedNodes: [], addedEdges: [], updatedCount: 0 };
+      return { addedNodes: [], addedEdges: [], updatedCount: 0, organized: false };
     }
 
     const ops = actionPayload.operations;
@@ -1038,13 +1452,21 @@
     const pendingNewNodes = [];
     const pendingEdges = [];
     let updatedCount = 0;
+    let requestedOrganize = false;
 
-    // 1. Procesar limpieza o borrados/actualizaciones previas y recolectar nuevos nodos
+    // Si el lienzo previo tenía nodos a miles de píxeles por un layout roto anterior, repararlo antes
+    if (STATE.nodes && STATE.nodes.length >= 2 && isCanvasAbnormallyScattered(STATE.nodes)) {
+      layoutNodesHierarchically(STATE.nodes, STATE.edges, { originX: 120, originY: 60 });
+    }
+
+    // 1. Procesar limpieza, borrados, actualizaciones y recolectar nuevos nodos
     ops.forEach((op, index) => {
       if (!op || typeof op !== 'object') return;
       const kind = String(op.op || op.action || '').toLowerCase();
 
-      if (kind === 'clear_canvas') {
+      if (kind === 'organize_canvas' || kind === 'auto_layout') {
+        requestedOrganize = true;
+      } else if (kind === 'clear_canvas') {
         STATE.nodes = [];
         STATE.edges = [];
         STATE.sel = null;
@@ -1060,7 +1482,13 @@
         const targetId = resolveRefOrNodeId(op.id, refMap);
         const target = targetId ? byId(targetId) : null;
         if (target) {
-          if (typeof op.text === 'string' && op.text.trim()) target.text = op.text.trim();
+          if (typeof op.text === 'string' && op.text.trim()) {
+            const cleanTxt = sanitizeAINodeText(op.text, op.type ? normalizeNodeType(op.type) : target.type);
+            target.text = cleanTxt.displayText;
+            if (cleanTxt.overflowNotes) {
+              target.params = { ...(target.params || {}), notes: cleanTxt.overflowNotes };
+            }
+          }
           if (op.type) target.type = normalizeNodeType(op.type);
           if (op.status && CONFIG.BADGE[op.status]) target.status = op.status;
           if (typeof op.progress === 'number') target.progress = clamp(op.progress, 0, 100);
@@ -1071,11 +1499,15 @@
         }
       } else if (kind === 'add_node') {
         const type = normalizeNodeType(op.type);
-        const text = String(op.text || op.label || CONFIG.NODE_TYPES[type] || 'Paso').trim();
-        const nodeObj = createNode(type, text, 0, 0);
+        const rawLabel = op.text || op.label || CONFIG.NODE_TYPES[type] || 'Paso';
+        const cleanTxt = sanitizeAINodeText(rawLabel, type);
+        const nodeObj = createNode(type, cleanTxt.displayText, 0, 0);
         if (op.status && CONFIG.BADGE[op.status]) nodeObj.status = op.status;
         if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
         if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
+        if (cleanTxt.overflowNotes) {
+          nodeObj.params = { ...(nodeObj.params || {}), notes: cleanTxt.overflowNotes };
+        }
 
         const refKey = String(op.ref || op.id || 'ref_' + index);
         refMap.set(refKey, nodeObj.id);
@@ -1083,8 +1515,6 @@
         pendingNewNodes.push({
           refKey,
           node: nodeObj,
-          explicitX: typeof op.x === 'number' && Number.isFinite(op.x) ? op.x : null,
-          explicitY: typeof op.y === 'number' && Number.isFinite(op.y) ? op.y : null,
           afterRaw: op.after || null
         });
       } else if (kind === 'add_edge') {
@@ -1096,132 +1526,30 @@
       }
     });
 
-    // 2. Calcular posiciones limpias en árbol para los nuevos nodos
-    if (pendingNewNodes.length > 0) {
-      const newById = new Map(pendingNewNodes.map(item => [item.node.id, item]));
-      const parentsMap = new Map(pendingNewNodes.map(item => [item.node.id, []]));
-      const childrenMap = new Map(pendingNewNodes.map(item => [item.node.id, []]));
-      let externalAnchorNode = null;
+    const preExistingNodes = (STATE.nodes || []).slice();
+    const addedNodes = pendingNewNodes.map(i => i.node);
 
-      // Inferir relaciones desde edges y "after"
-      pendingEdges.forEach(pe => {
-        const fId = resolveRefOrNodeId(pe.fromRaw, refMap);
-        const tId = resolveRefOrNodeId(pe.toRaw, refMap);
-        if (!fId || !tId) return;
-        if (newById.has(tId) && newById.has(fId)) {
-          parentsMap.get(tId).push(fId);
-          childrenMap.get(fId).push(tId);
-        } else if (!newById.has(fId) && newById.has(tId)) {
-          const existingParent = byId(fId);
-          if (existingParent && !externalAnchorNode) externalAnchorNode = existingParent;
-        }
-      });
-
-      pendingNewNodes.forEach(item => {
-        if (!item.afterRaw) return;
-        const afterId = resolveRefOrNodeId(item.afterRaw, refMap);
-        if (!afterId) return;
-        if (newById.has(afterId)) {
-          if (!parentsMap.get(item.node.id).includes(afterId)) {
-            parentsMap.get(item.node.id).push(afterId);
-            childrenMap.get(afterId).push(item.node.id);
-          }
-        } else {
-          const existingParent = byId(afterId);
-          if (existingParent && !externalAnchorNode) externalAnchorNode = existingParent;
-        }
-      });
-
-      // Asignar niveles por profundidad topológica
-      const levelMap = new Map();
-      const roots = pendingNewNodes
-        .map(i => i.node.id)
-        .filter(id => (parentsMap.get(id) || []).length === 0);
-
-      if (roots.length === 0 && pendingNewNodes.length > 0) {
-        roots.push(pendingNewNodes[0].node.id);
-      }
-
-      const queue = roots.map(id => ({ id, lvl: 0 }));
-      const visitCount = new Map();
-
-      while (queue.length > 0) {
-        const { id, lvl } = queue.shift();
-        const prev = levelMap.get(id);
-        if (prev === undefined || lvl > prev) {
-          levelMap.set(id, lvl);
-        }
-        const visits = (visitCount.get(id) || 0) + 1;
-        visitCount.set(id, visits);
-        if (visits > pendingNewNodes.length * 2) continue;
-
-        (childrenMap.get(id) || []).forEach(childId => {
-          queue.push({ id: childId, lvl: (levelMap.get(id) || 0) + 1 });
-        });
-      }
-
-      // Asegurar nivel para nodos desconectados
-      let fallbackLvl = 0;
-      pendingNewNodes.forEach(item => {
-        if (!levelMap.has(item.node.id)) {
-          levelMap.set(item.node.id, fallbackLvl++);
-        }
-      });
-
-      // Agrupar por nivel
-      const layers = new Map();
-      pendingNewNodes.forEach(item => {
-        const lvl = levelMap.get(item.node.id) || 0;
-        if (!layers.has(lvl)) layers.set(lvl, []);
-        layers.get(lvl).push(item);
-      });
-
-      // Determinar punto de origen en el lienzo
-      let centerX = 440;
-      let startY = 96;
-
-      if (externalAnchorNode) {
-        centerX = externalAnchorNode.x + externalAnchorNode.w / 2;
-        startY = externalAnchorNode.y + externalAnchorNode.h + 96;
-      } else if (STATE.nodes.length > 0) {
-        const b = bbox();
-        centerX = b.maxX + 180;
-        startY = Math.max(72, b.minY + 100);
-      }
-
-      const H_GAP = 224;
-      const V_GAP = 132;
-
-      Array.from(layers.keys())
-        .sort((a, b) => a - b)
-        .forEach(lvl => {
-          const rowItems = layers.get(lvl);
-          const count = rowItems.length;
-          rowItems.forEach((item, idx) => {
-            if (item.explicitX !== null && item.explicitY !== null) {
-              const pos = findFreePosition(item.explicitX, item.explicitY, item.node.w, item.node.h);
-              item.node.x = pos.x;
-              item.node.y = pos.y;
-            } else {
-              const rawX = centerX + (idx - (count - 1) / 2) * H_GAP - item.node.w / 2;
-              const rawY = startY + lvl * V_GAP;
-              const pos = findFreePosition(rawX, rawY, item.node.w, item.node.h);
-              item.node.x = pos.x;
-              item.node.y = pos.y;
-            }
-            STATE.nodes.push(item.node);
-          });
-        });
-
+    // Añadir nuevos nodos al estado primero para medir dimensiones reales y resolver aristas
+    if (addedNodes.length > 0) {
+      addedNodes.forEach(n => STATE.nodes.push(n));
       STATE.isBlankCanvas = false;
     }
 
-    // 3. Crear conexiones resueltas
+    // 2. Resolver todas las aristas declaradas y enlaces "after"
     const createdEdges = [];
+    let externalAnchorNode = null;
+    const addedIdsSet = new Set(addedNodes.map(n => n.id));
+
     pendingEdges.forEach(pe => {
       const fromId = resolveRefOrNodeId(pe.fromRaw, refMap);
       const toId = resolveRefOrNodeId(pe.toRaw, refMap);
       if (!fromId || !toId || fromId === toId) return;
+
+      if (!addedIdsSet.has(fromId) && addedIdsSet.has(toId)) {
+        const ext = byId(fromId);
+        if (ext && !externalAnchorNode) externalAnchorNode = ext;
+      }
+
       if (!STATE.edges.some(e => e.from === fromId && e.to === toId)) {
         const edge = createEdge(fromId, toId, pe.label || '', 'normal');
         STATE.edges.push(edge);
@@ -1229,12 +1557,17 @@
       }
     });
 
-    // También auto-conectar cuando se usó "after" pero el modelo olvidó add_edge explícito
     pendingNewNodes.forEach(item => {
       if (!item.afterRaw) return;
       const fromId = resolveRefOrNodeId(item.afterRaw, refMap);
       const toId = item.node.id;
       if (!fromId || fromId === toId) return;
+
+      if (!addedIdsSet.has(fromId)) {
+        const ext = byId(fromId);
+        if (ext && !externalAnchorNode) externalAnchorNode = ext;
+      }
+
       const alreadyHasIncoming = STATE.edges.some(e => e.to === toId);
       if (!alreadyHasIncoming) {
         const edge = createEdge(fromId, toId, '', 'normal');
@@ -1243,9 +1576,79 @@
       }
     });
 
-    const addedNodes = pendingNewNodes.map(i => i.node);
+    // Si un modelo externo creó varios nodos de flujo pero olvidó conectar alguno, enlazarlos en secuencia limpia
+    if (addedNodes.length >= 2) {
+      for (let i = 0; i < addedNodes.length; i++) {
+        const cur = addedNodes[i];
+        if (cur.type === 'note') continue;
+        const hasIn = STATE.edges.some(e => e.to === cur.id);
+        const hasOut = STATE.edges.some(e => e.from === cur.id);
+        if (!hasIn && !hasOut) {
+          if (i > 0 && addedNodes[i - 1].type !== 'note') {
+            const fallbackEdge = createEdge(addedNodes[i - 1].id, cur.id, '', 'normal');
+            STATE.edges.push(fallbackEdge);
+            createdEdges.push(fallbackEdge);
+          } else if (i + 1 < addedNodes.length && addedNodes[i + 1].type !== 'note') {
+            const fallbackEdge = createEdge(cur.id, addedNodes[i + 1].id, '', 'normal');
+            STATE.edges.push(fallbackEdge);
+            createdEdges.push(fallbackEdge);
+          }
+        }
+      }
+    }
 
-    if (addedNodes.length > 0 || createdEdges.length > 0 || updatedCount > 0) {
+    // 3. Medir tamaños reales en el DOM y aplicar motor jerárquico compacto
+    if (addedNodes.length > 0) {
+      if (typeof renderNodes === 'function') {
+        try { renderNodes(); } catch {}
+      }
+
+      let originX = 240;
+      let originY = 64;
+      let centerFirstColumnX = undefined;
+
+      if (externalAnchorNode) {
+        centerFirstColumnX = externalAnchorNode.x + (externalAnchorNode.w || 150) / 2;
+        originX = Math.max(48, centerFirstColumnX - 90);
+        originY = externalAnchorNode.y + (externalAnchorNode.h || 60) + 52;
+      } else if (preExistingNodes.length > 0) {
+        const exMinY = Math.min(...preExistingNodes.map(n => n.y));
+        const exMaxX = Math.max(...preExistingNodes.map(n => n.x + (n.w || 150)));
+        originX = exMaxX + 96;
+        originY = Math.max(48, exMinY);
+      }
+
+      layoutNodesHierarchically(addedNodes, STATE.edges, {
+        originX,
+        originY,
+        centerFirstColumnX
+      });
+
+      // Si el bloque nuevo roza algún nodo previo (p. ej. al expandir una rama intermedia), desplazar el bloque entero sin deformarlo
+      let safetySteps = 0;
+      while (
+        preExistingNodes.length > 0 &&
+        safetySteps < 14 &&
+        groupOverlapsExisting(addedNodes, preExistingNodes, 24)
+      ) {
+        if (externalAnchorNode) {
+          shiftNodeGroup(addedNodes, 0, 48);
+        } else {
+          shiftNodeGroup(addedNodes, 72, 0);
+        }
+        safetySteps++;
+      }
+    }
+
+    if (requestedOrganize && STATE.nodes.length > 0) {
+      if (typeof renderNodes === 'function') {
+        try { renderNodes(); } catch {}
+      }
+      layoutNodesHierarchically(STATE.nodes, STATE.edges, { originX: 120, originY: 60 });
+      updatedCount += STATE.nodes.length;
+    }
+
+    if (addedNodes.length > 0 || createdEdges.length > 0 || updatedCount > 0 || requestedOrganize) {
       commitHistory();
       renderAll();
 
@@ -1253,7 +1656,9 @@
         if (typeof animateNodePlacement === 'function') animateNodePlacement(n.id);
       });
 
-      if (addedNodes.length > 0) {
+      if (requestedOrganize && STATE.nodes.length > 0) {
+        focusNodesOnCanvas(STATE.nodes.map(n => n.id));
+      } else if (addedNodes.length > 0) {
         STATE.sel = { kind: 'node', id: addedNodes[0].id };
         renderAll();
         focusNodesOnCanvas(addedNodes.map(n => n.id));
@@ -1263,12 +1668,12 @@
         log(
           'agent',
           `IA aplicó: +${addedNodes.length} nodo(s), +${createdEdges.length} conexión(es)` +
-            (updatedCount ? `, ${updatedCount} editado(s)` : '')
+            (updatedCount ? `, ${updatedCount} ajustado(s)` : '')
         );
       }
     }
 
-    return { addedNodes, addedEdges: createdEdges, updatedCount };
+    return { addedNodes, addedEdges: createdEdges, updatedCount, organized: requestedOrganize };
   }
 
   function focusNodesOnCanvas(nodeIds) {
@@ -1276,23 +1681,34 @@
     const targets = nodeIds.map(id => byId(id)).filter(Boolean);
     if (!targets.length) return;
 
-    const minX = Math.min(...targets.map(n => n.x)) - 70;
-    const minY = Math.min(...targets.map(n => n.y)) - 70;
-    const maxX = Math.max(...targets.map(n => n.x + n.w)) + 70;
-    const maxY = Math.max(...targets.map(n => n.y + n.h)) + 70;
+    const minX = Math.min(...targets.map(n => n.x)) - 56;
+    const minY = Math.min(...targets.map(n => n.y)) - 56;
+    const maxX = Math.max(...targets.map(n => n.x + (n.w || 150))) + 56;
+    const maxY = Math.max(...targets.map(n => n.y + (n.h || 60))) + 56;
 
     const r = DOM.vp.getBoundingClientRect();
-    const w = r.width || 800;
-    const h = r.height || 600;
+    const w = r.width || 900;
+    const h = r.height || 640;
     const bw = Math.max(1, maxX - minX);
     const bh = Math.max(1, maxY - minY);
 
-    const targetZoom = clamp(Math.min((w - 80) / bw, (h - 80) / bh, 1.15), 0.35, 1.4);
+    const targetZoom = clamp(Math.min((w - 56) / bw, (h - 56) / bh, 1.08), 0.55, 1.15);
     STATE.zoom = targetZoom;
     STATE.pan.x = w / 2 - ((minX + bw / 2) * targetZoom);
     STATE.pan.y = h / 2 - ((minY + bh / 2) * targetZoom);
     if (typeof applyTransform === 'function') applyTransform();
+    if (typeof updateStatus === 'function') updateStatus();
+    if (typeof drawMinimap === 'function') drawMinimap();
     if (typeof saveState === 'function') saveState();
+  }
+
+  function isOrganizeCanvasIntent(normPrompt) {
+    return (
+      /\b(ordena|ordenar|organiza|organizar|acomoda|acomodar|alinea|alinear|compacta|compactar|junta|juntar|reordena|reordenar)\b/i.test(
+        normPrompt
+      ) &&
+      /\b(nodo|nodos|flujo|diagrama|lienzo|canvas|distancia|distancias|todo|mapa)\b/i.test(normPrompt)
+    );
   }
 
   // =========================================================================
@@ -1313,22 +1729,34 @@
     const ctx = buildWorkspaceContext();
     const selNode = ctx.selected && ctx.selected.kind === 'node' ? ctx.selected : null;
 
+    // 0. Solicitudes para organizar / compactar nodos dispersos en el lienzo
+    if (isOrganizeCanvasIntent(norm)) {
+      return {
+        cleanReply:
+          `He reorganizado y compactado los **${ctx.summary.totalNodes} nodos** de **\`${ctx.projectTitle}\`** en una jerarquía simétrica sin distancias excesivas, ajustando la cámara a una escala legible.`,
+        actions: {
+          summary: `Organizar y compactar ${ctx.summary.totalNodes} nodos`,
+          operations: [{ op: 'organize_canvas' }]
+        }
+      };
+    }
+
     const isHowToQuestion =
       /^(como|donde|para que|que es|cuales son|puedo)\b/i.test(norm) &&
       !/\b(crea|genera|agrega|anade|inserta|construye|arma|disena)\b/i.test(norm);
 
     const wantsCreation =
       !isHowToQuestion &&
-      (/\b(crea|crear|genera|generar|agrega|agregar|anade|añade|añadir|inserta|insertar|construye|arma|diseña|disena|nuevo nodo|nuevos nodos|flujo de|proceso de|expande|expandir)\b/i.test(
+      (/\b(crea|crear|genera|generar|agrega|agregar|anade|añade|añadir|inserta|insertar|construye|arma|diseña|disena|modela|modelar|estructura|estructurar|nuevo nodo|nuevos nodos|flujo de|flujo para|diagrama de|proceso de|expande|expandir)\b/i.test(
         q
       ) ||
-        /\b(haz|hacer)\s+(un|una|el|la|dos|tres|\d+)\s+(flujo|diagrama|nodo|nodos|rama|ramas|proceso|secuencia|validacion|validación)\b/i.test(
+        /\b(haz|hacer)\s+(un|una|el|la|dos|tres|\d+)\s+(flujo|diagrama|nodo|nodos|rama|ramas|proceso|secuencia|validacion|validación|arquitectura|pipeline)\b/i.test(
           q
         ));
 
     // 1. Solicitudes explícitas de creación de flujos o nodos
     if (wantsCreation) {
-      return generateBuiltinFlowProposal(userPrompt, q, selNode);
+      return generateBuiltinFlowProposal(userPrompt, q, norm, selNode);
     }
 
     // 2. Guía de funcionalidades propias de la página FlowLab
@@ -1379,9 +1807,9 @@
         cleanReply:
           `Soy el asistente exclusivo de **FlowLab**. Estoy conectado en tiempo real al lienzo **\`${ctx.projectTitle}\`** (**${ctx.summary.totalNodes} nodos** y **${ctx.summary.totalEdges} conexiones**).\n\n` +
           `Puedo ayudarte únicamente con tareas de esta plataforma:\n` +
-          `• **Diseñar y añadir nodos**: *"crea un flujo de autenticación"*, *"añade un nodo de decisión Sí/No"*.\n` +
-          `• **Auditar tu arquitectura**: *"analiza los cuellos de botella o nodos bloqueados"*.\n` +
-          `• **Resolver dudas de FlowLab**: proyectos, espacios de usuario, consola PowerShell o exportación.`,
+          `• **Diseñar y añadir nodos bien organizados**: *"crea un flujo de autenticación"*, *"crea un pipeline de pagos"*.\n` +
+          `• **Compactar el lienzo**: *"ordena los nodos"* o pulsa el botón **\`ordenar\`**.\n` +
+          `• **Auditar tu arquitectura**: *"analiza los cuellos de botella o nodos bloqueados"*.`,
         actions: null
       };
     }
@@ -1446,191 +1874,308 @@
         `Estoy leyendo el contexto vivo de **${ctx.projectTitle}** (**${ctx.summary.totalNodes} nodos** y **${ctx.summary.totalEdges} conexiones**, **${ctx.summary.done}** completados).\n` +
         (sampleNodes ? `\nNodos principales: ${sampleNodes}${ctx.nodes.length > 5 ? '…' : ''}.\n` : '') +
         (selNode ? `\nTienes seleccionado **\`${selNode.text.split('\n')[0]}\`**.\n` : '') +
-        `\nPuedes pedirme crear nodos directamente (ej. *"crea un flujo de autenticación con base de datos"*, *"añade un nodo de decisión con Sí y No"*) o pulsar el icono de configuración arriba para enlazar **Ollama / LM Studio en tu PC**, una **API Key** o una **URL propia**.`,
+        `\nPuedes pedirme crear flujos estructurados (ej. *"crea un flujo de autenticación"*, *"crea un flujo de soporte con IA"*), ordenar el lienzo (*"ordena los nodos"*) o conectar **Ollama / LM Studio / API Key** arriba.`,
       actions: null
     };
   }
 
-  function generateBuiltinFlowProposal(rawPrompt, q, selNode) {
-    const anchorId = selNode ? selNode.id : null;
+  function inferStepNodeType(stepLabel, idx, total, hasAnchor) {
+    const s = normalizePlainSpanish(stepLabel);
+    if (idx === 0 && !hasAnchor && /\b(inicio|iniciar|comenzar|start|entrada inicial)\b/.test(s)) return 'start';
+    if (idx === total - 1 && /\b(fin|final|completado|cierre|terminado|end)\b/.test(s)) return 'end';
+    if (stepLabel.includes('?') || /\b(validar si|es valido|aprobado|existe|cumple|decision|condicion)\b/.test(s)) return 'decision';
+    if (/\b(bd|base de datos|sql|guardar|consulta|registrar|cache|inventario|stock)\b/.test(s)) return 'db';
+    if (/\b(api|http|endpoint|pasarela|servicio|token|jwt|externo)\b/.test(s)) return 'api';
+    if (/\b(webhook|correo|email|notificar|alerta|mensaje|confirmacion)\b/.test(s)) return 'hook';
+    if (/\b(ia|llm|agente|clasificar|resumir|modelo|inteligencia)\b/.test(s)) return 'ai';
+    if (/\b(error|rechazar|excepcion|fallo|rollback)\b/.test(s)) return 'err';
+    if (/\b(manual|humano|supervisor|revision|revisar)\b/.test(s)) return 'human';
+    if (/\b(recibir|formulario|solicitud|input|datos|credenciales)\b/.test(s)) return 'io';
+    if (/\b(metrica|kpi|panel|dashboard)\b/.test(s)) return 'metrics';
+    if (idx === 0 && !hasAnchor) return 'start';
+    if (idx === total - 1 && total >= 3) return 'end';
+    return 'process';
+  }
+
+  function generateBuiltinFlowProposal(rawPrompt, q, norm, selNode) {
+    // Solo encadenar al nodo seleccionado si el usuario lo pide explícitamente (evita estirar flujos nuevos debajo de otros)
+    const explicitAttach =
+      Boolean(selNode) &&
+      /\b(este nodo|seleccionado|expande|expandir|rama|ramas|bifurca|despues|a partir|conectado a|continua)\b/i.test(norm);
+    const anchorId = explicitAttach ? selNode.id : null;
+
+    const wantsFreshCanvas =
+      /\b(desde cero|limpia el lienzo|borra todo|reemplaza todo|nuevo lienzo)\b/i.test(norm);
+    const prefixOps = wantsFreshCanvas ? [{ op: 'clear_canvas' }] : [];
 
     // Caso A: Expandir nodo seleccionado o crear bifurcación Sí/No
     if (
-      (q.includes('rama') || q.includes('decision') || q.includes('decisión') || q.includes('bifurca') || q.includes('expande')) &&
+      (norm.includes('rama') || norm.includes('decision') || norm.includes('bifurca') || norm.includes('expande')) &&
       selNode
     ) {
+      const targetAnchor = selNode.id;
       const ops = [
-        { op: 'add_node', ref: 'd1', type: 'decision', text: '¿Validación correcta?', after: anchorId },
+        { op: 'add_node', ref: 'd1', type: 'decision', text: '¿Validación correcta?', after: targetAnchor },
         { op: 'add_node', ref: 'ok1', type: 'process', text: 'Continuar proceso', after: 'd1' },
         { op: 'add_node', ref: 'err1', type: 'err', text: 'Gestionar excepción', after: 'd1' },
-        { op: 'add_edge', from: anchorId, to: 'd1', label: '' },
+        { op: 'add_edge', from: targetAnchor, to: 'd1', label: '' },
         { op: 'add_edge', from: 'd1', to: 'ok1', label: 'Sí' },
         { op: 'add_edge', from: 'd1', to: 'err1', label: 'No' }
       ];
       return {
-        cleanReply: `He diseñado una bifurcación de decisión con rutas **Sí / No** conectada directamente a **\`${selNode.text.split('\n')[0]}\`**.`,
+        cleanReply: `He diseñado una bifurcación **Sí / No** compacta y alineada directamente debajo de **\`${selNode.text.split('\n')[0]}\`**.`,
         actions: { summary: 'Rama de decisión Sí/No conectada', operations: ops }
       };
     }
 
-    // Caso B: Flujo de login / autenticación / registro
-    if (q.includes('login') || q.includes('autentic') || q.includes('sesion') || q.includes('sesión') || q.includes('registro')) {
+    // Caso B: Flujo de login / autenticación / registro / seguridad
+    if (/\b(login|autentic|sesion|registro|contrase|2fa|permiso|acceso)\b/i.test(norm)) {
       const ops = [
-        { op: 'add_node', ref: 'a1', type: 'start', text: 'Inicio autenticación', ...(anchorId ? { after: anchorId } : {}) },
+        ...prefixOps,
+        { op: 'add_node', ref: 'a1', type: 'start', text: 'Inicio acceso', ...(anchorId ? { after: anchorId } : {}) },
         { op: 'add_node', ref: 'a2', type: 'io', text: 'Recibir credenciales', after: 'a1' },
-        { op: 'add_node', ref: 'a3', type: 'db', text: 'Verificar usuario en BD', after: 'a2' },
+        { op: 'add_node', ref: 'a3', type: 'db', text: 'Consultar usuario BD', after: 'a2' },
         { op: 'add_node', ref: 'a4', type: 'decision', text: '¿Credenciales válidas?', after: 'a3' },
-        { op: 'add_node', ref: 'a5', type: 'api', text: 'Emitir token JWT', after: 'a4' },
-        { op: 'add_node', ref: 'a6', type: 'err', text: 'Rechazar acceso (401)', after: 'a4' },
-        { op: 'add_node', ref: 'a7', type: 'end', text: 'Sesión activa', after: 'a5' },
+        { op: 'add_node', ref: 'a5', type: 'api', text: 'Emitir sesión JWT', after: 'a4' },
+        { op: 'add_node', ref: 'a6', type: 'err', text: 'Denegar acceso (401)', after: 'a4' },
+        { op: 'add_node', ref: 'a7', type: 'end', text: 'Acceso completado', after: 'a5' },
         ...(anchorId ? [{ op: 'add_edge', from: anchorId, to: 'a1', label: '' }] : []),
         { op: 'add_edge', from: 'a1', to: 'a2', label: '' },
         { op: 'add_edge', from: 'a2', to: 'a3', label: '' },
         { op: 'add_edge', from: 'a3', to: 'a4', label: '' },
         { op: 'add_edge', from: 'a4', to: 'a5', label: 'Sí' },
         { op: 'add_edge', from: 'a4', to: 'a6', label: 'No' },
-        { op: 'add_edge', from: 'a5', to: 'a7', label: '' }
+        { op: 'add_edge', from: 'a5', to: 'a7', label: 'OK' }
       ];
       return {
-        cleanReply: 'He creado un flujo completo de **autenticación** con entrada de credenciales, consulta en base de datos, decisión condicional, emisión de JWT y control de error.',
+        cleanReply:
+          'He creado un flujo compacto de **autenticación** con recepción de credenciales, verificación en base de datos, bifurcación **Sí / No**, emisión de JWT y cierre.',
         actions: { summary: 'Flujo de autenticación (7 nodos)', operations: ops }
       };
     }
 
-    // Caso C: Flujo de pagos / ventas / ecommerce / pedidos
-    if (q.includes('venta') || q.includes('pago') || q.includes('compra') || q.includes('pedido') || q.includes('checkout')) {
+    // Caso C: Flujo de pagos / ventas / ecommerce / pedidos / facturación
+    if (/\b(venta|ventas|pago|pagos|compra|pedido|pedidos|checkout|tienda|carrito|factura)\b/i.test(norm)) {
       const ops = [
+        ...prefixOps,
         { op: 'add_node', ref: 'v1', type: 'start', text: 'Nuevo pedido', ...(anchorId ? { after: anchorId } : {}) },
-        { op: 'add_node', ref: 'v2', type: 'db', text: 'Validar stock', after: 'v1' },
-        { op: 'add_node', ref: 'v3', type: 'api', text: 'Pasarela de pago', after: 'v2' },
+        { op: 'add_node', ref: 'v2', type: 'db', text: 'Verificar inventario', after: 'v1' },
+        { op: 'add_node', ref: 'v3', type: 'api', text: 'Cobrar en pasarela', after: 'v2' },
         { op: 'add_node', ref: 'v4', type: 'decision', text: '¿Pago aprobado?', after: 'v3' },
-        { op: 'add_node', ref: 'v5', type: 'hook', text: 'Enviar confirmación', after: 'v4' },
-        { op: 'add_node', ref: 'v6', type: 'err', text: 'Reintentar / notificar', after: 'v4' },
-        { op: 'add_node', ref: 'v7', type: 'end', text: 'Orden completada', after: 'v5' },
+        { op: 'add_node', ref: 'v5', type: 'hook', text: 'Emitir confirmación', after: 'v4' },
+        { op: 'add_node', ref: 'v6', type: 'err', text: 'Notificar rechazo', after: 'v4' },
+        { op: 'add_node', ref: 'v7', type: 'end', text: 'Pedido despachado', after: 'v5' },
         ...(anchorId ? [{ op: 'add_edge', from: anchorId, to: 'v1', label: '' }] : []),
         { op: 'add_edge', from: 'v1', to: 'v2', label: '' },
         { op: 'add_edge', from: 'v2', to: 'v3', label: '' },
         { op: 'add_edge', from: 'v3', to: 'v4', label: '' },
-        { op: 'add_edge', from: 'v4', to: 'v5', label: 'Aprobado' },
-        { op: 'add_edge', from: 'v4', to: 'v6', label: 'Falló' },
-        { op: 'add_edge', from: 'v5', to: 'v7', label: '' }
+        { op: 'add_edge', from: 'v4', to: 'v5', label: 'Sí' },
+        { op: 'add_edge', from: 'v4', to: 'v6', label: 'No' },
+        { op: 'add_edge', from: 'v5', to: 'v7', label: 'OK' }
       ];
       return {
-        cleanReply: 'He armado un flujo de **procesamiento de ventas y pagos** con verificación de inventario, pasarela API, validación de cobro y webhook de confirmación.',
+        cleanReply:
+          'He estructurado un flujo compacto de **pedidos y pagos** con validación de stock, pasarela API, rama de aprobación/rechazo y confirmación final.',
         actions: { summary: 'Flujo de ventas y pagos (7 nodos)', operations: ops }
       };
     }
 
-    // Caso D: Nodo único específico (ej. "agrega un nodo de métricas" / "añade nodo base de datos...")
-    if (q.includes('metrica') || q.includes('métrica') || q.includes('grafico') || q.includes('gráfico') || q.includes('kpi')) {
-      let mType = 'metrics';
-      if (q.includes('barra')) mType = 'chart_bar';
-      else if (q.includes('linea') || q.includes('línea')) mType = 'chart_line';
-      else if (q.includes('donut')) mType = 'chart_donut';
-      else if (q.includes('gauge')) mType = 'chart_gauge';
-      else if (q.includes('funnel') || q.includes('embudo')) mType = 'chart_funnel';
+    // Caso D: Flujo de Agente IA / Soporte / Tickets / Atención al cliente
+    if (/\b(soporte|ticket|atencion|cliente|chatbot|agente ia|clasificacion)\b/i.test(norm)) {
+      const ops = [
+        ...prefixOps,
+        { op: 'add_node', ref: 's1', type: 'start', text: 'Nueva consulta', ...(anchorId ? { after: anchorId } : {}) },
+        { op: 'add_node', ref: 's2', type: 'io', text: 'Capturar mensaje', after: 's1' },
+        { op: 'add_node', ref: 's3', type: 'ai', text: 'Clasificar con IA', after: 's2' },
+        { op: 'add_node', ref: 's4', type: 'decision', text: '¿Resolución directa?', after: 's3' },
+        { op: 'add_node', ref: 's5', type: 'hook', text: 'Enviar respuesta IA', after: 's4' },
+        { op: 'add_node', ref: 's6', type: 'human', text: 'Escalar a especialista', after: 's4' },
+        { op: 'add_node', ref: 's7', type: 'db', text: 'Guardar historial', after: 's5' },
+        { op: 'add_node', ref: 's8', type: 'end', text: 'Caso cerrado', after: 's7' },
+        ...(anchorId ? [{ op: 'add_edge', from: anchorId, to: 's1', label: '' }] : []),
+        { op: 'add_edge', from: 's1', to: 's2', label: '' },
+        { op: 'add_edge', from: 's2', to: 's3', label: '' },
+        { op: 'add_edge', from: 's3', to: 's4', label: '' },
+        { op: 'add_edge', from: 's4', to: 's5', label: 'Sí' },
+        { op: 'add_edge', from: 's4', to: 's6', label: 'No' },
+        { op: 'add_edge', from: 's5', to: 's7', label: '' },
+        { op: 'add_edge', from: 's6', to: 's7', label: 'Resuelto' },
+        { op: 'add_edge', from: 's7', to: 's8', label: '' }
+      ];
+      return {
+        cleanReply:
+          'He creado una arquitectura de **atención inteligente con IA y escalado humano**, convergiendo en registro en base de datos y cierre.',
+        actions: { summary: 'Flujo de soporte e IA (8 nodos)', operations: ops }
+      };
+    }
 
-      const lastNode = anchorId || (STATE.nodes.length ? STATE.nodes[STATE.nodes.length - 1].id : null);
+    // Caso E: Pipeline de Datos / API / ETL / Automatización / Integración
+    if (/\b(pipeline|etl|integracion|sincroniz|datos|automatiz|scraping|ingesta)\b/i.test(norm)) {
+      const ops = [
+        ...prefixOps,
+        { op: 'add_node', ref: 'd1', type: 'start', text: 'Disparar pipeline', ...(anchorId ? { after: anchorId } : {}) },
+        { op: 'add_node', ref: 'd2', type: 'api', text: 'Extraer desde API', after: 'd1' },
+        { op: 'add_node', ref: 'd3', type: 'tryc', text: 'Validar esquema', after: 'd2' },
+        { op: 'add_node', ref: 'd4', type: 'decision', text: '¿Payload íntegro?', after: 'd3' },
+        { op: 'add_node', ref: 'd5', type: 'process', text: 'Transformar datos', after: 'd4' },
+        { op: 'add_node', ref: 'd6', type: 'err', text: 'Registrar fallo', after: 'd4' },
+        { op: 'add_node', ref: 'd7', type: 'db', text: 'Persistir en BD', after: 'd5' },
+        { op: 'add_node', ref: 'd8', type: 'end', text: 'Sincronización lista', after: 'd7' },
+        ...(anchorId ? [{ op: 'add_edge', from: anchorId, to: 'd1', label: '' }] : []),
+        { op: 'add_edge', from: 'd1', to: 'd2', label: '' },
+        { op: 'add_edge', from: 'd2', to: 'd3', label: '' },
+        { op: 'add_edge', from: 'd3', to: 'd4', label: '' },
+        { op: 'add_edge', from: 'd4', to: 'd5', label: 'Sí' },
+        { op: 'add_edge', from: 'd4', to: 'd6', label: 'No' },
+        { op: 'add_edge', from: 'd5', to: 'd7', label: '' },
+        { op: 'add_edge', from: 'd7', to: 'd8', label: 'OK' }
+      ];
+      return {
+        cleanReply:
+          'He diseñado un **pipeline de extracción, validación y persistencia de datos** con manejo de errores y espaciado jerárquico compacto.',
+        actions: { summary: 'Pipeline de datos e integración (8 nodos)', operations: ops }
+      };
+    }
+
+    // Caso F: Despliegue / CI/CD / QA / Testing
+    if (/\b(deploy|despliegue|ci\/cd|testing|pruebas|calidad|qa|servidor|produccion)\b/i.test(norm)) {
+      const ops = [
+        ...prefixOps,
+        { op: 'add_node', ref: 'c1', type: 'start', text: 'Push a repositorio', ...(anchorId ? { after: anchorId } : {}) },
+        { op: 'add_node', ref: 'c2', type: 'process', text: 'Build y pruebas', after: 'c1' },
+        { op: 'add_node', ref: 'c3', type: 'decision', text: '¿Tests aprobados?', after: 'c2' },
+        { op: 'add_node', ref: 'c4', type: 'api', text: 'Desplegar versión', after: 'c3' },
+        { op: 'add_node', ref: 'c5', type: 'err', text: 'Cancelar y alertar', after: 'c3' },
+        { op: 'add_node', ref: 'c6', type: 'hook', text: 'Verificar healthcheck', after: 'c4' },
+        { op: 'add_node', ref: 'c7', type: 'end', text: 'Release activo', after: 'c6' },
+        ...(anchorId ? [{ op: 'add_edge', from: anchorId, to: 'c1', label: '' }] : []),
+        { op: 'add_edge', from: 'c1', to: 'c2', label: '' },
+        { op: 'add_edge', from: 'c2', to: 'c3', label: '' },
+        { op: 'add_edge', from: 'c3', to: 'c4', label: 'Sí' },
+        { op: 'add_edge', from: 'c3', to: 'c5', label: 'No' },
+        { op: 'add_edge', from: 'c4', to: 'c6', label: '' },
+        { op: 'add_edge', from: 'c6', to: 'c7', label: 'OK' }
+      ];
+      return {
+        cleanReply:
+          'He generado un flujo de **integración y despliegue continuo (CI/CD)** con verificación automática de pruebas y healthcheck.',
+        actions: { summary: 'Flujo CI/CD y despliegue (7 nodos)', operations: ops }
+      };
+    }
+
+    // Caso G: Nodo único de métricas / gráfico conectado al final del flujo actual
+    if (/\b(metrica|metricas|grafico|kpi|roi|donut|gauge|funnel|embudo)\b/i.test(norm)) {
+      let mType = 'metrics';
+      if (norm.includes('barra')) mType = 'chart_bar';
+      else if (norm.includes('linea')) mType = 'chart_line';
+      else if (norm.includes('donut')) mType = 'chart_donut';
+      else if (norm.includes('gauge')) mType = 'chart_gauge';
+      else if (norm.includes('funnel') || norm.includes('embudo')) mType = 'chart_funnel';
+
+      const outgoingIds = new Set((STATE.edges || []).map(e => e.from));
+      const leafNode = (STATE.nodes || []).find(n => !outgoingIds.has(n.id) && n.type !== 'note');
+      const lastNode = (selNode && selNode.id) || (leafNode && leafNode.id) || null;
       const ops = [
         { op: 'add_node', ref: 'm1', type: mType, text: 'Panel KPIs del flujo', ...(lastNode ? { after: lastNode } : {}) },
         ...(lastNode ? [{ op: 'add_edge', from: lastNode, to: 'm1', label: 'métricas' }] : [])
       ];
       return {
-        cleanReply: `He añadido un nodo visual **\`${CONFIG.NODE_TYPES[mType] || mType}\`** conectado a tu flujo para monitorear indicadores clave.`,
+        cleanReply: `He añadido un nodo visual **\`${CONFIG.NODE_TYPES[mType] || mType}\`** alineado justo debajo del nodo objetivo.`,
         actions: { summary: `Añadir ${CONFIG.NODE_TYPES[mType] || mType}`, operations: ops }
       };
     }
 
-    // Caso E: Extraer lista separada por comas o pasos personalizados del texto del usuario
-    const colonParts = rawPrompt.split(/[:：]/);
-    if (colonParts.length > 1) {
-      const steps = colonParts
-        .slice(1)
-        .join(':')
-        .split(/[,;→>-]+/)
+    // Caso H: Extraer pasos explícitos indicados por el usuario (con ":", flechas "->" o comas)
+    let rawStepsList = [];
+    if (rawPrompt.includes(':') || rawPrompt.includes('：')) {
+      const afterColon = rawPrompt.split(/[:：]/).slice(1).join(':');
+      rawStepsList = afterColon.split(/[,;→\n]+|\s*->\s*/).map(s => s.trim()).filter(Boolean);
+    } else if (/->|→/.test(rawPrompt)) {
+      rawStepsList = rawPrompt
+        .replace(/^(por favor\s+)?(crea|crear|genera|haz|diseña|arma)\s+(un\s+)?(flujo|diagrama|proceso|secuencia)\s*(de|con)?\s*/i, '')
+        .split(/→|->/)
         .map(s => s.trim())
         .filter(Boolean);
-      if (steps.length >= 2) {
-        const ops = [];
-        steps.forEach((stepText, idx) => {
-          const ref = 's' + (idx + 1);
-          const inferredType =
-            idx === 0 && !anchorId
-              ? 'start'
-              : idx === steps.length - 1
-                ? 'end'
-                : stepText.includes('?')
-                  ? 'decision'
-                  : 'process';
-          ops.push({
-            op: 'add_node',
-            ref,
-            type: inferredType,
-            text: stepText,
-            after: idx === 0 ? anchorId : 's' + idx
-          });
-          if (idx === 0 && anchorId) {
-            ops.push({ op: 'add_edge', from: anchorId, to: ref, label: '' });
-          } else if (idx > 0) {
-            ops.push({ op: 'add_edge', from: 's' + idx, to: ref, label: '' });
-          }
-        });
-        return {
-          cleanReply: `He generado una secuencia conectada con los **${steps.length} pasos** que indicaste.`,
-          actions: { summary: `Secuencia de ${steps.length} pasos`, operations: ops }
-        };
-      }
     }
 
-    // Caso F: Creación genérica de nodo o subflujo basado en la descripción del usuario
-    const cleanedTopic = rawPrompt
-      .replace(/^(por favor\s+)?(crea|crear|genera|generar|agrega|agregar|añade|añadir|anade|haz|hacer|un|una|el|la|flujo de|nodo de|proceso de)\s+/gi, '')
-      .trim() || 'Nuevo proceso';
+    if (rawStepsList.length >= 2) {
+      const ops = [...prefixOps];
+      rawStepsList.forEach((stepText, idx) => {
+        const ref = 's' + (idx + 1);
+        const inferredType = inferStepNodeType(stepText, idx, rawStepsList.length, Boolean(anchorId));
+        ops.push({
+          op: 'add_node',
+          ref,
+          type: inferredType,
+          text: stepText,
+          after: idx === 0 ? anchorId : 's' + idx
+        });
+        if (idx === 0 && anchorId) {
+          ops.push({ op: 'add_edge', from: anchorId, to: ref, label: '' });
+        } else if (idx > 0) {
+          const prevWasDecision = inferStepNodeType(rawStepsList[idx - 1], idx - 1, rawStepsList.length, Boolean(anchorId)) === 'decision';
+          ops.push({ op: 'add_edge', from: 's' + idx, to: ref, label: prevWasDecision ? 'Sí' : '' });
+        }
+      });
+      return {
+        cleanReply: `He estructurado y conectado tus **${rawStepsList.length} pasos** con tipos semánticos automáticos y espaciado compacto.`,
+        actions: { summary: `Secuencia de ${rawStepsList.length} pasos`, operations: ops }
+      };
+    }
 
-    let singleNodeType = 'process';
-    if (q.includes('ia') || q.includes('agente') || q.includes('llm')) singleNodeType = 'ai';
-    else if (q.includes('base de datos') || q.includes('bd') || q.includes('sql')) singleNodeType = 'db';
-    else if (q.includes('api') || q.includes('endpoint') || q.includes('http')) singleNodeType = 'api';
-    else if (q.includes('webhook')) singleNodeType = 'hook';
+    // Caso I: Creación de un único nodo puntual ("agrega un nodo de base de datos...")
+    const cleanedTopic =
+      rawPrompt
+        .replace(
+          /^(por favor\s+)?(crea|crear|genera|generar|agrega|agregar|añade|añadir|anade|inserta|insertar|diseña|disena|construye|arma|haz|hacer)\s+(un|una|el|la)?\s*(nuevo\s+)?(flujo\s+de|flujo\s+para|diagrama\s+de|nodo\s+de|nodo|proceso\s+de)?\s*/i,
+          ''
+        )
+        .trim() || 'Proceso principal';
 
-    if (q.includes('nodo')) {
-      const parentId = anchorId || (STATE.nodes.length ? STATE.nodes[STATE.nodes.length - 1].id : null);
+    const inferredMainType = inferStepNodeType(cleanedTopic, 1, 3, true);
+
+    if (/\b(un nodo|nuevo nodo|agrega nodo|añade nodo|anade nodo|inserta nodo)\b/i.test(norm)) {
+      const outgoingIds = new Set((STATE.edges || []).map(e => e.from));
+      const leafNode = (STATE.nodes || []).find(n => !outgoingIds.has(n.id) && n.type !== 'note');
+      const parentId = (selNode && selNode.id) || (leafNode && leafNode.id) || null;
       const ops = [
         {
           op: 'add_node',
           ref: 'u1',
-          type: singleNodeType,
-          text: cleanedTopic.slice(0, 48),
+          type: inferredMainType,
+          text: cleanedTopic.slice(0, 40),
           ...(parentId ? { after: parentId } : {})
         },
         ...(parentId ? [{ op: 'add_edge', from: parentId, to: 'u1', label: '' }] : [])
       ];
       return {
-        cleanReply: `He creado el nodo **\`${cleanedTopic.slice(0, 48)}\`** (${CONFIG.NODE_TYPES[singleNodeType]}) en tu lienzo.`,
+        cleanReply: `He creado el nodo **\`${cleanedTopic.slice(0, 40)}\`** (${CONFIG.NODE_TYPES[inferredMainType]}) conectado de forma compacta.`,
         actions: { summary: `Nodo "${cleanedTopic.slice(0, 28)}"`, operations: ops }
       };
     }
 
-    // Subflujo estructurado de 5 pasos sobre la temática pedida
-    const titleShort = cleanedTopic.slice(0, 32);
+    // Caso J: Arquitectura estructurada completa de 6 nodos (con validación Sí / No) para cualquier proceso de FlowLab
+    const titleShort = cleanedTopic.slice(0, 28);
     const ops = [
+      ...prefixOps,
       { op: 'add_node', ref: 'g1', type: 'start', text: `Inicio: ${titleShort}`, ...(anchorId ? { after: anchorId } : {}) },
-      { op: 'add_node', ref: 'g2', type: 'io', text: 'Entrada y preparación', after: 'g1' },
-      { op: 'add_node', ref: 'g3', type: singleNodeType, text: `Ejecutar ${titleShort}`, after: 'g2' },
-      { op: 'add_node', ref: 'g4', type: 'decision', text: '¿Resultado válido?', after: 'g3' },
-      { op: 'add_node', ref: 'g5', type: 'end', text: 'Proceso completado', after: 'g4' },
+      { op: 'add_node', ref: 'g2', type: 'io', text: 'Recibir parámetros', after: 'g1' },
+      { op: 'add_node', ref: 'g3', type: inferredMainType === 'start' || inferredMainType === 'end' ? 'process' : inferredMainType, text: `Procesar ${titleShort}`, after: 'g2' },
+      { op: 'add_node', ref: 'g4', type: 'decision', text: '¿Validación correcta?', after: 'g3' },
+      { op: 'add_node', ref: 'g5', type: 'err', text: 'Controlar incidencia', after: 'g4' },
+      { op: 'add_node', ref: 'g6', type: 'end', text: 'Flujo completado', after: 'g4' },
       ...(anchorId ? [{ op: 'add_edge', from: anchorId, to: 'g1', label: '' }] : []),
       { op: 'add_edge', from: 'g1', to: 'g2', label: '' },
       { op: 'add_edge', from: 'g2', to: 'g3', label: '' },
       { op: 'add_edge', from: 'g3', to: 'g4', label: '' },
-      { op: 'add_edge', from: 'g4', to: 'g5', label: 'OK' }
+      { op: 'add_edge', from: 'g4', to: 'g6', label: 'Sí' },
+      { op: 'add_edge', from: 'g4', to: 'g5', label: 'No' }
     ];
 
     return {
       cleanReply:
-        `He estructurado un flujo base para **${cleanedTopic}** con nodos de inicio, entrada, procesamiento, validación y cierre.\n\n` +
-        `*(Tip: conecta **Ollama / LM Studio** en tu PC o tu **API Key / URL** desde el botón **conectar** para respuestas generativas abiertas con cualquier LLM).*`,
-      actions: { summary: `Flujo: ${titleShort} (5 nodos)`, operations: ops }
+        `He diseñado una arquitectura compacta para **${cleanedTopic}** con inicio, entrada de datos, procesamiento, validación **Sí / No** y control de incidencias.`,
+      actions: { summary: `Flujo: ${titleShort} (6 nodos)`, operations: ops }
     };
   }
 
@@ -3606,6 +4151,44 @@
         return;
       }
 
+      if (isOrganizeCanvasIntent(normalizePlainSpanish(text)) && !/\b(crea|genera|agrega|anade|inserta)\b/i.test(normalizePlainSpanish(text))) {
+        await waitAbortableStep(stepDelay, currentAbort.signal);
+        const orgCount = (STATE.nodes || []).length;
+        autoOrganizeCanvas(true);
+        const totalDuration = Math.max(95, Date.now() - startedAt);
+        messages.push({
+          role: 'assistant',
+          content:
+            `He reorganizado y compactado automáticamente los **${orgCount} nodos** del lienzo en una jerarquía limpia sin grandes distancias, centrando el zoom para su lectura cómoda.`,
+          actions: {
+            summary: `Lienzo compactado (${orgCount} nodos)`,
+            operations: [{ op: 'organize_canvas' }]
+          },
+          applied: true,
+          appliedSummary: `${orgCount} nodo(s) alineados y compactados`,
+          createdNodeIds: (STATE.nodes || []).map(n => n.id),
+          isOffTopic: false,
+          providerTag: provSummary.text,
+          traceExpanded: false,
+          trace: {
+            durationMs: totalDuration,
+            domainStatus: 'flowlab',
+            sources: telemetry.sources,
+            steps: [
+              ...telemetry.steps,
+              {
+                title: 'Auto-layout jerárquico anti-colisión ejecutado',
+                detail: `${orgCount} nodos reubicados con detección de ciclos y espaciado uniforme.`,
+                ms: 32
+              }
+            ]
+          },
+          timestamp: Date.now()
+        });
+        saveAIChatHistory(true);
+        return;
+      }
+
       if (aiConfig.mode === 'builtin') {
         await waitAbortableStep(stepDelay, currentAbort.signal);
       }
@@ -3630,9 +4213,9 @@
 
       if (result.actions && Array.isArray(result.actions.operations) && result.actions.operations.length > 0) {
         finalSteps.push({
-          title: 'Estructuración de operaciones sobre el lienzo',
-          detail: `Preparadas ${result.actions.operations.length} operación(es) (${result.actions.summary || 'cambios en nodos y conexiones'}).`,
-          ms: 26
+          title: 'Auto-layout jerárquico compacto aplicado sobre el lienzo',
+          detail: `Procesadas ${result.actions.operations.length} operación(es) (${result.actions.summary || 'nodos y conexiones posicionados sin dispersión'}).`,
+          ms: 28
         });
       }
 
@@ -3665,10 +4248,14 @@
       ) {
         const applied = applyAIGraphActions(result.actions);
         assistantMsg.applied = true;
-        assistantMsg.createdNodeIds = applied.addedNodes.map(n => n.id);
-        assistantMsg.appliedSummary =
-          `${applied.addedNodes.length} nodo(s) · ${applied.addedEdges.length} conexión(es)` +
-          (applied.updatedCount ? ` · ${applied.updatedCount} editado(s)` : '');
+        assistantMsg.createdNodeIds =
+          applied.addedNodes.length > 0
+            ? applied.addedNodes.map(n => n.id)
+            : (STATE.nodes || []).map(n => n.id);
+        assistantMsg.appliedSummary = applied.organized && applied.addedNodes.length === 0
+          ? `${(STATE.nodes || []).length} nodo(s) compactados y alineados`
+          : `${applied.addedNodes.length} nodo(s) · ${applied.addedEdges.length} conexión(es)` +
+            (applied.updatedCount ? ` · ${applied.updatedCount} ajustado(s)` : '');
       }
 
       messages.push(assistantMsg);
@@ -3992,6 +4579,23 @@
       updateAIChatContextUI();
     });
 
+    document.getElementById('btnAiOrganize')?.addEventListener('click', () => {
+      autoOrganizeCanvas(false);
+    });
+
+    document.getElementById('zAutoLayout')?.addEventListener('click', () => {
+      autoOrganizeCanvas(false);
+    });
+
+    // Si había un diagrama guardado previamente con nodos dispersos a miles de píxeles, repararlo automáticamente al arrancar
+    if (STATE.nodes && STATE.nodes.length >= 2 && isCanvasAbnormallyScattered(STATE.nodes)) {
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(() => autoOrganizeCanvas(true));
+      } else {
+        autoOrganizeCanvas(true);
+      }
+    }
+
     document.getElementById('btnAiAutoApply')?.addEventListener('click', () => {
       aiConfig.autoApply = !aiConfig.autoApply;
       saveAIConfig();
@@ -4064,4 +4668,6 @@
   window.switchAISession = switchAISession;
   window.getAISessionsSnapshot = () => aiSessions.map(s => ({ ...s }));
   window.evaluateFlowLabDomainGuard = evaluateFlowLabDomainGuard;
+  window.autoOrganizeCanvas = autoOrganizeCanvas;
+  window.applyAIGraphActions = applyAIGraphActions;
 })();

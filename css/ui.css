@@ -5438,6 +5438,20 @@ select.fl-select-native {
   border-color: rgba(251, 113, 133, 0.28);
 }
 
+.ai-context-right {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+#zAutoLayout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 768px) and (pointer: coarse) {
   #aiSessionSearchInput,
   .ai-session-rename-input {
