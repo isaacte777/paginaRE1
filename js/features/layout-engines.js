@@ -44,22 +44,50 @@
   }
 
   function measureNodeSafe(n) {
-    const domW = Number(n.w) || 0;
-    const domH = Number(n.h) || 0;
-    let estW = 176;
-    let estH = 62;
-    if (isFin(n)) {
-      estW = 228;
-      estH = 96;
-    } else if (isChart(n)) {
-      estW = 284;
-      estH = 168;
-    } else if (n.type === 'decision' || n.type === 'loop') {
-      estW = 190;
-      estH = 92;
+    let liveW = 0;
+    let liveH = 0;
+    if (typeof document !== 'undefined' && n && n.id) {
+      try {
+        const sel =
+          typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+            ? `.node[data-id="${CSS.escape(n.id)}"]`
+            : `.node[data-id="${String(n.id).replace(/"/g, '\\"')}"]`;
+        const el = document.querySelector(sel);
+        if (el && el.offsetWidth > 60 && el.offsetHeight > 30) {
+          liveW = el.offsetWidth;
+          liveH = el.offsetHeight;
+        }
+      } catch {}
     }
-    n.w = domW > 85 ? Math.max(domW, Math.round(estW * 0.88)) : estW;
-    n.h = domH > 36 ? Math.max(domH, Math.round(estH * 0.88)) : estH;
+
+    const domW = Math.max(liveW, Number(n.w) || 0);
+    const domH = Math.max(liveH, Number(n.h) || 0);
+    const textLen = String(n.text || '').length;
+
+    let minW = 180;
+    let minH = Math.max(68, 50 + Math.ceil(textLen / 22) * 16);
+
+    if (isFin(n)) {
+      // Las tarjetas financieras incluyen cabecera de celda, título, barra fx, monto principal y referencias
+      minW = 228;
+      minH = 152 + (textLen > 26 ? 16 : 0);
+    } else if (isChart(n)) {
+      // Los Stat-Nodes de gráficos tienen 280px de ancho + título + subtítulo + SVG + leyenda
+      minW = 294;
+      minH = 222;
+    } else if (n.type === 'decision') {
+      minW = 184;
+      minH = 122;
+    } else if (n.type === 'loop') {
+      minW = 184;
+      minH = 82;
+    } else if (n.type === 'db') {
+      minW = 168;
+      minH = 74;
+    }
+
+    n.w = Math.max(minW, domW);
+    n.h = Math.max(minH, domH);
     return { w: n.w, h: n.h };
   }
 
@@ -249,55 +277,125 @@
     return comps;
   }
 
-  // Garantía matemática post-layout: ningún par de nodos se solapa jamás
-  function resolveAllOverlaps(nodes, minGap = 24) {
-    if (nodes.length < 2) return;
-    for (let iter = 0; iter < 12; iter++) {
+  // Garantía matemática post-layout: ningún par de nodos se solapa ni queda apretado jamás
+  function resolveAllOverlaps(nodes, minGapX = 48, minGapY = 48) {
+    if (!Array.isArray(nodes) || nodes.length < 2) return;
+
+    // 1. Si dos nodos cayeron exactamente en la misma coordenada (p. ej. celdas duplicadas A1/A1), abrirlos horizontalmente primero
+    const seenBuckets = new Map();
+    nodes.forEach(n => {
+      const key = `${Math.round(n.x / 24)}_${Math.round(n.y / 24)}`;
+      const count = seenBuckets.get(key) || 0;
+      if (count > 0) {
+        n.x += count * (n.w + minGapX);
+      }
+      seenBuckets.set(key, count + 1);
+    });
+
+    // 2. Relajación iterativa de cajas delimitadoras con margen amplio para conectores y etiquetas
+    for (let iter = 0; iter < 85; iter++) {
       let moved = false;
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const A = nodes[i];
           const B = nodes[j];
-          const ox = Math.min(A.x + A.w + minGap, B.x + B.w + minGap) - Math.max(A.x, B.x);
-          const oy = Math.min(A.y + A.h + minGap, B.y + B.h + minGap) - Math.max(A.y, B.y);
+          const ox = Math.min(A.x + A.w + minGapX, B.x + B.w + minGapX) - Math.max(A.x, B.x);
+          const oy = Math.min(A.y + A.h + minGapY, B.y + B.h + minGapY) - Math.max(A.y, B.y);
           if (ox > 0 && oy > 0) {
             moved = true;
+            // Desplazar predominantemente hacia derecha/abajo para conservar márgenes superiores limpios
             if (ox < oy) {
-              const push = Math.ceil(ox / 2);
-              if (A.x <= B.x) { A.x -= push; B.x += push; } else { A.x += push; B.x -= push; }
+              const pushL = Math.floor(ox * 0.25);
+              const pushR = ox - pushL;
+              if (A.x <= B.x) {
+                A.x = Math.max(48, A.x - pushL);
+                B.x += pushR;
+              } else {
+                B.x = Math.max(48, B.x - pushL);
+                A.x += pushR;
+              }
             } else {
-              const push = Math.ceil(oy / 2);
-              if (A.y <= B.y) { A.y -= push; B.y += push; } else { A.y += push; B.y -= push; }
+              const pushU = Math.floor(oy * 0.2);
+              const pushD = oy - pushU;
+              if (A.y <= B.y) {
+                A.y = Math.max(48, A.y - pushU);
+                B.y += pushD;
+              } else {
+                B.y = Math.max(48, B.y - pushU);
+                A.y += pushD;
+              }
             }
           }
         }
       }
       if (!moved) break;
     }
+
+    // 3. Snap a la rejilla + pasada determinista final de barrido (sweep-line) para garantizar 0 colisiones tras el redondeo
     nodes.forEach(n => {
-      n.x = snapVal(n.x);
-      n.y = snapVal(n.y);
+      n.x = Math.max(48, snapVal(n.x));
+      n.y = Math.max(48, snapVal(n.y));
     });
+
+    const sorted = nodes.slice().sort((a, b) => (a.y - b.y) || (a.x - b.x));
+    for (let pass = 0; pass < 6; pass++) {
+      let anyHit = false;
+      for (let i = 0; i < sorted.length; i++) {
+        for (let j = i + 1; j < sorted.length; j++) {
+          const A = sorted[i];
+          const B = sorted[j];
+          const overlapX = A.x < B.x + B.w + minGapX && A.x + A.w + minGapX > B.x;
+          const overlapY = A.y < B.y + B.h + minGapY && A.y + A.h + minGapY > B.y;
+          if (overlapX && overlapY) {
+            anyHit = true;
+            if (Math.abs(A.y - B.y) < 36) {
+              if (A.x <= B.x) B.x = snapVal(A.x + A.w + minGapX + 12);
+              else A.x = snapVal(B.x + B.w + minGapX + 12);
+            } else {
+              if (A.y <= B.y) B.y = snapVal(A.y + A.h + minGapY + 12);
+              else A.y = snapVal(B.y + B.h + minGapY + 12);
+            }
+          }
+        }
+      }
+      if (!anyHit) break;
+    }
+  }
+
+  // Divide capas demasiado anchas (> maxPerRow hermanos) en sub-filas limpias
+  function splitWideLayers(layers, maxPerRow = 4) {
+    const out = [];
+    layers.forEach(layer => {
+      if (layer.length <= maxPerRow) {
+        out.push(layer);
+      } else {
+        for (let i = 0; i < layer.length; i += maxPerRow) {
+          out.push(layer.slice(i, i + maxPerRow));
+        }
+      }
+    });
+    return out;
   }
 
   // =========================================================================
   // IMPLEMENTACIONES DE LAS 16 TOPOLOGÍAS PARAMÉTRICAS
   // =========================================================================
 
-  // 1. VERTICAL PURO (Arriba -> Abajo, sin corte artificial cada 7 niveles)
+  // 1. VERTICAL JERÁRQUICO LIMPIO (Arriba -> Abajo, separando subflujos y plegando torres excesivas)
   function layoutVerticalDag(nodes, edges, opts) {
     const scale = densityScale(opts.density);
-    const vGap = Math.round(58 * scale);
-    const hGap = Math.round(52 * scale);
-    const compGap = Math.round(115 * scale);
+    const vGap = Math.round(76 * scale);
+    const hGap = Math.round(88 * scale);
+    const compGap = Math.round(156 * scale);
 
     if (opts.columns === 1) {
-      // Una sola columna estricta de arriba a abajo
+      // Una sola columna estricta de arriba a abajo cuando el usuario pide explícitamente "1 columna"
       const { layers } = computeDagLayers(nodes, edges, opts.sortBy);
       const ordered = layers.flat();
       if (opts.reverse) ordered.reverse();
-      const centerX = (opts.originX || 180) + 140;
-      let curY = opts.originY || 60;
+      const maxW = Math.max(200, ...ordered.map(n => n.w));
+      const centerX = (opts.originX || 140) + maxW / 2;
+      let curY = opts.originY || 64;
       ordered.forEach(n => {
         n.x = snapVal(centerX - n.w / 2);
         n.y = snapVal(curY);
@@ -308,46 +406,63 @@
 
     const comps = splitWeakComponents(nodes, edges);
     let cursorX = opts.originX || 120;
-    const startY = opts.originY || 60;
+    const startY = opts.originY || 64;
 
     comps.forEach(compNodes => {
       const { layers } = computeDagLayers(compNodes, edges, opts.sortBy);
-      const rows = opts.reverse ? layers.slice().reverse() : layers;
-      const rowWidths = rows.map(
-        r => r.reduce((s, n) => s + n.w, 0) + Math.max(0, r.length - 1) * hGap
-      );
-      const compW = Math.max(180, ...rowWidths);
-      const centerX = cursorX + compW / 2;
+      const baseRows = splitWideLayers(opts.reverse ? layers.slice().reverse() : layers, 4);
 
-      let curY = startY;
-      rows.forEach((rNodes, idx) => {
-        const rw = rowWidths[idx];
-        const rMaxH = Math.max(54, ...rNodes.map(n => n.h));
-        let curX =
-          opts.align === 'start'
-            ? cursorX
-            : opts.align === 'end'
-              ? cursorX + compW - rw
-              : centerX - rw / 2;
+      // Si una cadena lineal supera 7 niveles seguidos, dividirla en columnas verticales paralelas para evitar torres gigantes
+      const maxRowsPerBlock = 6;
+      const rowBlocks = [];
+      if (baseRows.length <= 7) {
+        rowBlocks.push(baseRows);
+      } else {
+        const numBlocks = Math.ceil(baseRows.length / maxRowsPerBlock);
+        const perBlock = Math.ceil(baseRows.length / numBlocks);
+        for (let i = 0; i < baseRows.length; i += perBlock) {
+          rowBlocks.push(baseRows.slice(i, i + perBlock));
+        }
+      }
 
-        rNodes.forEach(n => {
-          n.x = snapVal(curX);
-          n.y = snapVal(curY + (rMaxH - n.h) / 2);
-          curX += n.w + hGap;
+      rowBlocks.forEach(rows => {
+        const rowWidths = rows.map(
+          r => r.reduce((s, n) => s + n.w, 0) + Math.max(0, r.length - 1) * hGap
+        );
+        const compW = Math.max(200, ...rowWidths);
+        const centerX = cursorX + compW / 2;
+
+        let curY = startY;
+        rows.forEach((rNodes, idx) => {
+          const rw = rowWidths[idx];
+          const rMaxH = Math.max(66, ...rNodes.map(n => n.h));
+          let curX =
+            opts.align === 'start'
+              ? cursorX
+              : opts.align === 'end'
+                ? cursorX + compW - rw
+                : centerX - rw / 2;
+
+          rNodes.forEach(n => {
+            n.x = snapVal(curX);
+            n.y = snapVal(curY + (rMaxH - n.h) / 2);
+            curX += n.w + hGap;
+          });
+          curY += rMaxH + vGap;
         });
-        curY += rMaxH + vGap;
-      });
 
-      cursorX += compW + compGap;
+        cursorX += compW + compGap;
+      });
     });
   }
 
-  // 2. HORIZONTAL PIPELINE (Izquierda -> Derecha por columnas topológicas)
+  // 2. HORIZONTAL PIPELINE (Izquierda -> Derecha por etapas, envolviendo columnas muy altas)
   function layoutHorizontalDag(nodes, edges, opts) {
     const scale = densityScale(opts.density);
-    const colGap = Math.round(84 * scale);
-    const rowGap = Math.round(44 * scale);
-    const compVGap = Math.round(96 * scale);
+    const colGap = Math.round(138 * scale);
+    const rowGap = Math.round(64 * scale);
+    const compVGap = Math.round(124 * scale);
+    const maxPerCol = 4;
 
     const comps = splitWeakComponents(nodes, edges);
     const startX = opts.originX || 96;
@@ -355,21 +470,32 @@
 
     comps.forEach(compNodes => {
       const { layers } = computeDagLayers(compNodes, edges, opts.sortBy);
-      const cols = opts.reverse ? layers.slice().reverse() : layers;
+      const rawCols = opts.reverse ? layers.slice().reverse() : layers;
+      // Si una etapa tiene más de 4 tarjetas paralelas, partirla en sub-columnas limpias
+      const cols = [];
+      rawCols.forEach(c => {
+        if (c.length <= maxPerCol) cols.push(c);
+        else {
+          for (let i = 0; i < c.length; i += maxPerCol) {
+            cols.push(c.slice(i, i + maxPerCol));
+          }
+        }
+      });
+
       const colHeights = cols.map(
         c => c.reduce((s, n) => s + n.h, 0) + Math.max(0, c.length - 1) * rowGap
       );
-      const compH = Math.max(80, ...colHeights);
+      const compH = Math.max(100, ...colHeights);
       const centerY = cursorY + compH / 2;
 
       let curX = startX;
       cols.forEach((cNodes, idx) => {
         const ch = colHeights[idx];
-        const colMaxW = Math.max(156, ...cNodes.map(n => n.w));
+        const colMaxW = Math.max(180, ...cNodes.map(n => n.w));
         let curY = centerY - ch / 2;
         cNodes.forEach(n => {
           n.x = snapVal(curX + (colMaxW - n.w) / 2);
-          n.y = snapVal(curY);
+          n.y = snapVal(Math.max(48, curY));
           curY += n.h + rowGap;
         });
         curX += colMaxW + colGap;
@@ -382,25 +508,26 @@
   // 3. COMPACTO PLEGADO EQUILIBRADO
   function layoutCompactFolded(nodes, edges, opts) {
     const scale = densityScale(opts.density);
-    const vGap = Math.round(52 * scale);
-    const hGap = Math.round(48 * scale);
-    const colChunkGap = Math.round(108 * scale);
-    const maxRows = opts.maxRowsPerCol || 7;
+    const vGap = Math.round(72 * scale);
+    const hGap = Math.round(82 * scale);
+    const colChunkGap = Math.round(148 * scale);
+    const maxRows = opts.maxRowsPerCol || 5;
 
     const comps = splitWeakComponents(nodes, edges);
     let cursorX = opts.originX || 108;
-    const baseOriginY = opts.originY || 60;
+    const baseOriginY = opts.originY || 64;
 
     comps.forEach(compNodes => {
       const { layers } = computeDagLayers(compNodes, edges, opts.sortBy);
+      const normLayers = splitWideLayers(layers, 3);
       const chunks = [];
-      if (layers.length <= maxRows) {
-        chunks.push(layers);
+      if (normLayers.length <= maxRows) {
+        chunks.push(normLayers);
       } else {
-        const nCols = Math.ceil(layers.length / maxRows);
-        const perCol = Math.ceil(layers.length / nCols);
-        for (let i = 0; i < layers.length; i += perCol) {
-          chunks.push(layers.slice(i, i + perCol));
+        const nCols = Math.ceil(normLayers.length / maxRows);
+        const perCol = Math.ceil(normLayers.length / nCols);
+        for (let i = 0; i < normLayers.length; i += perCol) {
+          chunks.push(normLayers.slice(i, i + perCol));
         }
       }
 
@@ -408,12 +535,12 @@
         const widths = chunk.map(
           r => r.reduce((s, n) => s + n.w, 0) + Math.max(0, r.length - 1) * hGap
         );
-        const colW = Math.max(170, ...widths);
+        const colW = Math.max(190, ...widths);
         const cx = cursorX + colW / 2;
         let cy = baseOriginY;
         chunk.forEach((rNodes, i) => {
           const rw = widths[i];
-          const rh = Math.max(54, ...rNodes.map(n => n.h));
+          const rh = Math.max(66, ...rNodes.map(n => n.h));
           let x = cx - rw / 2;
           rNodes.forEach(n => {
             n.x = snapVal(x);
@@ -427,29 +554,28 @@
     });
   }
 
-  // 4. SEPARACIÓN INTELIGENTE FLUJO ⇄ GRÁFICOS ⇄ PLANILLA FINANCIERA (con corredor limpio de flechas)
+  // 4. SEPARACIÓN INTELIGENTE FLUJO ⇄ PLANILLA FINANCIERA ⇄ PANEL DE GRÁFICOS (con corredores amplios)
   function layoutDomainBridge(nodes, edges, opts) {
     const scale = densityScale(opts.density);
     const wfNodes = nodes.filter(n => !isFin(n) && !isChart(n));
     const chartNodes = nodes.filter(n => isChart(n));
     const finNodes = nodes.filter(n => isFin(n));
 
-    // Si solo hay un tipo, usar vertical limpio o hoja excel
     if (finNodes.length > 0 && wfNodes.length === 0 && chartNodes.length === 0) {
       layoutExcelSheet(finNodes, edges, opts);
       return;
     }
     if (finNodes.length === 0 && chartNodes.length === 0) {
-      layoutVerticalDag(wfNodes, edges, opts);
+      layoutCompactFolded(wfNodes, edges, opts);
       return;
     }
 
     let cursorX = opts.originX || 96;
     const startY = opts.originY || 64;
-    const zoneCorridor = Math.round(148 * scale); // Corredor amplio para cables puente sin cruces
+    const zoneCorridor = Math.round(176 * scale); // Corredor holgado para puentes y etiquetas
 
     if (wfNodes.length > 0) {
-      layoutVerticalDag(wfNodes, edges, { ...opts, originX: cursorX, originY: startY });
+      layoutCompactFolded(wfNodes, edges, { ...opts, originX: cursorX, originY: startY, maxRowsPerCol: 5 });
       const wfMaxX = Math.max(...wfNodes.map(n => n.x + n.w));
       cursorX = wfMaxX + zoneCorridor;
     }
@@ -461,12 +587,45 @@
     }
 
     if (chartNodes.length > 0) {
-      // Colocar gráficos alineados en su propia columna limpia a la derecha sin invadir el flujo central
-      let cy = startY;
-      chartNodes.forEach(cn => {
-        cn.x = snapVal(cursorX);
-        cn.y = snapVal(cy);
-        cy += cn.h + Math.round(52 * scale);
+      const upstreamPlaced = [...wfNodes, ...finNodes];
+      const chartHGap = Math.round(88 * scale);
+      const chartVGap = Math.round(74 * scale);
+      const maxChartW = Math.max(294, ...chartNodes.map(c => c.w));
+      const maxChartH = Math.max(222, ...chartNodes.map(c => c.h));
+
+      if (upstreamPlaced.length > 0) {
+        const upMinX = Math.min(...upstreamPlaced.map(n => n.x));
+        const upMaxX = Math.max(...upstreamPlaced.map(n => n.x + n.w));
+        const upMinY = Math.min(...upstreamPlaced.map(n => n.y));
+        const upMaxY = Math.max(...upstreamPlaced.map(n => n.y + n.h));
+        const upW = upMaxX - upMinX;
+        const upH = upMaxY - upMinY;
+
+        // Si el bloque de flujo/finanzas ya es ancho (proporción panorámica > 1.55),
+        // situar los gráficos como un tablero KPI horizontal debajo para lograr proporción 16:10 legible
+        if (upW > upH * 1.55 && upW >= 920) {
+          const rowCols = Math.min(chartNodes.length, Math.max(2, Math.floor((upW + chartHGap) / (maxChartW + chartHGap))));
+          const totalRowW = rowCols * maxChartW + (rowCols - 1) * chartHGap;
+          const rowStartX = Math.max(opts.originX || 96, upMinX + (upW - totalRowW) / 2);
+          const rowStartY = upMaxY + Math.round(132 * scale);
+
+          chartNodes.forEach((cn, idx) => {
+            const c = idx % rowCols;
+            const r = Math.floor(idx / rowCols);
+            cn.x = snapVal(rowStartX + c * (maxChartW + chartHGap));
+            cn.y = snapVal(rowStartY + r * (maxChartH + chartVGap));
+          });
+          return;
+        }
+      }
+
+      // En grafos más altos que anchos, colocar gráficos en panel 2×N a la derecha
+      const chartCols = chartNodes.length >= 3 ? 2 : 1;
+      chartNodes.forEach((cn, idx) => {
+        const c = idx % chartCols;
+        const r = Math.floor(idx / chartCols);
+        cn.x = snapVal(cursorX + c * (maxChartW + chartHGap));
+        cn.y = snapVal(startY + r * (maxChartH + chartVGap));
       });
     }
   }
@@ -555,8 +714,10 @@
   // 7. CARRILES / SWIMLANES POR ROL O TIPO DE NODO
   function layoutSwimlanesByType(nodes, edges, opts) {
     const scale = densityScale(opts.density);
-    const laneGap = Math.round(76 * scale);
-    const itemGap = Math.round(46 * scale);
+    const laneGap = Math.round(124 * scale);
+    const subColGap = Math.round(74 * scale);
+    const itemGap = Math.round(64 * scale);
+    const maxPerSubCol = 5;
 
     const buckets = [
       { key: 'entry', match: n => n.type === 'start' || n.type === 'io' || n.type === 'hook' },
@@ -579,14 +740,17 @@
       if (!group.length) return;
       group.forEach(n => assigned.add(n.id));
 
-      const laneW = Math.max(176, ...group.map(n => n.w));
-      let curY = startY;
-      group.forEach(n => {
-        n.x = snapVal(curX + (laneW - n.w) / 2);
-        n.y = snapVal(curY);
-        curY += n.h + itemGap;
-      });
-      curX += laneW + laneGap;
+      for (let i = 0; i < group.length; i += maxPerSubCol) {
+        const sub = group.slice(i, i + maxPerSubCol);
+        const laneW = Math.max(196, ...sub.map(n => n.w));
+        let curY = startY;
+        sub.forEach(n => {
+          n.x = snapVal(curX + (laneW - n.w) / 2);
+          n.y = snapVal(curY);
+          curY += n.h + itemGap;
+        });
+        curX += laneW + (i + maxPerSubCol < group.length ? subColGap : laneGap);
+      }
     });
 
     const leftovers = nodes.filter(n => !assigned.has(n.id));
@@ -603,8 +767,10 @@
   // 8. TABLERO KANBAN POR ESTADO
   function layoutKanbanByStatus(nodes, edges, opts) {
     const scale = densityScale(opts.density);
-    const colGap = Math.round(84 * scale);
-    const cardGap = Math.round(38 * scale);
+    const colGap = Math.round(128 * scale);
+    const subColGap = Math.round(74 * scale);
+    const cardGap = Math.round(62 * scale);
+    const maxPerSubCol = 5;
 
     const statusOrder = ['pending', 'progress', 'done', 'error'];
     const { rank } = computeDagLayers(nodes, edges, opts.sortBy);
@@ -617,40 +783,61 @@
         .filter(n => (n.status || 'pending') === st)
         .sort((a, b) => (rank.get(a.id) || 0) - (rank.get(b.id) || 0));
       if (!colNodes.length) return;
-      const colW = Math.max(184, ...colNodes.map(n => n.w));
-      let curY = startY;
-      colNodes.forEach(n => {
-        n.x = snapVal(curX + (colW - n.w) / 2);
-        n.y = snapVal(curY);
-        curY += n.h + cardGap;
-      });
-      curX += colW + colGap;
+
+      for (let i = 0; i < colNodes.length; i += maxPerSubCol) {
+        const sub = colNodes.slice(i, i + maxPerSubCol);
+        const colW = Math.max(196, ...sub.map(n => n.w));
+        let curY = startY;
+        sub.forEach(n => {
+          n.x = snapVal(curX + (colW - n.w) / 2);
+          n.y = snapVal(curY);
+          curY += n.h + cardGap;
+        });
+        curX += colW + (i + maxPerSubCol < colNodes.length ? subColGap : colGap);
+      }
     });
   }
 
-  // 9. HOJA DE CÁLCULO EXCEL (Alinea por coordenadas A1, B1, C2... o niveles DAG)
+  // 9. HOJA DE CÁLCULO EXCEL INTELIGENTE (Distribuye por etapas/columnas reales sin apilar todo en columna A)
   function layoutExcelSheet(nodes, edges, opts) {
     const scale = densityScale(opts.density);
-    const colW = Math.round(268 * scale);
-    const rowH = Math.round(136 * scale);
+    const maxCardW = Math.max(228, ...nodes.map(n => n.w));
+    const maxCardH = Math.max(152, ...nodes.map(n => n.h));
+    const colStride = maxCardW + Math.round(138 * scale);
+    const rowStride = maxCardH + Math.round(68 * scale);
     const startX = opts.originX || 96;
     const startY = opts.originY || 68;
 
-    const hasCellRefs = nodes.some(n => /^[A-Z]{1,2}\d{1,2}$/i.test(n.params?.cellRef || ''));
-    if (!hasCellRefs) {
-      layoutHorizontalDag(nodes, edges, opts);
+    const parsed = nodes.map((n, idx) => {
+      const m = String(n.params?.cellRef || '').trim().toUpperCase().match(/^([A-Z]{1,2})(\d{1,2})$/);
+      if (!m) return { n, valid: false, colIdx: idx % 4, rowIdx: Math.floor(idx / 4) };
+      const letters = m[1];
+      const colIdx =
+        letters.length === 1
+          ? letters.charCodeAt(0) - 65
+          : (letters.charCodeAt(0) - 64) * 26 + (letters.charCodeAt(1) - 65);
+      const rowIdx = Math.max(0, parseInt(m[2], 10) - 1);
+      return { n, valid: true, colIdx, rowIdx, refKey: `${colIdx}_${rowIdx}` };
+    });
+
+    const allValid = parsed.every(p => p.valid);
+    const uniqCols = Array.from(new Set(parsed.map(p => p.colIdx))).sort((a, b) => a - b);
+    const refKeysSet = new Set(parsed.map(p => p.refKey));
+    const hasDuplicateCells = refKeysSet.size < parsed.length;
+    const isSingleTallColumn = uniqCols.length <= 1 && nodes.length > 4;
+
+    // Si hay colisiones de celdas (ej. Hoja A + Hoja B ambas con A1..A6) o todo cayó en la columna A,
+    // organizar como etapas financieras de Izquierda -> Derecha (Entradas -> Operaciones -> Saldos/KPIs)
+    if (!allValid || hasDuplicateCells || isSingleTallColumn) {
+      layoutHorizontalDag(nodes, edges, {
+        ...opts,
+        originX: startX,
+        originY: startY
+      });
       return;
     }
 
-    const parsed = nodes.map((n, idx) => {
-      const m = String(n.params?.cellRef || '').toUpperCase().match(/^([A-Z])(\d{1,2})$/);
-      const colIdx = m ? m[1].charCodeAt(0) - 65 : idx % 4;
-      const rowIdx = m ? Math.max(0, parseInt(m[2], 10) - 1) : Math.floor(idx / 4);
-      return { n, colIdx, rowIdx };
-    });
-
-    // Comprimir columnas y filas vacías para que no queden huecos enormes si usan A1 y F1
-    const uniqCols = Array.from(new Set(parsed.map(p => p.colIdx))).sort((a, b) => a - b);
+    // Rejilla Excel genuina multicolumna sin colisiones y con zanjas holgadas para fórmulas
     const uniqRows = Array.from(new Set(parsed.map(p => p.rowIdx))).sort((a, b) => a - b);
     const colMap = new Map(uniqCols.map((c, i) => [c, i]));
     const rowMap = new Map(uniqRows.map((r, i) => [r, i]));
@@ -658,8 +845,8 @@
     parsed.forEach(p => {
       const c = colMap.get(p.colIdx) || 0;
       const r = rowMap.get(p.rowIdx) || 0;
-      p.n.x = snapVal(startX + c * colW);
-      p.n.y = snapVal(startY + r * rowH);
+      p.n.x = snapVal(startX + c * colStride);
+      p.n.y = snapVal(startY + r * rowStride);
     });
   }
 
@@ -670,8 +857,8 @@
     const ordered = opts.reverse ? layers.flat().reverse() : layers.flat();
     const cols = opts.columns && opts.columns >= 1 ? opts.columns : Math.max(2, Math.ceil(Math.sqrt(ordered.length)));
 
-    const cellW = Math.max(190, ...ordered.map(n => n.w)) + Math.round(54 * scale);
-    const cellH = Math.max(76, ...ordered.map(n => n.h)) + Math.round(48 * scale);
+    const cellW = Math.max(210, ...ordered.map(n => n.w)) + Math.round(92 * scale);
+    const cellH = Math.max(90, ...ordered.map(n => n.h)) + Math.round(68 * scale);
     const startX = opts.originX || 96;
     const startY = opts.originY || 64;
 
@@ -690,8 +877,8 @@
     const ordered = layers.flat();
     const cols = opts.columns && opts.columns >= 2 ? opts.columns : Math.min(5, Math.max(3, Math.ceil(Math.sqrt(ordered.length))));
 
-    const cellW = Math.max(196, ...ordered.map(n => n.w)) + Math.round(58 * scale);
-    const cellH = Math.max(82, ...ordered.map(n => n.h)) + Math.round(58 * scale);
+    const cellW = Math.max(210, ...ordered.map(n => n.w)) + Math.round(96 * scale);
+    const cellH = Math.max(92, ...ordered.map(n => n.h)) + Math.round(72 * scale);
     const startX = opts.originX || 96;
     const startY = opts.originY || 64;
 
@@ -970,8 +1157,9 @@
         break;
     }
 
-    const minGap = Math.round(24 * densityScale(opts.density));
-    resolveAllOverlaps(targetNodes, Math.max(16, minGap));
+    const minGapX = Math.max(36, Math.round(52 * densityScale(opts.density)));
+    const minGapY = Math.max(36, Math.round(48 * densityScale(opts.density)));
+    resolveAllOverlaps(targetNodes, minGapX, minGapY);
 
     const presetMeta = LAYOUT_PRESETS.find(p => p.id === mode);
     const baseLabel = presetMeta ? presetMeta.label : mode;

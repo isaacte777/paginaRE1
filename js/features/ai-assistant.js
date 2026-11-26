@@ -1095,10 +1095,11 @@
 
   function estimateNodeBoxSize(node) {
     const type = node.type || 'process';
+    const textLen = String(node.text || '').length;
     if (typeof isFinanceNodeType === 'function' && isFinanceNodeType(type)) {
-      return { w: 224, h: 96 };
+      return { w: 228, h: 152 + (textLen > 26 ? 16 : 0) };
     }
-    if (type.startsWith('chart_')) return { w: 280, h: 164 };
+    if (type.startsWith('chart_')) return { w: 294, h: 222 };
 
     const lines = String(node.text || '')
       .split('\n')
@@ -1106,16 +1107,22 @@
     const maxChars = Math.max(8, ...lines.map(l => l.length));
     const lineCount = Math.max(1, lines.length);
 
-    if (type === 'decision' || type === 'loop') {
+    if (type === 'decision') {
       return {
-        w: clamp(Math.round(126 + maxChars * 5.2), 152, 224),
-        h: clamp(Math.round(74 + (lineCount - 1) * 16), 78, 118)
+        w: clamp(Math.round(138 + maxChars * 5.2), 180, 232),
+        h: clamp(Math.round(116 + (lineCount - 1) * 14), 118, 142)
+      };
+    }
+    if (type === 'loop') {
+      return {
+        w: clamp(Math.round(134 + maxChars * 5.2), 180, 228),
+        h: clamp(Math.round(78 + (lineCount - 1) * 14), 82, 114)
       };
     }
 
     return {
-      w: clamp(Math.round(112 + maxChars * 5.6), 148, 236),
-      h: clamp(Math.round(48 + (lineCount - 1) * 16), 52, 108)
+      w: clamp(Math.round(118 + maxChars * 5.6), 176, 242),
+      h: clamp(Math.round(58 + (lineCount - 1) * 16), 66, 118)
     };
   }
 
@@ -1123,9 +1130,8 @@
     const est = estimateNodeBoxSize(node);
     const domW = Number(node.w) || 0;
     const domH = Number(node.h) || 0;
-    // Si el DOM ya midió dimensiones reales (> 80px), respetar el máximo seguro para evitar solapamientos
-    const w = domW > 80 ? Math.max(domW, Math.round(est.w * 0.85)) : est.w;
-    const h = domH > 34 ? Math.max(domH, Math.round(est.h * 0.85)) : est.h;
+    const w = Math.max(est.w, domW);
+    const h = Math.max(est.h, domH);
     node.w = w;
     node.h = h;
     return { w, h };
@@ -2226,21 +2232,27 @@
         'position:fixed;left:-9999px;top:-9999px;visibility:hidden;pointer-events:none;';
       document.body.appendChild(probeWrap);
       nodesToMeasure.forEach(n => {
+        const est = estimateNodeBoxSize(n);
         const card = document.createElement('div');
-        card.className = `node ${n.type}`;
-        const head = document.createElement('div');
-        head.className = 'head';
-        head.textContent = (CONFIG.NODE_TYPES && CONFIG.NODE_TYPES[n.type]) || n.type;
-        const txt = document.createElement('div');
-        txt.className = 'text';
-        txt.textContent = n.text || '';
-        card.appendChild(head);
-        card.appendChild(txt);
-        probeWrap.appendChild(card);
-        if (card.offsetWidth > 40 && card.offsetHeight > 24) {
-          n.w = card.offsetWidth;
-          n.h = card.offsetHeight;
+        const isFin = typeof isFinanceNodeType === 'function' && isFinanceNodeType(n.type);
+        let cls = `node ${n.type}`;
+        if (isFin && typeof getFinanceNodeToneClass === 'function') {
+          cls += ` ${getFinanceNodeToneClass(n.type)}`;
         }
+        card.className = cls;
+        if (isFin && typeof renderFinanceNodeHtml === 'function') {
+          card.innerHTML = renderFinanceNodeHtml(n);
+        } else if (String(n.type).startsWith('chart_') && typeof renderChartNodeHtml === 'function') {
+          card.innerHTML = renderChartNodeHtml(n);
+        } else {
+          const txt = document.createElement('span');
+          txt.className = 'txt';
+          txt.textContent = n.text || '';
+          card.appendChild(txt);
+        }
+        probeWrap.appendChild(card);
+        n.w = Math.max(est.w, card.offsetWidth || 0);
+        n.h = Math.max(est.h, card.offsetHeight || 0);
       });
     } catch {} finally {
       if (probeWrap && probeWrap.parentNode) probeWrap.parentNode.removeChild(probeWrap);
@@ -2897,17 +2909,40 @@
         await drawReadyEdgesNow();
       }
 
-      // 4E. Reorganización animada suave si se solicitó organize_canvas explícitamente
-      if (requestedOrganize && STATE.nodes.length > 0) {
-        stepCounter++;
-        recordStep(
-          'organize_canvas',
-          `Aplicando disposición ${requestedLayoutOpts?.mode || 'inteligente'} a ${STATE.nodes.length} nodos...`,
-          stepCounter,
-          totalSteps
-        );
-        await autoOrganizeCanvasLive(true, signal, requestedLayoutOpts || {});
-        updatedCount += STATE.nodes.length;
+      // 4E. Reorganización animada suave si se solicitó organize_canvas o si algún nodo creció al conectarse (ej. gráficos y celdas fx)
+      if (typeof renderNodes === 'function') {
+        try { renderNodes(); } catch {}
+      }
+      const hasPostBuildCrowding = (() => {
+        const list = STATE.nodes || [];
+        for (let i = 0; i < list.length; i++) {
+          for (let j = i + 1; j < list.length; j++) {
+            const a = list[i];
+            const b = list[j];
+            const aw = a.w || 180;
+            const ah = a.h || 68;
+            const bw = b.w || 180;
+            const bh = b.h || 68;
+            if (a.x < b.x + bw + 34 && a.x + aw + 34 > b.x && a.y < b.y + bh + 34 && a.y + ah + 34 > b.y) {
+              return true;
+            }
+          }
+        }
+        return false;
+      })();
+
+      if ((requestedOrganize || (orderedNewNodes.length > 0 && hasPostBuildCrowding)) && STATE.nodes.length > 0) {
+        if (requestedOrganize) {
+          stepCounter++;
+          recordStep(
+            'organize_canvas',
+            `Aplicando disposición ${requestedLayoutOpts?.mode || 'inteligente'} a ${STATE.nodes.length} nodos...`,
+            stepCounter,
+            totalSteps
+          );
+        }
+        await autoOrganizeCanvasLive(true, signal, requestedLayoutOpts || { mode: 'domain_bridge' });
+        if (requestedOrganize) updatedCount += STATE.nodes.length;
       }
 
       // 5. Consolidar un único punto de historial (Undo limpio) y sincronizar UI final
