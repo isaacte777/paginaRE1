@@ -182,7 +182,29 @@
         </defs>
         <g id="edgesG"></g>
       </svg>
+      <div id="aiBlueprintLayer" class="ai-blueprint-layer" aria-hidden="true"></div>
       <div id="canvasTitle"></div>
+      <div id="aiWorldCursor" class="ai-world-cursor" hidden aria-hidden="true">
+        <svg class="ai-world-cursor__ptr" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="#08120c" stroke-width="1.6"><path d="M4 3l16 7.2-7.1 2.1L10.8 19.5 4 3z"/></svg>
+        <span class="ai-world-cursor__tag" id="aiWorldCursorTag">ia :: construyendo</span>
+      </div>
+    </div>
+
+    <!-- HUD flotante en vivo mientras la IA analiza, construye o edita en el lienzo -->
+    <div id="aiBuildHud" class="ai-build-hud" role="status" aria-live="polite" hidden>
+      <div class="ai-build-hud__main">
+        <span class="ai-build-hud__pulse" aria-hidden="true"></span>
+        <svg class="ai-build-hud__icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/></svg>
+        <div class="ai-build-hud__copy">
+          <span class="ai-build-hud__phase" id="aiBuildHudPhase">ia :: preparando arquitectura</span>
+          <span class="ai-build-hud__step" id="aiBuildHudStep">Inspeccionando nodos del lienzo…</span>
+        </div>
+        <span class="ai-build-hud__count" id="aiBuildHudCount"></span>
+        <button type="button" class="ai-build-hud__skip" id="btnAiSkipAnim" title="Terminar la animación al instante" hidden>completar ya</button>
+      </div>
+      <div class="ai-build-hud__bar">
+        <i id="aiBuildHudFill" style="width: 18%"></i>
+      </div>
     </div>
 
     <!-- Barra flotante táctil al seleccionar un nodo o conexión en móvil/tablet -->

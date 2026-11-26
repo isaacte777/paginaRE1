@@ -1442,6 +1442,17 @@
     return null;
   }
 
+  function normalizeNodeStatus(rawStatus) {
+    if (!rawStatus) return null;
+    const s = String(rawStatus).trim().toLowerCase();
+    if (CONFIG.BADGE && CONFIG.BADGE[s]) return s;
+    if (s === 'ok' || s === 'completed' || s === 'completado' || s === 'listo' || s === 'success') return 'done';
+    if (s === 'running' || s === 'in_progress' || s === 'en_progreso' || s === 'active' || s === 'activo') return 'progress';
+    if (s === 'err' || s === 'failed' || s === 'fallo' || s === 'blocked') return 'error';
+    if (s === 'todo' || s === 'pendiente' || s === 'idle') return 'pending';
+    return null;
+  }
+
   function applyAIGraphActions(actionPayload) {
     if (!actionPayload || !Array.isArray(actionPayload.operations)) {
       return { addedNodes: [], addedEdges: [], updatedCount: 0, organized: false };
@@ -1490,7 +1501,8 @@
             }
           }
           if (op.type) target.type = normalizeNodeType(op.type);
-          if (op.status && CONFIG.BADGE[op.status]) target.status = op.status;
+          const normStatus = normalizeNodeStatus(op.status);
+          if (normStatus) target.status = normStatus;
           if (typeof op.progress === 'number') target.progress = clamp(op.progress, 0, 100);
           if (op.params && typeof op.params === 'object') {
             target.params = { ...(target.params || {}), ...op.params };
@@ -1502,7 +1514,8 @@
         const rawLabel = op.text || op.label || CONFIG.NODE_TYPES[type] || 'Paso';
         const cleanTxt = sanitizeAINodeText(rawLabel, type);
         const nodeObj = createNode(type, cleanTxt.displayText, 0, 0);
-        if (op.status && CONFIG.BADGE[op.status]) nodeObj.status = op.status;
+        const normStatus = normalizeNodeStatus(op.status);
+        if (normStatus) nodeObj.status = normStatus;
         if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
         if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
         if (cleanTxt.overflowNotes) {
@@ -1700,6 +1713,1165 @@
     if (typeof updateStatus === 'function') updateStatus();
     if (typeof drawMinimap === 'function') drawMinimap();
     if (typeof saveState === 'function') saveState();
+  }
+
+  // =========================================================================
+  // MOTOR DE COREOGRAFÍA VISUAL PASO A PASO EN VIVO SOBRE EL LIENZO
+  // =========================================================================
+  const liveBuildState = {
+    isAnimating: false,
+    skipRequested: false,
+    skipResolvers: new Set(),
+    scanTimer: null,
+    hudHideTimer: null,
+    lastStepLog: []
+  };
+
+  function getLiveAnimSpeedFactor() {
+    if (window.__FLOWLAB_FAST_TEST || liveBuildState.skipRequested) return 0;
+    try {
+      if (
+        typeof window !== 'undefined' &&
+        window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        return 0;
+      }
+    } catch {}
+    const spd = clamp(Number(STATE && STATE.speed) || 1, 0.5, 4);
+    return 1 / spd;
+  }
+
+  function requestSkipLiveAnimation() {
+    liveBuildState.skipRequested = true;
+    const resolvers = Array.from(liveBuildState.skipResolvers);
+    liveBuildState.skipResolvers.clear();
+    resolvers.forEach(fn => {
+      try { fn(); } catch {}
+    });
+  }
+
+  function waitLiveVisualBeat(baseMs, signal) {
+    if (signal && signal.aborted) {
+      const err = new Error('Aborted');
+      err.name = 'AbortError';
+      return Promise.reject(err);
+    }
+    const scaled = Math.round(baseMs * getLiveAnimSpeedFactor());
+    if (scaled <= 0 || liveBuildState.skipRequested) {
+      return Promise.resolve();
+    }
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const cleanup = () => {
+        liveBuildState.skipResolvers.delete(onSkip);
+        if (signal) signal.removeEventListener('abort', onAbort);
+      };
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        resolve();
+      }, scaled);
+      function onSkip() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        cleanup();
+        resolve();
+      }
+      function onAbort() {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        cleanup();
+        const err = new Error('Aborted');
+        err.name = 'AbortError';
+        reject(err);
+      }
+      liveBuildState.skipResolvers.add(onSkip);
+      if (signal) signal.addEventListener('abort', onAbort, { once: true });
+    });
+  }
+
+  function computeTargetCameraForRects(targetRects) {
+    if (!DOM.vp || !Array.isArray(targetRects) || targetRects.length === 0) return null;
+    const minX = Math.min(...targetRects.map(n => n.x)) - 58;
+    const minY = Math.min(...targetRects.map(n => n.y)) - 64;
+    const maxX = Math.max(...targetRects.map(n => n.x + (n.w || 150))) + 58;
+    const maxY = Math.max(...targetRects.map(n => n.y + (n.h || 60))) + 58;
+
+    const r = DOM.vp.getBoundingClientRect();
+    const w = r.width || 900;
+    const h = r.height || 640;
+    const bw = Math.max(1, maxX - minX);
+    const bh = Math.max(1, maxY - minY);
+
+    const targetZoom = clamp(Math.min((w - 56) / bw, (h - 68) / bh, 1.08), 0.55, 1.15);
+    return {
+      zoom: targetZoom,
+      panX: w / 2 - ((minX + bw / 2) * targetZoom),
+      panY: h / 2 - ((minY + bh / 2) * targetZoom)
+    };
+  }
+
+  async function animateCameraToRects(targetRects, baseDurationMs, signal) {
+    const cam = computeTargetCameraForRects(targetRects);
+    if (!cam) return;
+
+    const duration = Math.round(baseDurationMs * getLiveAnimSpeedFactor());
+    if (duration <= 0 || typeof requestAnimationFrame !== 'function') {
+      STATE.zoom = cam.zoom;
+      STATE.pan.x = cam.panX;
+      STATE.pan.y = cam.panY;
+      if (typeof applyTransform === 'function') applyTransform();
+      if (typeof updateStatus === 'function') updateStatus();
+      if (typeof drawMinimap === 'function') drawMinimap();
+      return;
+    }
+
+    const startZoom = STATE.zoom;
+    const startPanX = STATE.pan.x;
+    const startPanY = STATE.pan.y;
+    const startTs = performance.now();
+
+    await new Promise((resolve, reject) => {
+      function tick(now) {
+        if (signal && signal.aborted) {
+          const err = new Error('Aborted');
+          err.name = 'AbortError';
+          reject(err);
+          return;
+        }
+        if (liveBuildState.skipRequested) {
+          STATE.zoom = cam.zoom;
+          STATE.pan.x = cam.panX;
+          STATE.pan.y = cam.panY;
+          if (typeof applyTransform === 'function') applyTransform();
+          if (typeof updateStatus === 'function') updateStatus();
+          if (typeof drawMinimap === 'function') drawMinimap();
+          resolve();
+          return;
+        }
+        const rawT = clamp((now - startTs) / duration, 0, 1);
+        const ease = 1 - Math.pow(1 - rawT, 3);
+        STATE.zoom = startZoom + (cam.zoom - startZoom) * ease;
+        STATE.pan.x = startPanX + (cam.panX - startPanX) * ease;
+        STATE.pan.y = startPanY + (cam.panY - startPanY) * ease;
+        if (typeof applyTransform === 'function') applyTransform();
+        if (typeof drawMinimap === 'function') drawMinimap();
+
+        if (rawT < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          if (typeof updateStatus === 'function') updateStatus();
+          resolve();
+        }
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function setBuildHudState({ mode = 'building', phase = '', step = '', current = 0, total = 0, showSkip = false }) {
+    if (liveBuildState.hudHideTimer) {
+      clearTimeout(liveBuildState.hudHideTimer);
+      liveBuildState.hudHideTimer = null;
+    }
+    const hud = document.getElementById('aiBuildHud');
+    if (!hud) return;
+    hud.hidden = false;
+    hud.classList.toggle('is-analyzing', mode === 'analyzing');
+    hud.classList.toggle('is-done', mode === 'done');
+
+    const phaseEl = document.getElementById('aiBuildHudPhase');
+    const stepEl = document.getElementById('aiBuildHudStep');
+    const countEl = document.getElementById('aiBuildHudCount');
+    const fillEl = document.getElementById('aiBuildHudFill');
+    const skipBtn = document.getElementById('btnAiSkipAnim');
+
+    if (phaseEl && phase) phaseEl.textContent = phase;
+    if (stepEl && step !== undefined) stepEl.textContent = step;
+    if (countEl) {
+      countEl.textContent = total > 0 ? `${Math.min(current, total)}/${total}` : mode === 'done' ? '✓' : '···';
+    }
+    if (fillEl) {
+      const pct = total > 0 ? clamp(Math.round((current / total) * 100), 4, 100) : mode === 'done' ? 100 : 28;
+      fillEl.style.width = `${pct}%`;
+    }
+    if (skipBtn) {
+      skipBtn.hidden = !showSkip || liveBuildState.skipRequested || Boolean(window.__FLOWLAB_FAST_TEST);
+    }
+  }
+
+  function hideBuildHud(delayMs = 0) {
+    if (liveBuildState.hudHideTimer) {
+      clearTimeout(liveBuildState.hudHideTimer);
+      liveBuildState.hudHideTimer = null;
+    }
+    const hud = document.getElementById('aiBuildHud');
+    if (!hud) return;
+    if (!delayMs || delayMs <= 0 || window.__FLOWLAB_FAST_TEST) {
+      hud.hidden = true;
+      hud.classList.remove('is-analyzing', 'is-done');
+      return;
+    }
+    liveBuildState.hudHideTimer = setTimeout(() => {
+      hud.hidden = true;
+      hud.classList.remove('is-analyzing', 'is-done');
+      liveBuildState.hudHideTimer = null;
+    }, delayMs);
+  }
+
+  function moveAiWorldCursor(x, y, tagText, variant = 'building') {
+    const cursor = document.getElementById('aiWorldCursor');
+    if (!cursor) return;
+    cursor.hidden = false;
+    cursor.classList.toggle('is-editing', variant === 'editing');
+    cursor.classList.toggle('is-deleting', variant === 'deleting');
+    cursor.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
+    const tag = document.getElementById('aiWorldCursorTag');
+    if (tag && tagText) tag.textContent = tagText;
+  }
+
+  function hideAiWorldCursor() {
+    const cursor = document.getElementById('aiWorldCursor');
+    if (!cursor) return;
+    cursor.hidden = true;
+    cursor.classList.remove('is-editing', 'is-deleting');
+  }
+
+  function clearBlueprintSlots() {
+    const layer = document.getElementById('aiBlueprintLayer');
+    if (layer) layer.innerHTML = '';
+  }
+
+  function renderBlueprintSlots(plannedNodes) {
+    const layer = document.getElementById('aiBlueprintLayer');
+    if (!layer) return;
+    layer.innerHTML = '';
+    plannedNodes.forEach(n => {
+      const slot = document.createElement('div');
+      slot.className = 'ai-blueprint-slot';
+      slot.dataset.slotNodeId = n.id;
+      slot.style.left = `${Math.round(n.x)}px`;
+      slot.style.top = `${Math.round(n.y)}px`;
+      slot.style.width = `${Math.round(n.w || 150)}px`;
+      slot.style.height = `${Math.round(n.h || 60)}px`;
+
+      const lbl = document.createElement('span');
+      lbl.className = 'ai-blueprint-slot-label';
+      const typeTitle = (CONFIG.NODE_TYPES && CONFIG.NODE_TYPES[n.type]) || n.type || 'paso';
+      lbl.textContent = `+ ${String(typeTitle).toLowerCase()}`;
+      slot.appendChild(lbl);
+      layer.appendChild(slot);
+    });
+  }
+
+  function highlightBlueprintSlot(nodeId) {
+    const layer = document.getElementById('aiBlueprintLayer');
+    if (!layer) return;
+    layer.querySelectorAll('.ai-blueprint-slot').forEach(el => {
+      el.classList.toggle('is-active-slot', el.dataset.slotNodeId === nodeId);
+    });
+  }
+
+  function removeBlueprintSlot(nodeId) {
+    const layer = document.getElementById('aiBlueprintLayer');
+    if (!layer) return;
+    const slot = layer.querySelector(`.ai-blueprint-slot[data-slot-node-id="${nodeId}"]`);
+    if (slot) slot.remove();
+  }
+
+  function clearCanvasScanHighlights() {
+    if (DOM.world) {
+      DOM.world.querySelectorAll('.node.ai-scanning-node').forEach(el => {
+        el.classList.remove('ai-scanning-node');
+      });
+    }
+  }
+
+  function startCanvasThinkingScan(stepSubtitle = 'Analizando estructura del lienzo...') {
+    stopCanvasThinkingScan(false);
+    const nodes = Array.isArray(STATE.nodes) ? STATE.nodes : [];
+    setBuildHudState({
+      mode: 'analyzing',
+      phase: 'ia :: analizando contexto',
+      step: stepSubtitle,
+      current: 1,
+      total: Math.max(3, nodes.length > 0 ? Math.min(nodes.length, 6) : 3),
+      showSkip: false
+    });
+
+    if (window.__FLOWLAB_FAST_TEST || !aiConfig.includeContext || nodes.length === 0) return;
+
+    // Priorizar el nodo seleccionado primero para que el usuario vea qué inspecciona la IA
+    const ordered = nodes.slice();
+    if (STATE.sel && STATE.sel.kind === 'node') {
+      const selIdx = ordered.findIndex(n => n.id === STATE.sel.id);
+      if (selIdx > 0) {
+        const [picked] = ordered.splice(selIdx, 1);
+        ordered.unshift(picked);
+      }
+    }
+
+    let idx = 0;
+    const pulseNext = () => {
+      clearCanvasScanHighlights();
+      if (!ordered.length) return;
+      const target = ordered[idx % ordered.length];
+      const domNode = typeof nodeEl === 'function' ? nodeEl(target.id) : null;
+      if (domNode) domNode.classList.add('ai-scanning-node');
+      const shortName = String(target.text || target.type || 'nodo').replace(/\s+/g, ' ').slice(0, 30);
+      moveAiWorldCursor(
+        target.x + (target.w || 150) * 0.68,
+        target.y + (target.h || 60) * 0.72,
+        `ia :: leyendo "${shortName}"`,
+        'editing'
+      );
+      idx++;
+    };
+
+    pulseNext();
+    liveBuildState.scanTimer = setInterval(pulseNext, 210);
+  }
+
+  function stopCanvasThinkingScan(hideOverlays = true) {
+    if (liveBuildState.scanTimer) {
+      clearInterval(liveBuildState.scanTimer);
+      liveBuildState.scanTimer = null;
+    }
+    clearCanvasScanHighlights();
+    if (hideOverlays) {
+      hideAiWorldCursor();
+      hideBuildHud(0);
+    }
+  }
+
+  async function animateNodeTypewriter(nodeId, finalText, baseDurationMs, signal) {
+    const domNode = typeof nodeEl === 'function' ? nodeEl(nodeId) : null;
+    const textDiv = domNode ? domNode.querySelector('.text') : null;
+    const fullStr = String(finalText || '');
+    const duration = Math.round(baseDurationMs * getLiveAnimSpeedFactor());
+
+    if (!domNode || !textDiv || duration <= 0 || fullStr.length <= 1) {
+      if (textDiv) textDiv.textContent = fullStr;
+      return;
+    }
+
+    domNode.classList.add('ai-typing-active');
+    const slices = clamp(Math.min(fullStr.length, 9), 3, 9);
+    const intervalMs = Math.max(14, Math.round(duration / slices));
+
+    try {
+      for (let s = 1; s <= slices; s++) {
+        if (liveBuildState.skipRequested) break;
+        const cut = Math.ceil((fullStr.length * s) / slices);
+        textDiv.textContent = fullStr.slice(0, cut);
+        await waitLiveVisualBeat(intervalMs, signal);
+      }
+    } finally {
+      textDiv.textContent = fullStr;
+      domNode.classList.remove('ai-typing-active');
+    }
+  }
+
+  async function animateEdgeStrokeDraw(edgeId, baseDurationMs, signal) {
+    if (!DOM.edgesG) return;
+    const pathEl = DOM.edgesG.querySelector(`path.edge[data-edge-id="${edgeId}"]`);
+    const labelEl = DOM.edgesG.querySelector(`text.edge-label[data-edge-label-id="${edgeId}"]`);
+    const duration = Math.round(baseDurationMs * getLiveAnimSpeedFactor());
+
+    if (!pathEl || duration <= 0) return;
+
+    let totalLen = 140;
+    try {
+      if (typeof pathEl.getTotalLength === 'function') {
+        totalLen = Math.max(24, pathEl.getTotalLength());
+      }
+    } catch {}
+
+    pathEl.classList.add('ai-edge-drawing');
+    pathEl.style.strokeDasharray = `${totalLen}`;
+    pathEl.style.strokeDashoffset = `${totalLen}`;
+    if (labelEl) labelEl.style.opacity = '0';
+
+    if (typeof requestAnimationFrame === 'function') {
+      const startTs = performance.now();
+      await new Promise((resolve, reject) => {
+        function frame(now) {
+          if (signal && signal.aborted) {
+            const err = new Error('Aborted');
+            err.name = 'AbortError';
+            reject(err);
+            return;
+          }
+          if (liveBuildState.skipRequested) {
+            pathEl.style.strokeDashoffset = '0';
+            resolve();
+            return;
+          }
+          const t = clamp((now - startTs) / duration, 0, 1);
+          const ease = 1 - Math.pow(1 - t, 2.4);
+          pathEl.style.strokeDashoffset = `${Math.round(totalLen * (1 - ease))}`;
+          if (t < 1) {
+            requestAnimationFrame(frame);
+          } else {
+            resolve();
+          }
+        }
+        requestAnimationFrame(frame);
+      });
+    } else {
+      await waitLiveVisualBeat(duration, signal);
+    }
+
+    pathEl.style.strokeDasharray = '';
+    pathEl.style.strokeDashoffset = '';
+    if (labelEl) {
+      labelEl.style.opacity = '';
+      labelEl.classList.add('ai-edge-label-reveal');
+    }
+    setTimeout(() => {
+      try {
+        pathEl.classList.remove('ai-edge-drawing');
+        if (labelEl) labelEl.classList.remove('ai-edge-label-reveal');
+      } catch {}
+    }, 360);
+  }
+
+  function measureNodesOffscreenExact(nodesToMeasure) {
+    nodesToMeasure.forEach(n => {
+      const est = estimateNodeBoxSize(n);
+      n.w = est.w;
+      n.h = est.h;
+    });
+    if (typeof document === 'undefined' || !document.body) return;
+    let probeWrap = null;
+    try {
+      probeWrap = document.createElement('div');
+      probeWrap.style.cssText =
+        'position:fixed;left:-9999px;top:-9999px;visibility:hidden;pointer-events:none;';
+      document.body.appendChild(probeWrap);
+      nodesToMeasure.forEach(n => {
+        const card = document.createElement('div');
+        card.className = `node ${n.type}`;
+        const head = document.createElement('div');
+        head.className = 'head';
+        head.textContent = (CONFIG.NODE_TYPES && CONFIG.NODE_TYPES[n.type]) || n.type;
+        const txt = document.createElement('div');
+        txt.className = 'text';
+        txt.textContent = n.text || '';
+        card.appendChild(head);
+        card.appendChild(txt);
+        probeWrap.appendChild(card);
+        if (card.offsetWidth > 40 && card.offsetHeight > 24) {
+          n.w = card.offsetWidth;
+          n.h = card.offsetHeight;
+        }
+      });
+    } catch {} finally {
+      if (probeWrap && probeWrap.parentNode) probeWrap.parentNode.removeChild(probeWrap);
+    }
+  }
+
+  async function autoOrganizeCanvasLive(silent = false, signal = null) {
+    if (!STATE.nodes || STATE.nodes.length === 0) {
+      if (!silent && typeof showToast === 'function') {
+        showToast('No hay nodos en el lienzo para organizar', 'info', 1600);
+      }
+      return false;
+    }
+
+    if (typeof renderNodes === 'function') {
+      try { renderNodes(); } catch {}
+    }
+
+    const startCoords = new Map(STATE.nodes.map(n => [n.id, { x: n.x, y: n.y }]));
+    const targetClone = STATE.nodes.map(n => ({ ...n }));
+    layoutNodesHierarchically(targetClone, STATE.edges, {
+      originX: 120,
+      originY: 60
+    });
+    const endCoords = new Map(targetClone.map(n => [n.id, { x: n.x, y: n.y, w: n.w, h: n.h }]));
+    const targetCam = computeTargetCameraForRects(targetClone);
+
+    const duration = Math.round(370 * getLiveAnimSpeedFactor());
+    if (duration <= 0 || typeof requestAnimationFrame !== 'function') {
+      STATE.nodes.forEach(n => {
+        const dst = endCoords.get(n.id);
+        if (dst) {
+          n.x = dst.x;
+          n.y = dst.y;
+        }
+      });
+      if (typeof commitHistory === 'function') commitHistory();
+      if (typeof renderAll === 'function') renderAll();
+      focusNodesOnCanvas(STATE.nodes.map(n => n.id));
+      if (!silent && typeof showToast === 'function') {
+        showToast(`Lienzo organizado (${STATE.nodes.length} nodos compactados)`, 'ok', 2000);
+      }
+      return true;
+    }
+
+    setBuildHudState({
+      mode: 'building',
+      phase: 'ia :: reorganizando flujo',
+      step: `Alineando y compactando ${STATE.nodes.length} nodos en vivo...`,
+      current: 1,
+      total: 2,
+      showSkip: true
+    });
+
+    const startZoom = STATE.zoom;
+    const startPanX = STATE.pan.x;
+    const startPanY = STATE.pan.y;
+    const startTs = performance.now();
+
+    if (targetClone.length > 0) {
+      moveAiWorldCursor(
+        targetClone[0].x + (targetClone[0].w || 150) * 0.6,
+        targetClone[0].y + (targetClone[0].h || 60) * 0.6,
+        'ia :: ordenando jerarquía',
+        'building'
+      );
+    }
+
+    await new Promise((resolve, reject) => {
+      function stepFrame(now) {
+        if (signal && signal.aborted) {
+          const err = new Error('Aborted');
+          err.name = 'AbortError';
+          reject(err);
+          return;
+        }
+        const rawT = liveBuildState.skipRequested ? 1 : clamp((now - startTs) / duration, 0, 1);
+        const ease = 1 - Math.pow(1 - rawT, 3);
+
+        STATE.nodes.forEach(n => {
+          const s = startCoords.get(n.id) || { x: n.x, y: n.y };
+          const e = endCoords.get(n.id) || s;
+          n.x = Math.round(s.x + (e.x - s.x) * ease);
+          n.y = Math.round(s.y + (e.y - s.y) * ease);
+          const el = typeof nodeEl === 'function' ? nodeEl(n.id) : null;
+          if (el) {
+            el.style.left = `${n.x}px`;
+            el.style.top = `${n.y}px`;
+          }
+        });
+
+        if (targetCam) {
+          STATE.zoom = startZoom + (targetCam.zoom - startZoom) * ease;
+          STATE.pan.x = startPanX + (targetCam.panX - startPanX) * ease;
+          STATE.pan.y = startPanY + (targetCam.panY - startPanY) * ease;
+          if (typeof applyTransform === 'function') applyTransform();
+        }
+        if (typeof drawEdges === 'function') drawEdges();
+        if (typeof drawMinimap === 'function') drawMinimap();
+
+        if (rawT < 1) {
+          requestAnimationFrame(stepFrame);
+        } else {
+          resolve();
+        }
+      }
+      requestAnimationFrame(stepFrame);
+    });
+
+    STATE.nodes.forEach(n => {
+      const dst = endCoords.get(n.id);
+      if (dst) {
+        n.x = dst.x;
+        n.y = dst.y;
+      }
+    });
+
+    if (typeof commitHistory === 'function') commitHistory();
+    if (typeof renderAll === 'function') renderAll();
+    focusNodesOnCanvas(STATE.nodes.map(n => n.id));
+
+    setBuildHudState({
+      mode: 'done',
+      phase: 'ia :: lienzo compactado',
+      step: `${STATE.nodes.length} nodos organizados sin dispersión`,
+      current: 2,
+      total: 2,
+      showSkip: false
+    });
+    hideAiWorldCursor();
+    hideBuildHud(680);
+
+    if (!silent && typeof showToast === 'function') {
+      showToast(`Lienzo organizado (${STATE.nodes.length} nodos compactados)`, 'ok', 2000);
+    }
+    if (typeof log === 'function') {
+      log('agent', `Auto-layout animado aplicado a ${STATE.nodes.length} nodo(s).`);
+    }
+    return true;
+  }
+
+  /**
+   * Ejecuta las operaciones de la IA paso a paso frente a los ojos del usuario:
+   * 1) Precalcula coordenadas jerárquicas exactas (cero saltos ni superposiciones).
+   * 2) Encuadra suavemente la cámara y dibuja el boceto fantasma (wireframe).
+   * 3) Materializa/edita/elimina cada nodo con puntero autónomo y escritura en vivo.
+   * 4) Traza progresivamente cada conexión SVG conforme sus nodos quedan listos.
+   */
+  async function applyAIGraphActionsLive(actionPayload, options = {}) {
+    if (!actionPayload || !Array.isArray(actionPayload.operations)) {
+      return { addedNodes: [], addedEdges: [], updatedCount: 0, organized: false, visualSteps: [] };
+    }
+
+    const signal = options.signal || null;
+    const onProgressStep = typeof options.onProgressStep === 'function' ? options.onProgressStep : null;
+
+    stopCanvasThinkingScan(false);
+    liveBuildState.isAnimating = true;
+    liveBuildState.skipRequested = Boolean(window.__FLOWLAB_FAST_TEST);
+    liveBuildState.lastStepLog = [];
+
+    const visualSteps = [];
+    const recordStep = (kind, label, current, total) => {
+      const entry = { kind, label, index: current, total, at: Date.now() };
+      visualSteps.push(entry);
+      liveBuildState.lastStepLog.push(entry);
+      setBuildHudState({
+        mode: 'building',
+        phase: 'ia :: construyendo en vivo',
+        step: label,
+        current,
+        total,
+        showSkip: true
+      });
+      if (onProgressStep) {
+        try { onProgressStep(entry); } catch {}
+      }
+    };
+
+    try {
+      // Asegurar punto de restauración limpio previo a los cambios de la IA
+      if (typeof commitHistory === 'function') commitHistory();
+
+      // Si el lienzo previo tenía nodos a miles de píxeles, compactarlos suavemente primero
+      if (STATE.nodes && STATE.nodes.length >= 2 && isCanvasAbnormallyScattered(STATE.nodes)) {
+        await autoOrganizeCanvasLive(true, signal);
+      }
+
+      const ops = actionPayload.operations;
+      const refMap = new Map();
+      let hasClearCanvas = false;
+      const deleteIdsOrdered = [];
+      const deletedSet = new Set();
+      const updateOps = [];
+      const pendingNewNodes = [];
+      const pendingEdges = [];
+      let requestedOrganize = false;
+
+      const selectedIdSnapshot =
+        STATE.sel && STATE.sel.kind === 'node' ? STATE.sel.id : null;
+
+      const resolveTokenPlanned = token => {
+        if (!token) return null;
+        if (token === 'SELECTED' && selectedIdSnapshot && !hasClearCanvas && !deletedSet.has(selectedIdSnapshot)) {
+          return selectedIdSnapshot;
+        }
+        if (refMap.has(token)) return refMap.get(token);
+        if (!hasClearCanvas && !deletedSet.has(token)) {
+          const ex = byId(token);
+          if (ex) return ex.id;
+        }
+        return null;
+      };
+
+      // 1. Planificar operaciones en orden lógico sin mutar todavía el lienzo visible
+      ops.forEach((op, index) => {
+        if (!op || typeof op !== 'object') return;
+        const kind = String(op.op || op.action || '').toLowerCase();
+
+        if (kind === 'organize_canvas' || kind === 'auto_layout') {
+          requestedOrganize = true;
+        } else if (kind === 'clear_canvas') {
+          hasClearCanvas = true;
+          deleteIdsOrdered.length = 0;
+          deletedSet.clear();
+          updateOps.length = 0;
+        } else if (kind === 'delete_node' && op.id) {
+          const targetId = resolveTokenPlanned(op.id);
+          if (targetId && !deletedSet.has(targetId)) {
+            deletedSet.add(targetId);
+            deleteIdsOrdered.push(targetId);
+          }
+        } else if (kind === 'update_node' && op.id) {
+          const targetId = resolveTokenPlanned(op.id);
+          if (targetId && !deletedSet.has(targetId)) {
+            updateOps.push({ targetId, op });
+          }
+        } else if (kind === 'add_node') {
+          const type = normalizeNodeType(op.type);
+          const rawLabel = op.text || op.label || CONFIG.NODE_TYPES[type] || 'Paso';
+          const cleanTxt = sanitizeAINodeText(rawLabel, type);
+          const nodeObj = createNode(type, cleanTxt.displayText, 0, 0);
+          const normStatus = normalizeNodeStatus(op.status);
+          if (normStatus) nodeObj.status = normStatus;
+          if (typeof op.progress === 'number') nodeObj.progress = clamp(op.progress, 0, 100);
+          if (op.params && typeof op.params === 'object') nodeObj.params = { ...op.params };
+          if (cleanTxt.overflowNotes) {
+            nodeObj.params = { ...(nodeObj.params || {}), notes: cleanTxt.overflowNotes };
+          }
+
+          const refKey = String(op.ref || op.id || 'ref_' + index);
+          refMap.set(refKey, nodeObj.id);
+          pendingNewNodes.push({
+            refKey,
+            node: nodeObj,
+            afterRaw: op.after || null
+          });
+        } else if (kind === 'add_edge') {
+          pendingEdges.push({
+            fromRaw: op.from || op.source,
+            toRaw: op.to || op.target,
+            label: typeof op.label === 'string' ? op.label : ''
+          });
+        }
+      });
+
+      const survivingPreNodes = hasClearCanvas
+        ? []
+        : (STATE.nodes || []).filter(n => !deletedSet.has(n.id));
+      const survivingPreEdges = hasClearCanvas
+        ? []
+        : (STATE.edges || []).filter(e => !deletedSet.has(e.from) && !deletedSet.has(e.to));
+
+      const addedNodes = pendingNewNodes.map(item => item.node);
+      const addedIdsSet = new Set(addedNodes.map(n => n.id));
+      const plannedEdges = [];
+      let externalAnchorNode = null;
+
+      const hasEdgePlannedOrExisting = (fromId, toId) =>
+        survivingPreEdges.some(e => e.from === fromId && e.to === toId) ||
+        plannedEdges.some(pe => pe.fromId === fromId && pe.toId === toId);
+
+      pendingEdges.forEach(pe => {
+        const fromId = resolveTokenPlanned(pe.fromRaw);
+        const toId = resolveTokenPlanned(pe.toRaw);
+        if (!fromId || !toId || fromId === toId) return;
+        if (!addedIdsSet.has(fromId) && addedIdsSet.has(toId)) {
+          const ext = survivingPreNodes.find(n => n.id === fromId);
+          if (ext && !externalAnchorNode) externalAnchorNode = ext;
+        }
+        if (!hasEdgePlannedOrExisting(fromId, toId)) {
+          plannedEdges.push({ fromId, toId, label: pe.label || '' });
+        }
+      });
+
+      pendingNewNodes.forEach(item => {
+        if (!item.afterRaw) return;
+        const fromId = resolveTokenPlanned(item.afterRaw);
+        const toId = item.node.id;
+        if (!fromId || fromId === toId) return;
+        if (!addedIdsSet.has(fromId)) {
+          const ext = survivingPreNodes.find(n => n.id === fromId);
+          if (ext && !externalAnchorNode) externalAnchorNode = ext;
+        }
+        const alreadyHasIn =
+          survivingPreEdges.some(e => e.to === toId) ||
+          plannedEdges.some(pe => pe.toId === toId);
+        if (!alreadyHasIn) {
+          plannedEdges.push({ fromId, toId, label: '' });
+        }
+      });
+
+      if (addedNodes.length >= 2) {
+        for (let i = 0; i < addedNodes.length; i++) {
+          const cur = addedNodes[i];
+          if (cur.type === 'note') continue;
+          const hasIn =
+            survivingPreEdges.some(e => e.to === cur.id) ||
+            plannedEdges.some(pe => pe.toId === cur.id);
+          const hasOut =
+            survivingPreEdges.some(e => e.from === cur.id) ||
+            plannedEdges.some(pe => pe.fromId === cur.id);
+          if (!hasIn && !hasOut) {
+            if (i > 0 && addedNodes[i - 1].type !== 'note') {
+              plannedEdges.push({ fromId: addedNodes[i - 1].id, toId: cur.id, label: '' });
+            } else if (i + 1 < addedNodes.length && addedNodes[i + 1].type !== 'note') {
+              plannedEdges.push({ fromId: cur.id, toId: addedNodes[i + 1].id, label: '' });
+            }
+          }
+        }
+      }
+
+      // 2. Precalcular dimensiones exactas y layout jerárquico compacto ANTES de mostrar nodos
+      let orderedNewNodes = [];
+      if (addedNodes.length > 0) {
+        measureNodesOffscreenExact(addedNodes);
+
+        let originX = 240;
+        let originY = 64;
+        let centerFirstColumnX = undefined;
+
+        if (externalAnchorNode) {
+          centerFirstColumnX = externalAnchorNode.x + (externalAnchorNode.w || 150) / 2;
+          originX = Math.max(48, centerFirstColumnX - 90);
+          originY = externalAnchorNode.y + (externalAnchorNode.h || 60) + 52;
+        } else if (survivingPreNodes.length > 0) {
+          const exMinY = Math.min(...survivingPreNodes.map(n => n.y));
+          const exMaxX = Math.max(...survivingPreNodes.map(n => n.x + (n.w || 150)));
+          originX = exMaxX + 96;
+          originY = Math.max(48, exMinY);
+        }
+
+        const combinedEdgesForLayout = [
+          ...survivingPreEdges.map(e => ({ from: e.from, to: e.to })),
+          ...plannedEdges.map(pe => ({ from: pe.fromId, to: pe.toId }))
+        ];
+
+        layoutNodesHierarchically(addedNodes, combinedEdgesForLayout, {
+          originX,
+          originY,
+          centerFirstColumnX
+        });
+
+        let safetySteps = 0;
+        while (
+          survivingPreNodes.length > 0 &&
+          safetySteps < 14 &&
+          groupOverlapsExisting(addedNodes, survivingPreNodes, 24)
+        ) {
+          if (externalAnchorNode) {
+            shiftNodeGroup(addedNodes, 0, 48);
+          } else {
+            shiftNodeGroup(addedNodes, 72, 0);
+          }
+          safetySteps++;
+        }
+
+        // Ordenar de arriba abajo y de izquierda a derecha para construir como un arquitecto humano
+        orderedNewNodes = addedNodes.slice().sort((a, b) => {
+          const rowDiff = Math.round(a.y / 24) - Math.round(b.y / 24);
+          if (rowDiff !== 0) return rowDiff;
+          return a.x - b.x;
+        });
+      }
+
+      const totalSteps =
+        (hasClearCanvas ? 1 : 0) +
+        deleteIdsOrdered.length +
+        updateOps.length +
+        orderedNewNodes.length +
+        plannedEdges.length +
+        (requestedOrganize ? 1 : 0);
+
+      if (totalSteps === 0) {
+        hideAiWorldCursor();
+        hideBuildHud(0);
+        return { addedNodes: [], addedEdges: [], updatedCount: 0, organized: false, visualSteps: [] };
+      }
+
+      let stepCounter = 0;
+      let updatedCount = 0;
+      const createdEdges = [];
+
+      // 3. Encuadrar suavemente la cámara hacia el área donde trabajará la IA y mostrar boceto fantasma
+      const cameraTargets = [
+        ...orderedNewNodes,
+        ...updateOps.map(u => byId(u.targetId)).filter(Boolean),
+        ...(externalAnchorNode ? [externalAnchorNode] : [])
+      ];
+      if (cameraTargets.length > 0) {
+        setBuildHudState({
+          mode: 'building',
+          phase: 'ia :: preparando área de trabajo',
+          step: orderedNewNodes.length > 0
+            ? `Trazando boceto para ${orderedNewNodes.length} nodo(s) y ${plannedEdges.length} conexión(es)...`
+            : `Enfocando nodos a editar...`,
+          current: 0,
+          total: totalSteps,
+          showSkip: true
+        });
+        await animateCameraToRects(cameraTargets, 220, signal);
+      }
+
+      if (orderedNewNodes.length > 0) {
+        renderBlueprintSlots(orderedNewNodes);
+        await waitLiveVisualBeat(110, signal);
+      }
+
+      // 4A. Limpieza progresiva del lienzo si se solicitó clear_canvas
+      if (hasClearCanvas) {
+        stepCounter++;
+        recordStep('clear_canvas', 'Limpiando lienzo anterior...', stepCounter, totalSteps);
+        if (DOM.world) {
+          DOM.world.querySelectorAll('.node').forEach(el => el.classList.add('ai-node-deleting'));
+        }
+        await waitLiveVisualBeat(150, signal);
+        STATE.nodes = [];
+        STATE.edges = [];
+        STATE.sel = null;
+        STATE.isBlankCanvas = false;
+        if (typeof renderNodes === 'function') renderNodes();
+        if (typeof drawEdges === 'function') drawEdges();
+        if (typeof updateStatus === 'function') updateStatus();
+        if (typeof drawMinimap === 'function') drawMinimap();
+      }
+
+      // 4B. Eliminación visual nodo por nodo
+      for (const delId of deleteIdsOrdered) {
+        const target = byId(delId);
+        stepCounter++;
+        const shortDel = target
+          ? String(target.text || target.type).replace(/\s+/g, ' ').slice(0, 32)
+          : delId;
+        recordStep('delete_node', `Eliminando nodo "${shortDel}"`, stepCounter, totalSteps);
+
+        if (target) {
+          moveAiWorldCursor(
+            target.x + (target.w || 150) * 0.55,
+            target.y + (target.h || 60) * 0.55,
+            'ia :: eliminando',
+            'deleting'
+          );
+          const el = typeof nodeEl === 'function' ? nodeEl(target.id) : null;
+          if (el) el.classList.add('ai-node-deleting');
+          await waitLiveVisualBeat(185, signal);
+
+          STATE.nodes = STATE.nodes.filter(n => n.id !== delId);
+          STATE.edges = STATE.edges.filter(e => e.from !== delId && e.to !== delId);
+          if (STATE.sel && STATE.sel.id === delId) STATE.sel = null;
+          updatedCount++;
+          if (typeof renderNodes === 'function') renderNodes();
+          if (typeof drawEdges === 'function') drawEdges();
+          if (typeof updateStatus === 'function') updateStatus();
+          if (typeof drawMinimap === 'function') drawMinimap();
+        }
+      }
+
+      // 4C. Edición en vivo de nodos existentes (texto con máquina de escribir, estado y tipo)
+      for (const item of updateOps) {
+        const target = byId(item.targetId);
+        const op = item.op;
+        stepCounter++;
+        if (!target) continue;
+
+        const prevName = String(target.text || target.type).replace(/\s+/g, ' ').slice(0, 26);
+        let nextDisplayText = null;
+        if (typeof op.text === 'string' && op.text.trim()) {
+          const cleanTxt = sanitizeAINodeText(op.text, op.type ? normalizeNodeType(op.type) : target.type);
+          nextDisplayText = cleanTxt.displayText;
+          if (cleanTxt.overflowNotes) {
+            target.params = { ...(target.params || {}), notes: cleanTxt.overflowNotes };
+          }
+        }
+        if (op.type) target.type = normalizeNodeType(op.type);
+        const normUpdStatus = normalizeNodeStatus(op.status);
+        if (normUpdStatus) target.status = normUpdStatus;
+        if (typeof op.progress === 'number') target.progress = clamp(op.progress, 0, 100);
+        if (op.params && typeof op.params === 'object') {
+          target.params = { ...(target.params || {}), ...op.params };
+        }
+        if (nextDisplayText !== null) {
+          target.text = nextDisplayText;
+        }
+
+        const afterName = String(target.text || target.type).replace(/\s+/g, ' ').slice(0, 28);
+        recordStep(
+          'update_node',
+          nextDisplayText && nextDisplayText !== prevName
+            ? `Editando nodo: "${prevName}" → "${afterName}"`
+            : `Actualizando propiedades de "${afterName}"`,
+          stepCounter,
+          totalSteps
+        );
+
+        moveAiWorldCursor(
+          target.x + (target.w || 150) * 0.62,
+          target.y + (target.h || 60) * 0.68,
+          'ia :: editando nodo',
+          'editing'
+        );
+        STATE.sel = { kind: 'node', id: target.id };
+        if (typeof renderAll === 'function') renderAll();
+
+        const domTarget = typeof nodeEl === 'function' ? nodeEl(target.id) : null;
+        if (domTarget) domTarget.classList.add('ai-node-editing');
+
+        if (nextDisplayText !== null) {
+          await animateNodeTypewriter(target.id, nextDisplayText, 175, signal);
+        } else {
+          await waitLiveVisualBeat(160, signal);
+        }
+
+        if (domTarget) {
+          domTarget.classList.remove('ai-node-editing');
+          domTarget.classList.add('ai-node-just-updated');
+          setTimeout(() => {
+            try { domTarget.classList.remove('ai-node-just-updated'); } catch {}
+          }, 900);
+        }
+        updatedCount++;
+      }
+
+      // 4D. Creación progresiva nodo por nodo + tendido de conexiones listas tras cada nodo
+      const remainingEdges = plannedEdges.slice();
+
+      const drawReadyEdgesNow = async () => {
+        for (let idx = 0; idx < remainingEdges.length; ) {
+          const pe = remainingEdges[idx];
+          const fromNode = byId(pe.fromId);
+          const toNode = byId(pe.toId);
+          if (!fromNode || !toNode) {
+            idx++;
+            continue;
+          }
+          remainingEdges.splice(idx, 1);
+          stepCounter++;
+
+          if (STATE.edges.some(e => e.from === pe.fromId && e.to === pe.toId)) {
+            continue;
+          }
+
+          const fromShort = String(fromNode.text || fromNode.type).replace(/\s+/g, ' ').slice(0, 18);
+          const toShort = String(toNode.text || toNode.type).replace(/\s+/g, ' ').slice(0, 18);
+          recordStep(
+            'add_edge',
+            `Conectando "${fromShort}" → "${toShort}"${pe.label ? ` [${pe.label}]` : ''}`,
+            stepCounter,
+            totalSteps
+          );
+
+          moveAiWorldCursor(
+            toNode.x + (toNode.w || 150) * 0.52,
+            toNode.y + 8,
+            pe.label ? `ia :: enlace [${pe.label}]` : 'ia :: conectando',
+            'building'
+          );
+
+          const edge = createEdge(pe.fromId, pe.toId, pe.label || '', 'normal');
+          STATE.edges.push(edge);
+          createdEdges.push(edge);
+
+          if (typeof renderNodes === 'function') renderNodes();
+          if (typeof drawEdges === 'function') drawEdges();
+          if (typeof updateStatus === 'function') updateStatus();
+          if (typeof drawMinimap === 'function') drawMinimap();
+
+          await animateEdgeStrokeDraw(edge.id, 175, signal);
+        }
+      };
+
+      // Conectar primero aristas entre nodos ya existentes
+      await drawReadyEdgesNow();
+
+      for (let i = 0; i < orderedNewNodes.length; i++) {
+        const node = orderedNewNodes[i];
+        stepCounter++;
+        const typeLabel = (CONFIG.NODE_TYPES && CONFIG.NODE_TYPES[node.type]) || node.type;
+        const shortNodeTxt = String(node.text || typeLabel).replace(/\s+/g, ' ').slice(0, 34);
+
+        recordStep(
+          'add_node',
+          `Creando ${typeLabel}: "${shortNodeTxt}"`,
+          stepCounter,
+          totalSteps
+        );
+
+        highlightBlueprintSlot(node.id);
+        moveAiWorldCursor(
+          node.x + (node.w || 150) * 0.62,
+          node.y + (node.h || 60) * 0.68,
+          `ia :: +${String(typeLabel).toLowerCase()}`,
+          'building'
+        );
+        await waitLiveVisualBeat(95, signal);
+
+        removeBlueprintSlot(node.id);
+        STATE.nodes.push(node);
+        STATE.isBlankCanvas = false;
+        STATE.sel = { kind: 'node', id: node.id };
+
+        if (typeof renderNodes === 'function') renderNodes();
+        if (typeof drawEdges === 'function') drawEdges();
+        if (typeof updateStatus === 'function') updateStatus();
+        if (typeof drawMinimap === 'function') drawMinimap();
+
+        const domCreated = typeof nodeEl === 'function' ? nodeEl(node.id) : null;
+        if (domCreated) domCreated.classList.add('ai-node-constructing');
+
+        await animateNodeTypewriter(node.id, node.text, 160, signal);
+
+        if (domCreated) {
+          setTimeout(() => {
+            try { domCreated.classList.remove('ai-node-constructing'); } catch {}
+          }, 500);
+        }
+
+        // En cuanto este nodo aterriza, trazar en vivo cualquier flecha lista hacia/desde él
+        await drawReadyEdgesNow();
+      }
+
+      // 4E. Reorganización animada suave si se solicitó organize_canvas explícitamente
+      if (requestedOrganize && STATE.nodes.length > 0) {
+        stepCounter++;
+        recordStep('organize_canvas', `Compactando y alineando ${STATE.nodes.length} nodos...`, stepCounter, totalSteps);
+        await autoOrganizeCanvasLive(true, signal);
+        updatedCount += STATE.nodes.length;
+      }
+
+      // 5. Consolidar un único punto de historial (Undo limpio) y sincronizar UI final
+      clearBlueprintSlots();
+      hideAiWorldCursor();
+
+      if (orderedNewNodes.length > 0) {
+        STATE.sel = { kind: 'node', id: orderedNewNodes[0].id };
+      }
+
+      if (typeof commitHistory === 'function') commitHistory();
+      if (typeof renderAll === 'function') renderAll();
+
+      if (requestedOrganize && STATE.nodes.length > 0) {
+        focusNodesOnCanvas(STATE.nodes.map(n => n.id));
+      } else if (orderedNewNodes.length > 0) {
+        focusNodesOnCanvas(orderedNewNodes.map(n => n.id));
+      }
+
+      const summaryParts = [];
+      if (orderedNewNodes.length) summaryParts.push(`+${orderedNewNodes.length} nodo(s)`);
+      if (createdEdges.length) summaryParts.push(`+${createdEdges.length} conexión(es)`);
+      if (updatedCount) summaryParts.push(`${updatedCount} ajustado(s)`);
+
+      setBuildHudState({
+        mode: 'done',
+        phase: 'ia :: construcción completada',
+        step: summaryParts.join(' · ') || 'Cambios aplicados en el lienzo',
+        current: totalSteps,
+        total: totalSteps,
+        showSkip: false
+      });
+      hideBuildHud(780);
+
+      if (typeof log === 'function') {
+        log('agent', `IA construyó en vivo: ${summaryParts.join(', ') || 'sin cambios'}`);
+      }
+
+      return {
+        addedNodes: orderedNewNodes,
+        addedEdges: createdEdges,
+        updatedCount,
+        organized: requestedOrganize,
+        visualSteps
+      };
+    } catch (err) {
+      clearBlueprintSlots();
+      hideAiWorldCursor();
+      hideBuildHud(0);
+      if (typeof commitHistory === 'function') commitHistory();
+      if (typeof renderAll === 'function') renderAll();
+      throw err;
+    } finally {
+      liveBuildState.isAnimating = false;
+      liveBuildState.skipResolvers.clear();
+      clearBlueprintSlots();
+      clearCanvasScanHighlights();
+    }
   }
 
   function isOrganizeCanvasIntent(normPrompt) {
@@ -3993,16 +5165,29 @@
 
     // Bind botones de tarjetas de acción
     container.querySelectorAll('[data-apply-idx]').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
+        if (liveBuildState.isAnimating) return;
         const m = messages[Number(btn.dataset.applyIdx)];
         if (!m || !m.actions) return;
-        const res = applyAIGraphActions(m.actions);
-        m.applied = true;
-        m.createdNodeIds = res.addedNodes.map(n => n.id);
-        m.appliedSummary = `${res.addedNodes.length} nodo(s) · ${res.addedEdges.length} conexión(es)`;
-        updateAIChatContextUI();
-        saveAIChatHistory(true);
-        renderAIMessages(true);
+        btn.disabled = true;
+        try {
+          const res = await applyAIGraphActionsLive(m.actions);
+          m.applied = true;
+          m.createdNodeIds =
+            res.addedNodes.length > 0
+              ? res.addedNodes.map(n => n.id)
+              : (STATE.nodes || []).map(n => n.id);
+          m.appliedSummary =
+            res.organized && res.addedNodes.length === 0
+              ? `${(STATE.nodes || []).length} nodo(s) compactados y alineados`
+              : `${res.addedNodes.length} nodo(s) · ${res.addedEdges.length} conexión(es)` +
+                (res.updatedCount ? ` · ${res.updatedCount} ajustado(s)` : '');
+          updateAIChatContextUI();
+          saveAIChatHistory(true);
+          renderAIMessages(true);
+        } finally {
+          btn.disabled = false;
+        }
       });
     });
 
@@ -4114,20 +5299,48 @@
 
     const provSummary = getActiveProviderSummary();
     const stepDelay = window.__FLOWLAB_FAST_TEST ? 0 : 95;
+    let completedVisualBuild = false;
 
     try {
+      // Iniciar escaneo visual en vivo sobre el lienzo mientras la IA inspecciona el contexto
+      startCanvasThinkingScan(
+        (telemetry.steps[0] && telemetry.steps[0].title) || 'Inspeccionando contexto del flujo...'
+      );
+
       // Recorrer en vivo las fases de inspección de fuentes antes de emitir la síntesis final
       const totalPreSteps = Math.max(0, telemetry.steps.length - 1);
       for (let i = 0; i < totalPreSteps; i++) {
         liveTraceState.activeStepIndex = i;
+        if (telemetry.steps[i]) {
+          setBuildHudState({
+            mode: 'analyzing',
+            phase: 'ia :: analizando contexto',
+            step: telemetry.steps[i].title,
+            current: i + 1,
+            total: Math.max(2, telemetry.steps.length),
+            showSkip: false
+          });
+        }
         updateLiveThinkingDOM();
         await waitAbortableStep(stepDelay, currentAbort.signal);
       }
       liveTraceState.activeStepIndex = Math.max(0, telemetry.steps.length - 1);
+      const lastThinkStep = telemetry.steps[liveTraceState.activeStepIndex];
+      if (lastThinkStep) {
+        setBuildHudState({
+          mode: 'analyzing',
+          phase: 'ia :: razonando solución',
+          step: lastThinkStep.title,
+          current: telemetry.steps.length,
+          total: Math.max(2, telemetry.steps.length + 1),
+          showSkip: false
+        });
+      }
       updateLiveThinkingDOM();
 
       // Si la consulta es ajena a FlowLab, filtrarla sin consumir API externa ni salir del dominio
       if (!domainCheck.allowed) {
+        stopCanvasThinkingScan(true);
         await waitAbortableStep(stepDelay, currentAbort.signal);
         const totalDuration = Math.max(85, Date.now() - startedAt);
         messages.push({
@@ -4152,14 +5365,18 @@
       }
 
       if (isOrganizeCanvasIntent(normalizePlainSpanish(text)) && !/\b(crea|genera|agrega|anade|inserta)\b/i.test(normalizePlainSpanish(text))) {
+        stopCanvasThinkingScan(false);
         await waitAbortableStep(stepDelay, currentAbort.signal);
         const orgCount = (STATE.nodes || []).length;
-        autoOrganizeCanvas(true);
+        const orgStart = Date.now();
+        await autoOrganizeCanvasLive(true, currentAbort.signal);
+        completedVisualBuild = true;
+        const orgElapsed = Math.max(32, Date.now() - orgStart);
         const totalDuration = Math.max(95, Date.now() - startedAt);
         messages.push({
           role: 'assistant',
           content:
-            `He reorganizado y compactado automáticamente los **${orgCount} nodos** del lienzo en una jerarquía limpia sin grandes distancias, centrando el zoom para su lectura cómoda.`,
+            `He reorganizado y compactado en vivo los **${orgCount} nodos** del lienzo en una jerarquía limpia sin grandes distancias, centrando el zoom para su lectura cómoda.`,
           actions: {
             summary: `Lienzo compactado (${orgCount} nodos)`,
             operations: [{ op: 'organize_canvas' }]
@@ -4177,9 +5394,9 @@
             steps: [
               ...telemetry.steps,
               {
-                title: 'Auto-layout jerárquico anti-colisión ejecutado',
-                detail: `${orgCount} nodos reubicados con detección de ciclos y espaciado uniforme.`,
-                ms: 32
+                title: 'Auto-layout jerárquico animado ejecutado en vivo',
+                detail: `${orgCount} nodos deslizados y alineados sin colisiones ni dispersión.`,
+                ms: orgElapsed
               }
             ]
           },
@@ -4196,6 +5413,7 @@
       const llmStart = Date.now();
       const result = await callExternalAI(text, currentAbort.signal);
       const llmElapsed = Math.max(60, Date.now() - llmStart);
+      stopCanvasThinkingScan(false);
 
       if (aiConfig.mode !== 'builtin') {
         connectionHealth = {
@@ -4211,12 +5429,50 @@
         idx === telemetry.steps.length - 1 ? { ...st, ms: llmElapsed } : st
       );
 
-      if (result.actions && Array.isArray(result.actions.operations) && result.actions.operations.length > 0) {
-        finalSteps.push({
-          title: 'Auto-layout jerárquico compacto aplicado sobre el lienzo',
-          detail: `Procesadas ${result.actions.operations.length} operación(es) (${result.actions.summary || 'nodos y conexiones posicionados sin dispersión'}).`,
-          ms: 28
+      let appliedResult = null;
+      if (
+        result.actions &&
+        Array.isArray(result.actions.operations) &&
+        result.actions.operations.length > 0 &&
+        aiConfig.autoApply
+      ) {
+        const liveStepIdx = liveTraceState.steps.length;
+        liveTraceState.steps.push({
+          title: 'Construyendo y conectando en vivo sobre el lienzo',
+          detail: 'Preparando boceto jerárquico...',
+          ms: 0
         });
+        liveTraceState.activeStepIndex = liveStepIdx;
+        updateLiveThinkingDOM();
+
+        const buildStart = Date.now();
+        appliedResult = await applyAIGraphActionsLive(result.actions, {
+          signal: currentAbort.signal,
+          onProgressStep: ev => {
+            if (liveTraceState && liveTraceState.steps[liveStepIdx]) {
+              liveTraceState.steps[liveStepIdx].detail = `Paso ${ev.index}/${ev.total} · ${ev.label}`;
+              updateLiveThinkingDOM();
+            }
+          }
+        });
+        completedVisualBuild = true;
+        const buildElapsed = Math.max(35, Date.now() - buildStart);
+
+        finalSteps.push({
+          title: 'Construcción progresiva completada sobre el lienzo',
+          detail: `Ejecutados ${appliedResult.visualSteps.length} paso(s) visuales (${result.actions.summary || 'nodos, textos y conexiones trazados paso a paso'}).`,
+          ms: buildElapsed
+        });
+      } else {
+        hideAiWorldCursor();
+        hideBuildHud(0);
+        if (result.actions && Array.isArray(result.actions.operations) && result.actions.operations.length > 0) {
+          finalSteps.push({
+            title: 'Plan de construcción listo para aplicar en vivo',
+            detail: `${result.actions.operations.length} operación(es) preparadas (${result.actions.summary || 'pulsa Aplicar al lienzo para ver cada paso'}).`,
+            ms: 24
+          });
+        }
       }
 
       const totalDuration = Math.max(110, Date.now() - startedAt);
@@ -4240,27 +5496,23 @@
         timestamp: Date.now()
       };
 
-      if (
-        result.actions &&
-        Array.isArray(result.actions.operations) &&
-        result.actions.operations.length > 0 &&
-        aiConfig.autoApply
-      ) {
-        const applied = applyAIGraphActions(result.actions);
+      if (appliedResult) {
         assistantMsg.applied = true;
         assistantMsg.createdNodeIds =
-          applied.addedNodes.length > 0
-            ? applied.addedNodes.map(n => n.id)
+          appliedResult.addedNodes.length > 0
+            ? appliedResult.addedNodes.map(n => n.id)
             : (STATE.nodes || []).map(n => n.id);
-        assistantMsg.appliedSummary = applied.organized && applied.addedNodes.length === 0
+        assistantMsg.appliedSummary = appliedResult.organized && appliedResult.addedNodes.length === 0
           ? `${(STATE.nodes || []).length} nodo(s) compactados y alineados`
-          : `${applied.addedNodes.length} nodo(s) · ${applied.addedEdges.length} conexión(es)` +
-            (applied.updatedCount ? ` · ${applied.updatedCount} ajustado(s)` : '');
+          : `${appliedResult.addedNodes.length} nodo(s) · ${appliedResult.addedEdges.length} conexión(es)` +
+            (appliedResult.updatedCount ? ` · ${appliedResult.updatedCount} ajustado(s)` : '');
       }
 
       messages.push(assistantMsg);
       saveAIChatHistory(true);
     } catch (err) {
+      stopCanvasThinkingScan(true);
+      clearBlueprintSlots();
       if (err && err.name === 'AbortError') {
         messages.push({
           role: 'assistant',
@@ -4315,6 +5567,11 @@
       if (liveTraceTimer) {
         clearInterval(liveTraceTimer);
         liveTraceTimer = null;
+      }
+      stopCanvasThinkingScan(false);
+      if (!completedVisualBuild) {
+        hideAiWorldCursor();
+        hideBuildHud(0);
       }
       liveTraceState = null;
       isGenerating = false;
@@ -4580,11 +5837,15 @@
     });
 
     document.getElementById('btnAiOrganize')?.addEventListener('click', () => {
-      autoOrganizeCanvas(false);
+      if (!liveBuildState.isAnimating) autoOrganizeCanvasLive(false);
     });
 
     document.getElementById('zAutoLayout')?.addEventListener('click', () => {
-      autoOrganizeCanvas(false);
+      if (!liveBuildState.isAnimating) autoOrganizeCanvasLive(false);
+    });
+
+    document.getElementById('btnAiSkipAnim')?.addEventListener('click', () => {
+      requestSkipLiveAnimation();
     });
 
     // Si había un diagrama guardado previamente con nodos dispersos a miles de píxeles, repararlo automáticamente al arrancar
@@ -4639,6 +5900,10 @@
       clearInterval(liveTraceTimer);
       liveTraceTimer = null;
     }
+    stopCanvasThinkingScan(true);
+    clearBlueprintSlots();
+    liveBuildState.skipRequested = false;
+    liveBuildState.isAnimating = false;
     liveTraceState = null;
     isGenerating = false;
     sessionsSearchQuery = '';
@@ -4669,5 +5934,9 @@
   window.getAISessionsSnapshot = () => aiSessions.map(s => ({ ...s }));
   window.evaluateFlowLabDomainGuard = evaluateFlowLabDomainGuard;
   window.autoOrganizeCanvas = autoOrganizeCanvas;
+  window.autoOrganizeCanvasLive = autoOrganizeCanvasLive;
   window.applyAIGraphActions = applyAIGraphActions;
+  window.applyAIGraphActionsLive = applyAIGraphActionsLive;
+  window.requestSkipLiveAnimation = requestSkipLiveAnimation;
+  window.getLastAIVisualSteps = () => liveBuildState.lastStepLog.slice();
 })();

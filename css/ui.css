@@ -5459,6 +5459,396 @@ select.fl-select-native {
   }
 }
 
+/* ============================================================================
+   CONSTRUCCIÓN Y EDICIÓN EN VIVO DE LA IA SOBRE EL LIENZO (#aiBuildHud, #aiWorldCursor)
+   ============================================================================ */
+.ai-build-hud {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 95;
+  width: min(440px, calc(100% - 28px));
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px 11px 9px;
+  border-radius: 9px;
+  border: 1px solid rgba(134, 239, 172, 0.34);
+  background: rgba(14, 17, 20, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.56);
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: auto;
+  animation: aiHudSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-build-hud[hidden] {
+  display: none !important;
+}
+
+.ai-build-hud.is-analyzing {
+  border-color: rgba(125, 211, 252, 0.34);
+}
+
+.ai-build-hud.is-done {
+  border-color: rgba(134, 239, 172, 0.55);
+  background: rgba(14, 22, 17, 0.92);
+}
+
+@keyframes aiHudSlideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.ai-build-hud-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.ai-build-hud-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex: 0 0 7px;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.75);
+  animation: aiHudDotPulse 1.05s ease-in-out infinite;
+}
+
+.ai-build-hud.is-analyzing .ai-build-hud-dot {
+  background: #7dd3fc;
+  box-shadow: 0 0 8px rgba(125, 211, 252, 0.72);
+}
+
+.ai-build-hud.is-done .ai-build-hud-dot {
+  animation: none;
+  background: var(--green);
+}
+
+@keyframes aiHudDotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.42;
+    transform: scale(0.84);
+  }
+}
+
+.ai-build-hud-phase {
+  font-size: 9.6px;
+  font-weight: 700;
+  color: var(--tx0);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-build-hud-count {
+  margin-left: auto;
+  font-size: 8.8px;
+  font-weight: 600;
+  color: var(--tx2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.ai-build-hud-skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--tx1);
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
+}
+
+.ai-build-hud-skip:hover {
+  border-color: rgba(134, 239, 172, 0.6);
+  color: var(--green);
+  background: rgba(74, 222, 128, 0.09);
+}
+
+.ai-build-hud-skip[hidden] {
+  display: none !important;
+}
+
+.ai-build-hud-step {
+  font-size: 9.1px;
+  color: var(--tx1);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-build-hud-track {
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.ai-build-hud-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #34d399 0%, #86efac 100%);
+  transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ai-build-hud.is-analyzing .ai-build-hud-fill {
+  background: linear-gradient(90deg, #38bdf8 0%, #93c5fd 100%);
+}
+
+/* Capa de boceto arquitectónico fantasma (#aiBlueprintLayer dentro de #world) */
+.ai-blueprint-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ai-blueprint-slot {
+  position: absolute;
+  border-radius: 10px;
+  border: 1px dashed rgba(134, 239, 172, 0.28);
+  background: rgba(74, 222, 128, 0.025);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  box-sizing: border-box;
+  opacity: 0.85;
+  transition: border-color 0.16s ease, background 0.16s ease, opacity 0.16s ease, transform 0.16s ease;
+  animation: aiBlueprintAppear 0.22s ease-out;
+}
+
+.ai-blueprint-slot.is-active-slot {
+  border-color: rgba(134, 239, 172, 0.72);
+  background: rgba(74, 222, 128, 0.07);
+  opacity: 1;
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.14);
+}
+
+.ai-blueprint-slot-label {
+  font: 600 8.5px 'JetBrains Mono', monospace;
+  color: rgba(187, 247, 208, 0.62);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  letter-spacing: 0.01em;
+}
+
+@keyframes aiBlueprintAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+}
+
+/* Puntero autónomo de la IA en coordenadas del mundo (#aiWorldCursor) */
+.ai-world-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 40;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transition:
+    transform 0.21s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.15s ease;
+}
+
+.ai-world-cursor[hidden] {
+  display: none !important;
+}
+
+.ai-world-cursor-svg {
+  color: var(--green);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.72));
+  flex-shrink: 0;
+}
+
+.ai-world-cursor.is-editing .ai-world-cursor-svg {
+  color: #7dd3fc;
+}
+
+.ai-world-cursor.is-deleting .ai-world-cursor-svg {
+  color: #fb7185;
+}
+
+.ai-world-cursor-tag {
+  margin-top: 10px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid rgba(134, 239, 172, 0.42);
+  background: rgba(12, 15, 18, 0.92);
+  color: var(--tx0);
+  font: 600 8.6px 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.55);
+}
+
+.ai-world-cursor.is-editing .ai-world-cursor-tag {
+  border-color: rgba(125, 211, 252, 0.48);
+  color: #bae6fd;
+}
+
+.ai-world-cursor.is-deleting .ai-world-cursor-tag {
+  border-color: rgba(251, 113, 133, 0.5);
+  color: #fecdd3;
+}
+
+/* Estados visuales progresivos en nodos reales del lienzo */
+.node.ai-scanning-node {
+  border-color: rgba(125, 211, 252, 0.65) !important;
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.24),
+    0 10px 24px rgba(0, 0, 0, 0.48) !important;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.node.ai-node-constructing {
+  border-color: rgba(134, 239, 172, 0.85) !important;
+  box-shadow:
+    0 0 0 2px rgba(74, 222, 128, 0.26),
+    0 14px 30px rgba(0, 0, 0, 0.55) !important;
+  animation: aiNodeMaterialize 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes aiNodeMaterialize {
+  0% {
+    opacity: 0.28;
+    transform: scale(0.91);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.node.ai-node-editing {
+  border-color: rgba(125, 211, 252, 0.88) !important;
+  box-shadow:
+    0 0 0 2px rgba(56, 189, 248, 0.3),
+    0 14px 28px rgba(0, 0, 0, 0.52) !important;
+}
+
+.node.ai-node-just-updated {
+  border-color: rgba(134, 239, 172, 0.62) !important;
+  transition: border-color 0.5s ease, box-shadow 0.5s ease;
+}
+
+.node.ai-node-deleting {
+  border-color: rgba(251, 113, 133, 0.85) !important;
+  box-shadow: 0 0 0 2px rgba(251, 113, 133, 0.28) !important;
+  opacity: 0.2 !important;
+  transform: scale(0.9) !important;
+  transition: opacity 0.18s ease, transform 0.18s ease, border-color 0.14s ease !important;
+}
+
+.node.ai-typing-active .text::after {
+  content: "▍";
+  display: inline-block;
+  margin-left: 2px;
+  color: var(--green);
+  font-weight: 700;
+  animation: aiCaretBlink 0.55s steps(2, start) infinite;
+}
+
+@keyframes aiCaretBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Trazo progresivo de conexiones SVG recién tendidas por la IA */
+svg path.edge.ai-edge-drawing {
+  stroke: var(--green) !important;
+  stroke-width: 2.25px !important;
+  filter: drop-shadow(0 0 5px rgba(74, 222, 128, 0.42));
+}
+
+svg text.edge-label.ai-edge-label-reveal {
+  fill: #bbf7d0 !important;
+  animation: aiEdgeLabelFade 0.22s ease-out;
+}
+
+@keyframes aiEdgeLabelFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-build-hud {
+    top: 8px;
+    width: calc(100% - 18px);
+    padding: 7px 9px 8px;
+  }
+  .ai-build-hud-phase {
+    font-size: 9px;
+  }
+  .ai-build-hud-step {
+    font-size: 8.6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-build-hud,
+  .ai-build-hud-dot,
+  .ai-blueprint-slot,
+  .node.ai-node-constructing,
+  .node.ai-typing-active .text::after,
+  svg text.edge-label.ai-edge-label-reveal {
+    animation: none !important;
+  }
+  .ai-world-cursor,
+  .ai-build-hud-fill {
+    transition: none !important;
+  }
+}
+
+
 
 
 

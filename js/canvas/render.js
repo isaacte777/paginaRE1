@@ -115,6 +115,7 @@ function drawEdges() {
     p.setAttribute('d', g.d);
     p.setAttribute('class', 'edge' + (sel_edge ? ' sel' : '') + (isEdgeInCircuit ? ' circuit-edge' : '') + (isDimmedEdge ? ' dimmed-edge' : ''));
     p.setAttribute('marker-end', sel_edge ? 'url(#arrowSel)' : (isEdgeInCircuit ? 'url(#arrowSel)' : 'url(#arrow)'));
+    p.dataset.edgeId = e.id;
     DOM.edgesG.appendChild(p);
 
     const hit = document.createElementNS(CONFIG.NS, 'path');
@@ -128,6 +129,7 @@ function drawEdges() {
       t.setAttribute('x', g.lx);
       t.setAttribute('y', g.ly);
       t.setAttribute('class', 'edge-label' + (isDimmedEdge ? ' dimmed' : ''));
+      t.dataset.edgeLabelId = e.id;
       t.textContent = e.label;
       DOM.edgesG.appendChild(t);
     }
