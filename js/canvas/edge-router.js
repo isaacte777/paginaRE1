@@ -2,11 +2,11 @@
 // separación de carriles paralelos, puentes de cruce (line-jumps) y distinción Flujo ⇄ Finanzas.
 
 (function () {
-  const STUB_LEN = 18;
-  const OBS_PAD = 12;
-  const TRACK_SPACING = 10;
-  const CORNER_RADIUS = 7;
-  const BRIDGE_RADIUS = 4.8;
+  const STUB_LEN = 22;
+  const OBS_PAD = 14;
+  const TRACK_SPACING = 12;
+  const CORNER_RADIUS = 8;
+  const BRIDGE_RADIUS = 5.2;
 
   function isFinNode(n) {
     return Boolean(n && typeof isFinanceNodeType === 'function' && isFinanceNodeType(n.type));
@@ -77,17 +77,18 @@
       }
     }
 
-    // Destino claramente debajo del origen -> flujo vertical limpio (bottom -> top)
-    if (vGapDown >= 14 && Math.abs(dx) <= Math.max(360, vGapDown * 2.4)) {
-      return { sourceSide: 'bottom', targetSide: 'top', isBackEdge: false };
-    }
-
-    // Destino claramente a la derecha o izquierda en la misma banda -> flujo horizontal (right -> left)
-    if (hGapRight >= 16 && Math.abs(dy) <= Math.max(220, hGapRight * 1.65)) {
+    // Si existe un corredor horizontal claro entre columnas (destino en otra columna a la derecha o izquierda),
+    // usar siempre puertos laterales (right -> left / left -> right) para no pisar la tarjeta inferior de la misma columna
+    if (hGapRight >= 34 && Math.abs(dy) <= Math.max(520, hGapRight * 3.4)) {
       return { sourceSide: 'right', targetSide: 'left', isBackEdge: false };
     }
-    if (hGapLeft >= 16 && Math.abs(dy) <= Math.max(220, hGapLeft * 1.65)) {
+    if (hGapLeft >= 34 && Math.abs(dy) <= Math.max(520, hGapLeft * 3.4)) {
       return { sourceSide: 'left', targetSide: 'right', isBackEdge: false };
+    }
+
+    // Destino debajo del origen en la misma columna o sub-rama cercana -> flujo vertical limpio (bottom -> top)
+    if (vGapDown >= 14 && Math.abs(dx) <= Math.max(240, vGapDown * 1.8)) {
+      return { sourceSide: 'bottom', targetSide: 'top', isBackEdge: false };
     }
 
     // Arista de retorno / bucle hacia arriba: rodear por el costado exterior para no cruzar nodos intermedios
