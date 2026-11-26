@@ -1753,6 +1753,7 @@
     }
 
     syncFormulaBarUI();
+    window.FlowLabWorkbookEngine?.renderWorkbookSheetsBar?.();
     if (typeof updatePanel === 'function') updatePanel();
     if (!silent && typeof saveState === 'function') saveState();
   }
@@ -2637,6 +2638,7 @@
   }
 
   function loadFinancePresetOntoCanvas(presetKey) {
+    window.FlowLabWorkbookEngine?.clearActiveWorkbook?.();
     const built = buildFinanceTemplate(presetKey);
     STATE.nodes = built.nodes;
     STATE.edges = built.edges;

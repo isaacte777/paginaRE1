@@ -141,6 +141,16 @@ function exportJSON() {
 }
 
 function importProjectFile(file) {
+  const lowerName = String(file && file.name ? file.name : '').toLowerCase();
+  if (
+    (lowerName.endsWith('.xlsx') || lowerName.endsWith('.csv') || lowerName.endsWith('.tsv')) &&
+    window.FlowLabWorkbookEngine &&
+    typeof window.FlowLabWorkbookEngine.importFinancialWorkbookFile === 'function'
+  ) {
+    window.FlowLabWorkbookEngine.importFinancialWorkbookFile(file);
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = (ev) => {
     const text = ev.target.result;
