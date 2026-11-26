@@ -31,6 +31,22 @@
       tag: 'pipeline',
       svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>'
     },
+    fin_resultados: {
+      tag: 'excel p&l',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>'
+    },
+    fin_flujo_caja: {
+      tag: 'van / tir',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>'
+    },
+    fin_prestamo: {
+      tag: 'crédito fx',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>'
+    },
+    fin_blanco: {
+      tag: 'planilla fx',
+      svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="4 3"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/></svg>'
+    },
     blank: {
       tag: 'desde cero',
       svg: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="4 3"/></svg>'
@@ -341,8 +357,27 @@
     const items = [];
     let initialIdx = 0;
 
+    let insertedFinanceSection = false;
+    let insertedWorkflowEndDivider = false;
+
     Array.from(selectEl.options).forEach(opt => {
       if (launcher && opt.value === '') return;
+
+      if (selectEl.id === 'templateSelect' && opt.value.startsWith('fin_') && !insertedFinanceSection) {
+        insertedFinanceSection = true;
+        const secDiv = document.createElement('div');
+        secDiv.className = 'fl-dropdown-sec-label';
+        secDiv.setAttribute('role', 'presentation');
+        secDiv.innerHTML = '<span>apartado planillas financieras · fx</span>';
+        listWrap.appendChild(secDiv);
+      } else if (selectEl.id === 'templateSelect' && insertedFinanceSection && !opt.value.startsWith('fin_') && !insertedWorkflowEndDivider) {
+        insertedWorkflowEndDivider = true;
+        const secDiv = document.createElement('div');
+        secDiv.className = 'fl-dropdown-sec-label';
+        secDiv.setAttribute('role', 'presentation');
+        secDiv.innerHTML = '<span>lienzo vacío</span>';
+        listWrap.appendChild(secDiv);
+      }
 
       const idx = items.length;
       const isSelected = !launcher && opt.value === selectEl.value;
@@ -440,7 +475,7 @@
     selectEl.setAttribute('aria-hidden', 'true');
 
     const wrapperModule = selectEl.closest('.template-module');
-    const inZoombar = Boolean(selectEl.closest('.zoombar'));
+    const inZoombar = Boolean(selectEl.closest('.zoombar') || selectEl.closest('.fin-formula-bar'));
 
     const trigger = document.createElement('button');
     trigger.type = 'button';

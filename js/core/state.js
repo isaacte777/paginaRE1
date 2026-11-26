@@ -29,6 +29,8 @@ const STATE = {
   isBlankCanvas: false,
   activeProjectId: null,
   savedBaselineFingerprint: '',
+  canvasDomain: 'workflow', // 'workflow' | 'finance'
+  financeCurrency: 'USD',
   speed: 1,                // Velocidad de ejecución (0.5, 1, 2, 4)
   localSavedAt: 0,
   persistenceFingerprint: ''

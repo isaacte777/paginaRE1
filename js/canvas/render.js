@@ -1,49 +1,21 @@
-function renderMetricsWidget(n) {
-  const points = [35, 52, 45, 70, 60, 82, 75, 92, 88, 98];
-  const w = 288, h = 38;
-  const max = Math.max(...points, 1);
-  const step = w / (points.length - 1);
-  const pts = points.map((v, i) => `${i * step},${h - (v / max) * h}`).join(' ');
-
-  const trendSvg =
-    '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>';
-
-  return `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; width:100%">
-      <span style="display:inline-flex; align-items:center; gap:5px; font-weight:700; font-size:11px; color:var(--tx0); letter-spacing:0.02em">${trendSvg}<span>${escapeHTML(n.text || 'Métrica de Rendimiento')}</span></span>
-      <span style="font-size:9px; background:rgba(74,222,128,0.12); color:var(--green); padding:2px 5px; border-radius:3px; font-weight:700">LIVE</span>
-    </div>
-    <svg width="${w}" height="${h}" style="overflow:visible; display:block; margin-bottom:8px">
-      <defs>
-        <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.35"/>
-          <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0"/>
-        </linearGradient>
-      </defs>
-      <polygon fill="url(#chartGrad)" points="0,${h} ${pts} ${w},${h}" />
-      <polyline fill="none" stroke="#38bdf8" stroke-width="2" points="${pts}" />
-      ${points.map((v, i) => `<circle cx="${i * step}" cy="${h - (v / max) * h}" r="2.5" fill="#ffffff" stroke="#38bdf8" stroke-width="1.2" />`).join('')}
-    </svg>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 10px; font-size:9.5px; color:var(--tx2); border-top:1px solid var(--line); padding-top:6px; width:100%">
-      <div>ROI: <strong style="color:#4ade80">+34.2%</strong></div>
-      <div>Uptime: <strong style="color:var(--tx0)">99.98%</strong></div>
-      <div>Throughput: <strong style="color:var(--tx0)">140 op/s</strong></div>
-      <div>Latencia: <strong style="color:var(--tx0)">42ms</strong></div>
-    </div>
-  `;
-}
-
 // RENDER: Renderización del canvas y nodos
 function renderNodes() {
   DOM.world.querySelectorAll('.node').forEach(el => el.remove());
   const q = (document.getElementById('searchBox').value || '').toLowerCase();
 
-  // Calcular dependencias bloqueadas antes de renderizar
+  // Calcular dependencias bloqueadas y planilla financiera reactiva antes de renderizar
   computeBlocked();
+  if (typeof evaluateFinanceSheet === 'function') {
+    evaluateFinanceSheet();
+  }
 
   STATE.nodes.forEach(n => {
     const d = document.createElement('div');
+    const isFin = typeof isFinanceNodeType === 'function' && isFinanceNodeType(n.type);
     let cls = 'node ' + n.type + ' st-' + (n.status || 'pending');
+    if (isFin && typeof getFinanceNodeToneClass === 'function') {
+      cls += ' ' + getFinanceNodeToneClass(n.type);
+    }
     if (STATE.sel && STATE.sel.kind === 'node' && STATE.sel.id === n.id) cls += ' selected';
     if (n.current) cls += ' current';
 
@@ -56,7 +28,8 @@ function renderNodes() {
     }
 
     if (q) {
-      cls += (n.text.toLowerCase().includes(q) || n.type.includes(q)) ? ' match' : ' dimmed';
+      const cellStr = isFin && n.params?.cellRef ? String(n.params.cellRef).toLowerCase() : '';
+      cls += (n.text.toLowerCase().includes(q) || n.type.includes(q) || cellStr.includes(q)) ? ' match' : ' dimmed';
     } else if (STATE.statusFilter) {
       const hit = STATE.statusFilter === 'current' ? !!n.current : (n.status === STATE.statusFilter);
       if (!hit) cls += ' dimmed';
@@ -69,10 +42,10 @@ function renderNodes() {
     d.style.top = n.y + 'px';
     const txt = '<span class="txt">' + escapeHTML(n.text) + '</span>';
     let html = '';
-    if (n.type.startsWith('chart_') && typeof renderChartNodeHtml === 'function') {
+    if (isFin && typeof renderFinanceNodeHtml === 'function') {
+      html = renderFinanceNodeHtml(n);
+    } else if (n.type.startsWith('chart_') && typeof renderChartNodeHtml === 'function') {
       html = renderChartNodeHtml(n);
-    } else if (n.type === 'metrics') {
-      html = renderMetricsWidget(n);
     } else {
       html = (n.type === 'decision' || n.type === 'loop' || n.type === 'io') ? '<div class="core">' + txt + '</div>' : txt;
     }
