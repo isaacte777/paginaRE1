@@ -73,8 +73,13 @@ function renderNodes() {
 
 function drawEdges() {
   DOM.edgesG.innerHTML = '';
+  const routedMap =
+    typeof computeAllEdgesSmartLayout === 'function' ? computeAllEdgesSmartLayout() : null;
+
+  const labelsQueue = [];
+
   STATE.edges.forEach(e => {
-    const g = computeEdge(e);
+    const g = (routedMap && routedMap.get(e.id)) || computeEdge(e);
     if (!g) return;
     const sel_edge = STATE.sel && STATE.sel.kind === 'edge' && STATE.sel.id === e.id;
 
@@ -84,10 +89,42 @@ function drawEdges() {
 
     const isDimmedEdge = STATE.sel && STATE.sel.kind === 'node' && STATE.circuitHighlight && !isEdgeInCircuit;
 
+    const domainKind = g.domainKind || 'workflow';
+    const domainCls =
+      domainKind === 'bridge'
+        ? ' edge--bridge'
+        : domainKind === 'finance'
+          ? ' edge--finance'
+          : domainKind === 'error'
+            ? ' kind-error'
+            : ' edge--workflow';
+
+    let markerUrl = 'url(#arrow)';
+    if (sel_edge || isEdgeInCircuit) {
+      markerUrl = 'url(#arrowSel)';
+    } else if (domainKind === 'bridge') {
+      markerUrl = 'url(#arrowBridge)';
+    } else if (domainKind === 'finance') {
+      markerUrl = 'url(#arrowFin)';
+    }
+
+    // Halo oscuro sutil debajo del cable para separar visualmente líneas que se cruzan
+    const halo = document.createElementNS(CONFIG.NS, 'path');
+    halo.setAttribute('d', g.d);
+    halo.setAttribute('class', 'edge-casing' + (isDimmedEdge ? ' dimmed-edge' : ''));
+    DOM.edgesG.appendChild(halo);
+
     const p = document.createElementNS(CONFIG.NS, 'path');
     p.setAttribute('d', g.d);
-    p.setAttribute('class', 'edge' + (sel_edge ? ' sel' : '') + (isEdgeInCircuit ? ' circuit-edge' : '') + (isDimmedEdge ? ' dimmed-edge' : ''));
-    p.setAttribute('marker-end', sel_edge ? 'url(#arrowSel)' : (isEdgeInCircuit ? 'url(#arrowSel)' : 'url(#arrow)'));
+    p.setAttribute(
+      'class',
+      'edge' +
+        domainCls +
+        (sel_edge ? ' sel' : '') +
+        (isEdgeInCircuit ? ' circuit-edge' : '') +
+        (isDimmedEdge ? ' dimmed-edge' : '')
+    );
+    p.setAttribute('marker-end', markerUrl);
     p.dataset.edgeId = e.id;
     DOM.edgesG.appendChild(p);
 
@@ -97,15 +134,57 @@ function drawEdges() {
     hit.dataset.id = e.id;
     DOM.edgesG.appendChild(hit);
 
-    if (e.label) {
-      const t = document.createElementNS(CONFIG.NS, 'text');
-      t.setAttribute('x', g.lx);
-      t.setAttribute('y', g.ly);
-      t.setAttribute('class', 'edge-label' + (isDimmedEdge ? ' dimmed' : ''));
-      t.dataset.edgeLabelId = e.id;
-      t.textContent = e.label;
-      DOM.edgesG.appendChild(t);
+    const effectiveLabel =
+      e.label || (domainKind === 'bridge' ? 'flujo→fx' : '');
+
+    if (effectiveLabel) {
+      labelsQueue.push({
+        edge: e,
+        text: effectiveLabel,
+        lx: g.lx,
+        ly: g.ly,
+        domainKind,
+        isDimmedEdge,
+        sel_edge
+      });
     }
+  });
+
+  // Renderizar etiquetas al final sobre pastillas oscuras legibles para que ningún cable las tache
+  labelsQueue.forEach(item => {
+    const txtStr = String(item.text);
+    const pillW = Math.max(24, Math.round(txtStr.length * 6.3 + 12));
+    const pillH = 16;
+
+    const bg = document.createElementNS(CONFIG.NS, 'rect');
+    bg.setAttribute('x', (item.lx - pillW / 2).toFixed(1));
+    bg.setAttribute('y', (item.ly - pillH / 2 - 1).toFixed(1));
+    bg.setAttribute('width', String(pillW));
+    bg.setAttribute('height', String(pillH));
+    bg.setAttribute('rx', '4');
+    bg.setAttribute(
+      'class',
+      'edge-label-bg' +
+        (item.domainKind === 'bridge' ? ' edge-label-bg--bridge' : '') +
+        (item.domainKind === 'finance' ? ' edge-label-bg--finance' : '') +
+        (item.sel_edge ? ' is-sel' : '') +
+        (item.isDimmedEdge ? ' dimmed-edge' : '')
+    );
+    DOM.edgesG.appendChild(bg);
+
+    const t = document.createElementNS(CONFIG.NS, 'text');
+    t.setAttribute('x', item.lx.toFixed(1));
+    t.setAttribute('y', (item.ly + 2.5).toFixed(1));
+    t.setAttribute(
+      'class',
+      'edge-label' +
+        (item.domainKind === 'bridge' ? ' edge-label--bridge' : '') +
+        (item.domainKind === 'finance' ? ' edge-label--finance' : '') +
+        (item.isDimmedEdge ? ' dimmed' : '')
+    );
+    t.dataset.edgeLabelId = item.edge.id;
+    t.textContent = txtStr;
+    DOM.edgesG.appendChild(t);
   });
 
   // Partículas de luz viajeras para animar el recorrido del circuito de principio a fin
@@ -115,7 +194,7 @@ function drawEdges() {
         (STATE.circuit.upstream.has(e.to) || STATE.circuit.downstream.has(e.to) || e.to === STATE.sel?.id);
 
       if (isEdgeInCircuit) {
-        const g = computeEdge(e);
+        const g = (routedMap && routedMap.get(e.id)) || computeEdge(e);
         if (!g) return;
         for (let i = 0; i < 2; i++) {
           const particle = document.createElementNS(CONFIG.NS, 'circle');

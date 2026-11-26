@@ -64,11 +64,15 @@ function initApp() {
 }
 
 function isMobileLayout() {
-  return window.matchMedia('(max-width: 768px)').matches;
+  return typeof window.matchMedia === 'function'
+    ? window.matchMedia('(max-width: 768px)').matches
+    : false;
 }
 
 function isCompactSidebarLayout() {
-  return window.matchMedia('(max-width: 980px)').matches;
+  return typeof window.matchMedia === 'function'
+    ? window.matchMedia('(max-width: 980px)').matches
+    : false;
 }
 
 function syncMobileScrim() {

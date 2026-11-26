@@ -237,6 +237,8 @@
         <defs>
           <marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#6da27f"></path></marker>
           <marker id="arrowSel" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" refX="9" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#86efac"></path></marker>
+          <marker id="arrowFin" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" refX="8.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#34d399"></path></marker>
+          <marker id="arrowBridge" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="10.5" refX="9" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#fbbf24"></path></marker>
         </defs>
         <g id="edgesG"></g>
       </svg>
@@ -548,10 +550,27 @@
 
       <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
 
-      <div class="ai-composer">
-        <textarea id="aiChatInput" rows="2" placeholder="Pide crear nodos, expandir ramas o analizar este flujo..."></textarea>
+      <!-- Selector rápido de modos de organización cuando se pulsa "ordenar" -->
+      <div class="ai-layout-drawer" id="aiLayoutDrawer" hidden>
+        <div class="ai-layout-drawer__head">
+          <span>:: organizar nodos (16 arquitecturas + variantes)</span>
+          <button type="button" class="ai-layout-drawer__close" id="btnCloseAiLayoutDrawer" aria-label="Cerrar selector de orden">×</button>
+        </div>
+        <div class="ai-layout-grid" id="aiLayoutPresetsMount"></div>
+      </div>
+
+      <div class="ai-composer" id="aiComposerDropzone">
+        <input type="file" id="aiAttachInput" multiple hidden>
+        <div class="ai-attachments-bar" id="aiAttachmentsBar" hidden></div>
+        <textarea id="aiChatInput" rows="2" placeholder="Adjunta imágenes/documentos, pide armar tareas o indica cómo ordenar (ej. vertical, horizontal, árbol)..."></textarea>
         <div class="ai-composer-foot">
-          <span class="ai-composer-hint">Enter enviar · Shift+Enter salto</span>
+          <div class="ai-composer-left">
+            <button type="button" class="ai-attach-btn" id="btnAiAttach" title="Adjuntar imágenes, PDF, Word, Excel, CSV o cualquier documento (también puedes arrastrar o pegar Ctrl+V)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+              <span>adjuntar</span>
+            </button>
+            <span class="ai-composer-hint">Enter · Ctrl+V img/doc</span>
+          </div>
           <div class="ai-composer-btns">
             <button type="button" class="ai-stop-btn" id="btnAiStop" hidden>
               <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
@@ -1052,6 +1071,7 @@
 <script src="js/features/user-workspace.js"></script>
 <script src="js/utils/storage.js"></script>
 <script src="js/features/finance-sheet.js"></script>
+<script src="js/canvas/edge-router.js"></script>
 <script src="js/canvas/render.js"></script>
 <script src="js/interaction/selection.js"></script>
 <script src="js/interaction/editing.js"></script>
@@ -1064,6 +1084,8 @@
 <script src="js/ui/chat.js"></script>
 <script src="js/features/charts.js"></script>
 <script src="js/features/live-sync.js"></script>
+<script src="js/features/layout-engines.js"></script>
+<script src="js/features/ai-doc-reader.js"></script>
 <script src="js/features/ai-assistant.js"></script>
 <script src="js/features/terminal.js"></script>
 <script src="js/features/projects.js"></script>

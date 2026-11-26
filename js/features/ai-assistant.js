@@ -52,7 +52,13 @@
     edit:
       '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
     trash:
-      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+    fileDoc:
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>',
+    imageIcon:
+      '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+    paperclip:
+      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>'
   };
 
   class AIConnectionError extends Error {
@@ -305,6 +311,8 @@
   let liveTraceState = null; // Seguimiento en vivo de pasos/fuentes mientras genera
   let liveTraceTimer = null;
   let editingModeTab = aiConfig.mode === 'builtin' ? 'local' : aiConfig.mode;
+  let pendingAttachments = []; // Archivos e imágenes adjuntados listos para enviar
+  let lastLayoutOptions = { mode: 'domain_bridge', density: 'normal' };
 
   // Estado visual en vivo de la conexión actual ('idle' | 'ok' | 'error')
   let connectionHealth = {
@@ -607,22 +615,42 @@
   ];
 
   const FLOWLAB_SCOPE_REGEX =
-    /\b(flowlab|lienzo|canvas|planilla|planillas|finanza|finanzas|financiero|financiera|excel|celda|celdas|formula|formulas|van|vna|npv|tir|irr|ebitda|ebit|opex|capex|margen|utilidad|amortizacion|prestamo|credito|cuota|interes|tasa|impuesto|iva|flujo de caja|cashflow|balance|presupuesto|nomina|runway|roe|roa|cagr|nodo|nodos|conexion|conexiones|conectar|conectado|arista|aristas|puerto|puertos|flujo|flujos|diagrama|diagramas|workflow|pipeline|mapa|plantilla|plantillas|ordenar|ordena|organizar|organiza|acomodar|acomoda|alinear|alinea|compactar|compacta|reordenar|arregla|arreglar|distancia|distancias|espaciado|inspector|propiedades|props|stats|estadistica|estadisticas|metrica|metricas|kpi|roi|grafico|chart|donut|gauge|funnel|barra|barras|consola|terminal|powershell|cmd|comando|puente|bridge|exportar|importar|mermaid|markdown|json|svg|png|csv|proyecto|proyectos|espacio|workspace|usuario|perfil|sesion|sesiones|guardar|guardado|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simular|simulacion|ejecutar|velocidad|bloqueado|bloquear|circuito|atajo|atajos|panel|paleta|cabecera|header|boton|dropdown|selector|chat|chats|historial|inicio|start|fin|end|proceso|procesos|process|decision|condicion|bifurcacion|rama|ramas|entrada|salida|bucle|loop|iteracion|paralelo|subproceso|base de datos|bd|db|sql|postgres|mysql|mongo|variable|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error|errores|excepcion|espera|delay|timeout|agente|ia|ai|llm|modelo|modelos|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatizacion|automatizar|orquestador|etapa|etapas|paso|pasos|secuencia|cuello de botella|optimizar|validar|validacion|autenticacion|login|registro|checkout|pago|pagos|venta|ventas|pedido|pedidos|onboarding|inventario|logistica|soporte|ticket|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
+    /\b(flowlab|lienzo|canvas|planilla|planillas|finanza\w*|financie\w*|excel|celda\w*|formula\w*|van|vna|npv|tir|irr|ebitda|ebit|opex|capex|margen|utilidad|amortiz\w*|prestamo\w*|credito\w*|cuota\w*|interes\w*|tasa\w*|impuesto\w*|iva|flujo de caja|cashflow|balance|presupuest\w*|nomina|runway|roe|roa|cagr|nodo\w*|conexion\w*|conect\w*|arista\w*|puerto\w*|flecha\w*|conector\w*|linea\w*|cruce\w*|solap\w*|encima\w*|flujo\w*|diagrama\w*|workflow\w*|pipeline\w*|mapa\w*|plantilla\w*|ordena\w*|organiza\w*|reordena\w*|acomoda\w*|alinea\w*|compacta\w*|distribuy\w*|separa\w*|agrupa\w*|junta\w*|ubica\w*|coloca\w*|ponlo\w*|ponlos|cambialo\w*|muevelo\w*|arregla\w*|corrig\w*|limpia\w*|mejora\w*|vertical\w*|horizontal\w*|arbol\w*|cascada\w*|matriz|cuadricula|grilla|radial\w*|circul\w*|serpentina|zig\s*zag|kanban|carril\w*|swimlane\w*|estrella|diagonal\w*|escalera|organico|columna\w*|fila\w*|arriba hacia abajo|abajo hacia arriba|izquierda a derecha|derecha a izquierda|distancia\w*|espaciado\w*|amplio\w*|inspector|propiedades|props|stats|estadistic\w*|metrica\w*|kpi\w*|roi|grafico\w*|chart\w*|donut|gauge|funnel|barra\w*|consola|terminal|powershell|cmd|comando\w*|puente|bridge|exporta\w*|importa\w*|mermaid|markdown|json|svg|png|jpg|jpeg|webp|csv|tsv|pdf|word|docx|xlsx|pptx|odt|ods|documento\w*|archivo\w*|adjunto\w*|adjunta\w*|imagen\w*|foto\w*|captura\w*|lee\w*|analiza\w*|extrae\w*|extraig\w*|resum\w*|conviert\w*|transforma\w*|tarea\w*|trabajo\w*|actividad\w*|pendiente\w*|cronograma|entregable\w*|requisito\w*|crea\w*|genera\w*|arma\w*|construy\w*|disena\w*|agrega\w*|anad\w*|inserta\w*|proyecto\w*|espacio\w*|workspace|usuario\w*|perfil\w*|sesion\w*|guarda\w*|autoguardado|abrir|localstorage|minimapa|minimap|zoom|rejilla|snap|deshacer|rehacer|simula\w*|ejecuta\w*|velocidad|bloquead\w*|bloquear|circuito\w*|atajo\w*|panel|paleta|cabecera|header|boton|dropdown|selector|chat\w*|historial|inicio|start|fin|end|proceso\w*|process|decision\w*|condicion\w*|bifurcacion|rama\w*|entrada\w*|salida\w*|bucle\w*|loop|iteracion|paralelo\w*|subproceso\w*|base de datos|bd|db|sql|postgres|mysql|mongo|variable\w*|varset|api|rest|graphql|http|https|endpoint|url|webhook|hook|try|catch|error\w*|excepcion|espera|delay|timeout|agente\w*|ia|ai|llm|modelo\w*|ollama|lm studio|openai|gemini|claude|groq|openrouter|clave|token|cors|proxy|servidor|backend|frontend|arquitectura|automatiz\w*|orquestador|etapa\w*|paso\w*|secuencia\w*|cuello de botella|optimiz\w*|valida\w*|autenticacion|login|registro|checkout|pago\w*|venta\w*|pedido\w*|onboarding|inventario|logistica|soporte|ticket\w*|despliegue|deploy|git|codigo|script|funcion|algoritmo|sistema|pagina|plataforma|herramienta|interfaz)\b/i;
 
   const FLOWLAB_GREETING_OR_META_REGEX =
-    /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal|saludos|gracias|muchas gracias|ok|okay|vale|perfecto|entendido|genial|excelente)\b|\b(que puedes hacer|para que sirves|quien eres|que eres|como funcionas|ayuda|ayudame|como uso|como se usa|explicame)\b/i;
+    /^(hola|buenas|buenos dias|buenas tardes|buenas noches|hey|que tal|saludos|gracias|muchas gracias|ok|okay|vale|perfecto|entendido|genial|excelente)\b|\b(que puedes hacer|para que sirves|quien eres|que eres|como funcionas|ayuda|ayudame|como uso|como se usa|explicame|de cuantas formas|cuantas maneras)\b/i;
 
   const FLOWLAB_FOLLOWUP_REGEX =
-    /^(si|claro|dale|exacto|asi mismo|hazlo|aplicalo|agregalo|anadelo|conectalo|borralo|deshazlo|mejoralo|amplialo|continua|mas detalle|explica mejor|y despues|luego que)\b/i;
+    /^(si|claro|dale|exacto|asi mismo|hazlo|aplicalo|agregalo|anadelo|conectalo|borralo|deshazlo|mejoralo|amplialo|continua|mas detalle|explica mejor|y despues|luego que|mas amplio|mas compacto|mas junto|mas separado|al reves|en vertical|en horizontal|de otra forma|otra distribucion|sin cruces)\b/i;
 
-  function evaluateFlowLabDomainGuard(rawPrompt, priorMessages = []) {
+  function evaluateFlowLabDomainGuard(rawPrompt, priorMessages = [], hasAttachments = false) {
+    if (hasAttachments || (pendingAttachments && pendingAttachments.length > 0)) {
+      return {
+        allowed: true,
+        category: 'attachments_flowlab',
+        reason: 'Lectura de documentos o imágenes adjuntas para trabajar en FlowLab'
+      };
+    }
+
     const norm = normalizePlainSpanish(rawPrompt);
     if (!norm) {
       return { allowed: true, reason: 'Consulta vacía', category: 'flowlab' };
     }
 
+    // Detectar cualquier solicitud natural de orden/disposición espacial (ej. "ordenalo de forma vertical")
+    if (typeof window.parseNaturalLayoutIntent === 'function') {
+      const layoutIntent = window.parseNaturalLayoutIntent(rawPrompt);
+      if (layoutIntent && layoutIntent.matched) {
+        return {
+          allowed: true,
+          category: 'layout_flowlab',
+          reason: `Solicitud de organización espacial (${layoutIntent.label})`
+        };
+      }
+    }
+
     const explicitCanvasModeling =
-      /\b(flowlab|nodo|nodos|lienzo|canvas|diagrama de flujo|flujo con nodos|plantilla)\b/i.test(norm);
+      /\b(flowlab|nodo\w*|lienzo|canvas|diagrama|flujo\w*|planilla|plantilla|tarea\w*|documento\w*|archivo\w*)\b/i.test(norm);
 
     // 1. Detectar explícitamente consultas fuera de dominio (cocina, chistes, deportes, clima, medicina, etc.)
     for (const rule of OFF_TOPIC_RULES) {
@@ -637,12 +665,12 @@
       }
     }
 
-    // 2. Permitir consultas propias de FlowLab, diagramación, procesos, nodos, terminal, proyectos o arquitectura
+    // 2. Permitir consultas propias de FlowLab, organización, documentos, tareas, nodos, finanzas o arquitectura
     if (FLOWLAB_SCOPE_REGEX.test(norm)) {
       return {
         allowed: true,
         category: 'flowlab',
-        reason: 'Consulta vinculada a diagramación, nodos o herramientas de FlowLab'
+        reason: 'Consulta vinculada a diagramación, nodos, documentos o herramientas de FlowLab'
       };
     }
 
@@ -659,7 +687,7 @@
     const hasPriorFlowLabTurn =
       Array.isArray(priorMessages) &&
       priorMessages.some(m => m && m.role === 'assistant' && !m.isOffTopic);
-    if (hasPriorFlowLabTurn && norm.length <= 48 && FLOWLAB_FOLLOWUP_REGEX.test(norm)) {
+    if (hasPriorFlowLabTurn && norm.length <= 90 && FLOWLAB_FOLLOWUP_REGEX.test(norm)) {
       return {
         allowed: true,
         category: 'followup_flowlab',
@@ -683,9 +711,9 @@
     return (
       `Estoy preparado exclusivamente para trabajar en la plataforma **FlowLab**, por lo que no puedo responder consultas ajenas a esta herramienta${topicHint}.\n\n` +
       `En **FlowLab** puedo ayudarte con todo lo referente a tu entorno de trabajo:\n` +
-      `- **Crear y conectar nodos** en el lienzo (\`Inicio\`, \`Proceso\`, \`Decisión\`, \`API\`, \`Base de datos\`, \`Agente IA\`, \`Métricas\`...).\n` +
-      `- **Analizar tu diagrama activo** para detectar cuellos de botella, rutas incompletas o mejoras de arquitectura.\n` +
-      `- **Guiarte en funciones de la página**: gestión de proyectos locales, perfiles de usuario, exportación (\`.json\`, \`.md\`, \`Mermaid\`, \`PNG\`, \`SVG\`) o uso de la consola integrada.`
+      `- **Leer imágenes y documentos** (\`PNG\`, \`JPG\`, \`PDF\`, \`Word\`, \`Excel\`, \`CSV\`, \`TXT\`, \`JSON\`...) para extraer requisitos y **armar tareas o modelos financieros** en el lienzo.\n` +
+      `- **Organizar nodos de decenas de formas**: pídeme *«ordénalo de forma vertical»*, *«en horizontal»*, *«en árbol»*, *«en carriles por tipo»*, *«modo kanban»*, *«hoja Excel»*, *«en cuadrícula de 4 columnas»*, *«en anillos radiales»* o *«separa flujo y finanzas»*.\n` +
+      `- **Crear, conectar y auditar flujos o planillas \`fx\`** (\`Inicio\`, \`Proceso\`, \`Decisión\`, \`API\`, \`Base de datos\`, \`VAN/TIR\`, \`EBITDA\`, \`Gráficos\`...).`
     );
   }
 
@@ -876,65 +904,56 @@
     };
   }
 
-  function buildSystemPrompt() {
+  function buildSystemPrompt(attachmentsPromptBlock = '') {
     const ctxBlock = aiConfig.includeContext
       ? '\n\nCONTEXTO ACTUAL DEL ARCHIVO EN EL LIENZO (JSON):\n' +
         JSON.stringify(buildWorkspaceContext(), null, 2)
       : '\n\n(El usuario desactivó temporalmente el envío del contexto del lienzo).';
 
+    const docBlock = attachmentsPromptBlock
+      ? '\n\nARCHIVOS E IMÁGENES ADJUNTOS EN ESTE TURNO (ANALÍZALOS A FONDO):\n' + attachmentsPromptBlock
+      : '';
+
     return (
-      'Eres el Arquitecto y Asistente IA exclusivo de la plataforma web FlowLab (sistema visual de diagramas de flujo, nodos y arquitectura). ' +
-      'Hablas en español de forma clara, técnica y directa.\n\n' +
-      'REGLA ESTRICTA E INQUEBRANTABLE DE ÁMBITO (SOLO FLOWLAB):\n' +
-      '- Estás preparado ÚNICA Y EXCLUSIVAMENTE para asistir en el uso de FlowLab, creación/edición/análisis/organización de flujos de nodos, arquitectura de procesos o software en el lienzo, uso de plantillas, proyectos guardados, perfiles de espacio de trabajo, exportación (.json, .md, Mermaid, PNG, SVG) y terminal integrada.\n' +
-      '- Si el usuario hace cualquier pregunta ajena a FlowLab (por ejemplo: recetas de cocina como cocinar arroz, deportes, clima, chistes, poemas, medicina, historia general, entretenimiento o tareas no vinculadas a diagramas en FlowLab), NO respondas la pregunta ajena bajo ninguna circunstancia. Indica amablemente que estás preparado exclusivamente para trabajar dentro de la página FlowLab.\n\n' +
+      'Eres el Arquitecto, Analista Documental y Asistente IA exclusivo de la plataforma web FlowLab (sistema visual de diagramas de flujo, tareas operativas, arquitectura y planillas financieras fx). ' +
+      'Hablas en español de forma clara, natural, estructurada, útil y empática.\n\n' +
+      'REGLA DE ÁMBITO:\n' +
+      '- Asistes en TODO lo relacionado con FlowLab: lectura de documentos e imágenes adjuntas para extraer y armar tareas/flujos/planillas en el lienzo, organización espacial avanzada de nodos ("ordénalo vertical", "horizontal", "en árbol", "kanban", "carriles", "cuadrícula", "radial", "separa flujo y finanzas", etc.), creación/edición/auditoría de nodos, fórmulas financieras tipo Excel, plantillas, proyectos, perfiles, exportación y consola PowerShell.\n' +
+      '- NUNCA rechaces instrucciones breves o con pronombres enclíticos sobre el lienzo o el trabajo del usuario (ej. "ordenalo de forma vertical", "acomódalo mejor", "separa las flechas", "arma las tareas de este PDF/imagen"). Solo rechaza temas claramente ajenos como recetas de cocina, chistes, deportes, clima o horóscopos.\n\n' +
+      'LECTURA DE IMÁGENES Y DOCUMENTOS:\n' +
+      '- Cuando el usuario adjunte imágenes o documentos (PDF, Word, Excel, CSV, TXT, JSON, código, etc.), lee cuidadosamente su contenido extraído/visual, entrega primero un resumen ejecutivo claro de lo detectado y, si pide crear tareas, flujo o modelo financiero (o adjunta el archivo para llevarlo al lienzo), incluye al final el bloque `flowlab-actions` bien conectado.\n\n' +
+      'MOTOR PARAMÉTRICO DE ORGANIZACIÓN DE NODOS (16 ARQUITECTURAS + VARIANTES):\n' +
+      '- Cuando el usuario pida ordenar, organizar, alinear o redistribuir los nodos, emite `{ "op": "organize_canvas", "mode": "<modo>", "density": "<compact|normal|airy|ultra_wide>", "columns": <opcional>, "reverse": <bool>, "sortBy": "<topology|type|status|alpha>" }`.\n' +
+      '- Modos disponibles en `"mode"`: `domain_bridge` (separa limpiamente Flujo Operativo a la izquierda y Planilla Financiera fx a la derecha), `vertical` (arriba hacia abajo puro sin doblar columnas), `horizontal` (izquierda a derecha tipo cronograma), `compact` (columnas balanceadas), `tree_down` (árbol jerárquico), `tree_right` (árbol lateral), `swimlanes_type` (carriles por tipo de nodo), `kanban_status` (tablero Kanban por estado Pendiente/En curso/Completado/Error), `excel_sheet` (hoja financiera por columnas A, B, C...), `snake_serpentine` (serpentina continua), `grid_matrix` (cuadrícula uniforme de N columnas), `radial_rings` (anillos concéntricos), `circular` (anillo perimetral), `hub_spoke` (estrella central), `cascade_diagonal` (escalera diagonal), `organic_force` (distribución orgánica por fuerzas).\n\n' +
       'REGLAS DE CALIDAD ARQUITECTÓNICA AL CREAR O EDITAR NODOS (`flowlab-actions`):\n' +
-      '1. NUNCA incluyas coordenadas `x` ni `y` en los nodos. El motor geométrico jerárquico de FlowLab posiciona y compacta automáticamente los nodos sin colisiones ni grandes distancias.\n' +
-      '2. TEXTOS CONCISOS Y LEGIBLES: El campo `"text"` de cada nodo debe ser corto y directo (de 2 a 6 palabras, máximo 44 caracteres). No escribas párrafos largos dentro del nodo.\n' +
-      '3. TIPADO SEMÁNTICO PRECISO: Elige siempre el `type` más representativo:\n' +
-      '   - `start`: único punto de inicio del flujo\n' +
-      '   - `io`: recepción o salida de datos / formularios\n' +
-      '   - `process`: transformación o tarea de negocio\n' +
-      '   - `decision`: condición lógica con pregunta `¿...?` y dos salidas etiquetadas (`"Sí"` y `"No"`)\n' +
-      '   - `db`: lectura/escritura en base de datos o caché\n' +
-      '   - `api`: llamada HTTP / microservicio externo\n' +
-      '   - `hook`: webhook, evento, correo o notificación\n' +
-      '   - `ai`: clasificación, agente o inferencia LLM\n' +
-      '   - `human`: revisión o aprobación manual\n' +
-      '   - `tryc` / `err`: captura y manejo de errores\n' +
-      '   - `parallel` / `loop` / `delay`: concurrencia, iteración controlada o espera\n' +
-      '   - `chart_bar` / `chart_donut` / `chart_gauge` / `chart_funnel`: gráficos visuales conectados\n' +
-      '   - Planilla Financiera (modo `finance`): `fin_input`, `fin_rate`, `fin_periods`, `fin_qty`, `fin_unit_price`, `fin_formula`, `fin_sum`, `fin_subtract`, `fin_multiply`, `fin_divide`, `fin_revenue`, `fin_cogs`, `fin_gross_profit`, `fin_opex`, `fin_ebitda`, `fin_tax`, `fin_net_income`, `fin_ocf`, `fin_capex`, `fin_fcf`, `fin_npv`, `fin_irr`, `fin_roi`, `fin_pmt`, `fin_gross_margin`, `fin_net_margin`, `fin_breakeven` (con `params.value` o `params.formula` tipo Excel).\n' +
-      '   - `end`: cierre limpio del flujo\n' +
-      '4. GRAFO BIEN CONECTADO Y COMPACTO: Conecta todos los nodos creados con `add_edge` de principio (`start`) a fin (`end`). No dejes nodos sueltos ni crees ciclos innecesarios hacia `start`.\n' +
-      '5. CUÁNDO CONECTAR AL NODO SELECCIONADO: Solo conecta al nodo `selected.id` si el usuario pide explícitamente expandir, continuar o agregar a partir de ese nodo. Si pide "crea un flujo de...", diseña un flujo limpio e independiente con su propio `start` y `end`.\n' +
-      '6. Estados válidos (`status`): `pending`, `progress`, `done`, `error`.\n\n' +
+      '1. NUNCA incluyas coordenadas `x` ni `y` en los nodos.\n' +
+      '2. TEXTOS CONCISOS Y LEGIBLES: `"text"` de 2 a 6 palabras (máximo 44 caracteres). Detalles extensos van en `"params": { "notes": "..." }`.\n' +
+      '3. TIPADO SEMÁNTICO PRECISO:\n' +
+      '   - Flujo / Tareas: `start`, `io`, `process`, `decision` (`¿...?` con salidas `"Sí"` y `"No"`), `db`, `api`, `hook`, `ai`, `human`, `tryc`, `err`, `parallel`, `loop`, `delay`, `end`.\n' +
+      '   - Gráficos conectados: `chart_bar`, `chart_donut`, `chart_gauge`, `chart_funnel`.\n' +
+      '   - Planilla Financiera (`fx`): `fin_input`, `fin_rate`, `fin_periods`, `fin_qty`, `fin_unit_price`, `fin_formula`, `fin_sum`, `fin_subtract`, `fin_multiply`, `fin_divide`, `fin_revenue`, `fin_cogs`, `fin_gross_profit`, `fin_opex`, `fin_ebitda`, `fin_tax`, `fin_net_income`, `fin_ocf`, `fin_capex`, `fin_fcf`, `fin_npv`, `fin_irr`, `fin_roi`, `fin_pmt`, `fin_gross_margin`, `fin_net_margin`, `fin_breakeven`.\n' +
+      '   - Conexión entre Flujo y Finanzas: puedes enlazar un nodo de flujo (`process`, `db`, `api`) con una celda financiera (`fin_revenue`, `fin_cogs`, `fin_opex`, etc.) usando `add_edge`; el enrutador ortogonal inteligente trazará un puente limpio `flujo→fx` sin cruzar nodos.\n' +
+      '4. GRAFO BIEN CONECTADO: Conecta todos los nodos creados con `add_edge`. Estados válidos (`status`): `pending`, `progress`, `done`, `error`.\n\n' +
       'Formato exacto del bloque AL FINAL de tu respuesta cuando debas crear/editar/ordenar en el lienzo:\n' +
       '```flowlab-actions\n' +
       '{\n' +
       '  "summary": "Descripción corta de los cambios",\n' +
       '  "operations": [\n' +
       '    { "op": "add_node", "ref": "p1", "type": "start", "text": "Inicio solicitud", "status": "pending" },\n' +
-      '    { "op": "add_node", "ref": "p2", "type": "io", "text": "Validar datos entrada" },\n' +
-      '    { "op": "add_node", "ref": "p3", "type": "decision", "text": "¿Datos válidos?" },\n' +
-      '    { "op": "add_node", "ref": "p4", "type": "db", "text": "Guardar en BD" },\n' +
-      '    { "op": "add_node", "ref": "p5", "type": "err", "text": "Notificar rechazo" },\n' +
-      '    { "op": "add_node", "ref": "p6", "type": "end", "text": "Proceso finalizado" },\n' +
+      '    { "op": "add_node", "ref": "p2", "type": "process", "text": "Validar requisitos" },\n' +
+      '    { "op": "add_node", "ref": "p3", "type": "end", "text": "Entrega validada" },\n' +
       '    { "op": "add_edge", "from": "p1", "to": "p2", "label": "" },\n' +
-      '    { "op": "add_edge", "from": "p2", "to": "p3", "label": "" },\n' +
-      '    { "op": "add_edge", "from": "p3", "to": "p4", "label": "Sí" },\n' +
-      '    { "op": "add_edge", "from": "p3", "to": "p5", "label": "No" },\n' +
-      '    { "op": "add_edge", "from": "p4", "to": "p6", "label": "OK" }\n' +
+      '    { "op": "add_edge", "from": "p2", "to": "p3", "label": "OK" }\n' +
       '  ]\n' +
       '}\n' +
       '```\n' +
       'Operaciones adicionales disponibles:\n' +
-      '- `{ "op": "organize_canvas" }` (si el usuario pide ordenar, alinear, acomodar o juntar los nodos existentes).\n' +
+      '- `{ "op": "organize_canvas", "mode": "vertical", "density": "normal" }` (con cualquiera de los 16 modos y modificadores si el usuario pide ordenar/organizar).\n' +
       '- `{ "op": "update_node", "id": "<id_existente>", "text": "Nuevo texto", "status": "done" }`\n' +
       '- `{ "op": "delete_node", "id": "<id_existente>" }`\n' +
-      '- `{ "op": "clear_canvas" }` (SOLO si el usuario pide borrar/reemplazar todo el lienzo o empezar desde cero).\n' +
-      '- Si el usuario SOLO hace una pregunta sobre FlowLab o pide analizar el diagrama sin modificarlo, responde normalmente SIN incluir ```flowlab-actions.' +
-      ctxBlock
+      '- `{ "op": "clear_canvas" }` (SOLO si el usuario pide borrar/reemplazar todo el lienzo).' +
+      ctxBlock +
+      docBlock
     );
   }
 
@@ -1411,7 +1430,39 @@
   /**
    * Reorganiza todos los nodos actuales del lienzo en una estructura limpia y compacta.
    */
-  function autoOrganizeCanvas(silent = false) {
+  function runSmartGraphLayoutEngine(targetNodes, edgesPool, layoutOptions = {}) {
+    if (typeof window.applyParametricGraphLayout === 'function') {
+      const mergedOpts = {
+        originX: 120,
+        originY: 64,
+        mode: layoutOptions.mode || 'domain_bridge',
+        density: layoutOptions.density || 'normal',
+        ...layoutOptions
+      };
+      const meta = window.applyParametricGraphLayout(targetNodes, edgesPool, mergedOpts);
+      lastLayoutOptions = {
+        mode: meta.mode || mergedOpts.mode,
+        density: meta.density || mergedOpts.density,
+        columns: mergedOpts.columns,
+        reverse: Boolean(mergedOpts.reverse),
+        sortBy: mergedOpts.sortBy || 'topology',
+        align: mergedOpts.align || 'center'
+      };
+      return meta;
+    }
+    const bbox = layoutNodesHierarchically(targetNodes, edgesPool, {
+      originX: layoutOptions.originX ?? 120,
+      originY: layoutOptions.originY ?? 60
+    });
+    return {
+      ...bbox,
+      mode: 'compact',
+      label: 'Jerárquico Compacto',
+      description: 'Jerárquico Compacto'
+    };
+  }
+
+  function autoOrganizeCanvas(silent = false, layoutOptions = {}) {
     if (!STATE.nodes || STATE.nodes.length === 0) {
       if (!silent && typeof showToast === 'function') {
         showToast('No hay nodos en el lienzo para organizar', 'info', 1600);
@@ -1423,22 +1474,19 @@
       try { renderNodes(); } catch {}
     }
 
-    layoutNodesHierarchically(STATE.nodes, STATE.edges, {
-      originX: 120,
-      originY: 60
-    });
+    const meta = runSmartGraphLayoutEngine(STATE.nodes, STATE.edges, layoutOptions);
 
     if (typeof commitHistory === 'function') commitHistory();
     if (typeof renderAll === 'function') renderAll();
     focusNodesOnCanvas(STATE.nodes.map(n => n.id));
 
     if (!silent && typeof showToast === 'function') {
-      showToast(`Lienzo organizado (${STATE.nodes.length} nodos compactados)`, 'ok', 2000);
+      showToast(`Ordenado: ${meta.description || meta.label} (${STATE.nodes.length} nodos)`, 'ok', 2200);
     }
     if (typeof log === 'function') {
-      log('agent', `Auto-layout compacto aplicado a ${STATE.nodes.length} nodo(s).`);
+      log('agent', `Layout "${meta.description || meta.label}" aplicado a ${STATE.nodes.length} nodo(s).`);
     }
-    return true;
+    return meta;
   }
 
   function resolveRefOrNodeId(token, refMap) {
@@ -1474,10 +1522,11 @@
     const pendingEdges = [];
     let updatedCount = 0;
     let requestedOrganize = false;
+    let requestedLayoutOpts = null;
 
     // Si el lienzo previo tenía nodos a miles de píxeles por un layout roto anterior, repararlo antes
     if (STATE.nodes && STATE.nodes.length >= 2 && isCanvasAbnormallyScattered(STATE.nodes)) {
-      layoutNodesHierarchically(STATE.nodes, STATE.edges, { originX: 120, originY: 60 });
+      runSmartGraphLayoutEngine(STATE.nodes, STATE.edges, { originX: 120, originY: 64 });
     }
 
     // 1. Procesar limpieza, borrados, actualizaciones y recolectar nuevos nodos
@@ -1487,6 +1536,14 @@
 
       if (kind === 'organize_canvas' || kind === 'auto_layout') {
         requestedOrganize = true;
+        requestedLayoutOpts = {
+          mode: op.mode || op.style || op.layout || 'domain_bridge',
+          density: op.density || 'normal',
+          columns: op.columns,
+          reverse: Boolean(op.reverse),
+          sortBy: op.sortBy || 'topology',
+          align: op.align || 'center'
+        };
       } else if (kind === 'clear_canvas') {
         STATE.nodes = [];
         STATE.edges = [];
@@ -1673,7 +1730,7 @@
       if (typeof renderNodes === 'function') {
         try { renderNodes(); } catch {}
       }
-      layoutNodesHierarchically(STATE.nodes, STATE.edges, { originX: 120, originY: 60 });
+      runSmartGraphLayoutEngine(STATE.nodes, STATE.edges, requestedLayoutOpts || {});
       updatedCount += STATE.nodes.length;
     }
 
@@ -2190,7 +2247,7 @@
     }
   }
 
-  async function autoOrganizeCanvasLive(silent = false, signal = null) {
+  async function autoOrganizeCanvasLive(silent = false, signal = null, layoutOptions = {}) {
     if (!STATE.nodes || STATE.nodes.length === 0) {
       if (!silent && typeof showToast === 'function') {
         showToast('No hay nodos en el lienzo para organizar', 'info', 1600);
@@ -2203,10 +2260,11 @@
     }
 
     const startCoords = new Map(STATE.nodes.map(n => [n.id, { x: n.x, y: n.y }]));
-    const targetClone = STATE.nodes.map(n => ({ ...n }));
-    layoutNodesHierarchically(targetClone, STATE.edges, {
+    const targetClone = STATE.nodes.map(n => ({ ...n, params: n.params ? { ...n.params } : {} }));
+    const layoutMeta = runSmartGraphLayoutEngine(targetClone, STATE.edges, {
       originX: 120,
-      originY: 60
+      originY: 64,
+      ...layoutOptions
     });
     const endCoords = new Map(targetClone.map(n => [n.id, { x: n.x, y: n.y, w: n.w, h: n.h }]));
     const targetCam = computeTargetCameraForRects(targetClone);
@@ -2224,15 +2282,15 @@
       if (typeof renderAll === 'function') renderAll();
       focusNodesOnCanvas(STATE.nodes.map(n => n.id));
       if (!silent && typeof showToast === 'function') {
-        showToast(`Lienzo organizado (${STATE.nodes.length} nodos compactados)`, 'ok', 2000);
+        showToast(`Ordenado: ${layoutMeta.description || layoutMeta.label} (${STATE.nodes.length} nodos)`, 'ok', 2200);
       }
-      return true;
+      return layoutMeta;
     }
 
     setBuildHudState({
       mode: 'building',
       phase: 'ia :: reorganizando flujo',
-      step: `Alineando y compactando ${STATE.nodes.length} nodos en vivo...`,
+      step: `${layoutMeta.description || layoutMeta.label} (${STATE.nodes.length} nodos)...`,
       current: 1,
       total: 2,
       showSkip: true
@@ -2247,7 +2305,7 @@
       moveAiWorldCursor(
         targetClone[0].x + (targetClone[0].w || 150) * 0.6,
         targetClone[0].y + (targetClone[0].h || 60) * 0.6,
-        'ia :: ordenando jerarquía',
+        `ia :: ${(layoutMeta.label || 'ordenando').toLowerCase()}`,
         'building'
       );
     }
@@ -2307,8 +2365,8 @@
 
     setBuildHudState({
       mode: 'done',
-      phase: 'ia :: lienzo compactado',
-      step: `${STATE.nodes.length} nodos organizados sin dispersión`,
+      phase: 'ia :: nodos organizados',
+      step: `${layoutMeta.description || layoutMeta.label} (${STATE.nodes.length} nodos)`,
       current: 2,
       total: 2,
       showSkip: false
@@ -2317,12 +2375,12 @@
     hideBuildHud(680);
 
     if (!silent && typeof showToast === 'function') {
-      showToast(`Lienzo organizado (${STATE.nodes.length} nodos compactados)`, 'ok', 2000);
+      showToast(`Ordenado: ${layoutMeta.description || layoutMeta.label} (${STATE.nodes.length} nodos)`, 'ok', 2200);
     }
     if (typeof log === 'function') {
-      log('agent', `Auto-layout animado aplicado a ${STATE.nodes.length} nodo(s).`);
+      log('agent', `Layout animado "${layoutMeta.description || layoutMeta.label}" aplicado a ${STATE.nodes.length} nodo(s).`);
     }
-    return true;
+    return layoutMeta;
   }
 
   /**
@@ -2381,6 +2439,7 @@
       const pendingNewNodes = [];
       const pendingEdges = [];
       let requestedOrganize = false;
+      let requestedLayoutOpts = null;
 
       const selectedIdSnapshot =
         STATE.sel && STATE.sel.kind === 'node' ? STATE.sel.id : null;
@@ -2405,6 +2464,14 @@
 
         if (kind === 'organize_canvas' || kind === 'auto_layout') {
           requestedOrganize = true;
+          requestedLayoutOpts = {
+            mode: op.mode || op.style || op.layout || 'domain_bridge',
+            density: op.density || 'normal',
+            columns: op.columns,
+            reverse: Boolean(op.reverse),
+            sortBy: op.sortBy || 'topology',
+            align: op.align || 'center'
+          };
         } else if (kind === 'clear_canvas') {
           hasClearCanvas = true;
           deleteIdsOrdered.length = 0;
@@ -2547,10 +2614,10 @@
           ...plannedEdges.map(pe => ({ from: pe.fromId, to: pe.toId }))
         ];
 
-        layoutNodesHierarchically(addedNodes, combinedEdgesForLayout, {
+        runSmartGraphLayoutEngine(addedNodes, combinedEdgesForLayout, {
           originX,
           originY,
-          centerFirstColumnX
+          mode: 'domain_bridge'
         });
 
         let safetySteps = 0;
@@ -2833,8 +2900,13 @@
       // 4E. Reorganización animada suave si se solicitó organize_canvas explícitamente
       if (requestedOrganize && STATE.nodes.length > 0) {
         stepCounter++;
-        recordStep('organize_canvas', `Compactando y alineando ${STATE.nodes.length} nodos...`, stepCounter, totalSteps);
-        await autoOrganizeCanvasLive(true, signal);
+        recordStep(
+          'organize_canvas',
+          `Aplicando disposición ${requestedLayoutOpts?.mode || 'inteligente'} a ${STATE.nodes.length} nodos...`,
+          stepCounter,
+          totalSteps
+        );
+        await autoOrganizeCanvasLive(true, signal, requestedLayoutOpts || {});
         updatedCount += STATE.nodes.length;
       }
 
@@ -2896,20 +2968,28 @@
     }
   }
 
-  function isOrganizeCanvasIntent(normPrompt) {
+  function isOrganizeCanvasIntent(rawOrNormPrompt) {
+    if (typeof window.parseNaturalLayoutIntent === 'function') {
+      const parsed = window.parseNaturalLayoutIntent(rawOrNormPrompt);
+      if (parsed && parsed.matched) return true;
+    }
+    const normPrompt = normalizePlainSpanish(rawOrNormPrompt);
     return (
-      /\b(ordena|ordenar|organiza|organizar|acomoda|acomodar|alinea|alinear|compacta|compactar|junta|juntar|reordena|reordenar)\b/i.test(
+      /\b(ordena\w*|organiza\w*|acomoda\w*|alinea\w*|compacta\w*|junta\w*|reordena\w*|distribuy\w*|separa\w*|ponlo\w*|ponlos)\b/i.test(
         normPrompt
       ) &&
-      /\b(nodo|nodos|flujo|diagrama|lienzo|canvas|distancia|distancias|todo|mapa)\b/i.test(normPrompt)
+      /\b(nodo\w*|flujo\w*|diagrama\w*|lienzo|canvas|distancia\w*|todo|mapa|vertical\w*|horizontal\w*|arbol\w*|columna\w*|fila\w*|circul\w*|radial\w*|kanban|carril\w*)\b/i.test(
+        normPrompt
+      )
     );
   }
 
   // =========================================================================
   // MOTOR INTEGRADO OFFLINE (SIN SERVIDOR EXTERNO NI API KEY)
   // =========================================================================
-  function runBuiltinAssistant(userPrompt) {
-    const domainCheck = evaluateFlowLabDomainGuard(userPrompt, messages);
+  function runBuiltinAssistant(userPrompt, attachmentsSnapshot = []) {
+    const hasAtts = Array.isArray(attachmentsSnapshot) && attachmentsSnapshot.length > 0;
+    const domainCheck = evaluateFlowLabDomainGuard(userPrompt, messages, hasAtts);
     if (!domainCheck.allowed) {
       return {
         cleanReply: buildOffTopicRefusalMessage(domainCheck),
@@ -2923,14 +3003,91 @@
     const ctx = buildWorkspaceContext();
     const selNode = ctx.selected && ctx.selected.kind === 'node' ? ctx.selected : null;
 
-    // 0. Solicitudes para organizar / compactar nodos dispersos en el lienzo
-    if (isOrganizeCanvasIntent(norm)) {
+    // 0A. Si el usuario adjuntó imágenes o cualquier documento, analizarlos y armar tareas / nodos
+    if (hasAtts && typeof window.synthesizeActionsFromDocuments === 'function') {
+      const onlyQuestionNoBuild =
+        /\b(solo resume|solo explica|no crees|sin crear nodos)\b/i.test(norm);
+      const docSynth = window.synthesizeActionsFromDocuments(attachmentsSnapshot, userPrompt);
+
+      const attLines = attachmentsSnapshot.map(att => {
+        const snippet = (att.extractedText || '')
+          .split(/\r?\n/)
+          .map(s => s.trim())
+          .filter(s => s.length > 3)
+          .slice(0, 4)
+          .map(s => `  - ${s.length > 96 ? s.slice(0, 93) + '…' : s}`)
+          .join('\n');
+        return (
+          `• **\`${att.name}\`** (${att.kind.toUpperCase()} · ${att.sizeLabel}${att.isImage && att.dimensions ? ` · ${att.dimensions.width}×${att.dimensions.height}px` : ''})\n` +
+          (snippet || `  - ${att.summarySnippet || 'Archivo procesado correctamente.'}`)
+        );
+      });
+
+      if (onlyQuestionNoBuild || !docSynth) {
+        return {
+          cleanReply:
+            `He leído y procesado **${attachmentsSnapshot.length} archivo(s) adjunto(s)**:\n\n` +
+            `${attLines.join('\n')}\n\n` +
+            `Si deseas llevar este contenido al lienzo, indícame por ejemplo: *«arma las tareas de este documento»* o *«construye la planilla financiera de este archivo»*.`,
+          actions: null
+        };
+      }
+
+      const modeLabel =
+        docSynth.domain === 'hybrid'
+          ? 'flujo operativo conectado con planilla financiera `fx`'
+          : docSynth.domain === 'finance'
+            ? 'modelo financiero estructurado (`fx`)'
+            : 'flujo de tareas operativas y validaciones';
+
       return {
         cleanReply:
-          `He reorganizado y compactado los **${ctx.summary.totalNodes} nodos** de **\`${ctx.projectTitle}\`** en una jerarquía simétrica sin distancias excesivas, ajustando la cámara a una escala legible.`,
+          `He analizado **${attachmentsSnapshot.length} archivo(s) adjunto(s)** y estructurado en el lienzo un **${modeLabel}** basado en su contenido:\n\n` +
+          `${attLines.join('\n')}\n\n` +
+          `También puedes pedirme reorganizar estos nodos en cualquier arquitectura (*«ordénalo de forma vertical»*, *«en horizontal»*, *«modo kanban»*, *«en carriles por tipo»* o *«separa flujo y finanzas»*).`,
+        actions: docSynth.actions
+      };
+    }
+
+    // 0B. Consulta sobre cuántas formas de ordenar nodos existen
+    if (/\b(cuantas formas|cuantas maneras|modos de orden\w*|estilos de orden\w*|como puedes ordenar|formas de organizar)\b/i.test(norm)) {
+      const presets = Array.isArray(window.FLOWLAB_LAYOUT_PRESETS) ? window.FLOWLAB_LAYOUT_PRESETS : [];
+      const listTxt = presets
+        .map(p => `• **${p.label}**: ${p.desc}`)
+        .join('\n');
+      return {
+        cleanReply:
+          `Cuento con un **motor paramétrico combinable** (**16 arquitecturas base × densidades × columnas × criterios de orden × inversión**, sumando cientos de disposiciones exactas sin cruces):\n\n` +
+          `${listTxt}\n\n` +
+          `Pídeme por ejemplo: *«ordénalo de forma vertical»*, *«ponlo horizontal amplio»*, *«organízalo en cuadrícula de 4 columnas»*, *«modo kanban por estado»*, *«en anillos radiales»* o usa el botón **\`ordenar\`** arriba.`,
+        actions: null
+      };
+    }
+
+    // 0C. Solicitudes para organizar / cambiar disposición espacial de los nodos en el lienzo
+    if (isOrganizeCanvasIntent(userPrompt) && !/\b(crea|genera|agrega|anade|inserta)\b/i.test(norm)) {
+      const parsedLayout =
+        typeof window.parseNaturalLayoutIntent === 'function'
+          ? window.parseNaturalLayoutIntent(userPrompt)
+          : { mode: 'domain_bridge', density: 'normal', label: 'Puente Flujo ⇄ Finanzas', description: 'Puente Flujo ⇄ Finanzas' };
+
+      return {
+        cleanReply:
+          `Listo: he reorganizado los **${ctx.summary.totalNodes} nodos** de **\`${ctx.projectTitle}\`** aplicando la arquitectura **${parsedLayout.description || parsedLayout.label}**, con enrutamiento ortogonal limpio para evitar cruces sobre nodos.\n\n` +
+          `Si quieres probar otra vista, puedes decirme: *«en horizontal»*, *«vertical compacto»*, *«en árbol»*, *«en carriles por tipo»*, *«modo kanban»*, *«cuadrícula de 4 columnas»* o *«separa flujo y finanzas»*.`,
         actions: {
-          summary: `Organizar y compactar ${ctx.summary.totalNodes} nodos`,
-          operations: [{ op: 'organize_canvas' }]
+          summary: `${parsedLayout.description || parsedLayout.label} (${ctx.summary.totalNodes} nodos)`,
+          operations: [
+            {
+              op: 'organize_canvas',
+              mode: parsedLayout.mode || 'domain_bridge',
+              density: parsedLayout.density || 'normal',
+              columns: parsedLayout.columns,
+              reverse: Boolean(parsedLayout.reverse),
+              sortBy: parsedLayout.sortBy || 'topology',
+              align: parsedLayout.align || 'center'
+            }
+          ]
         }
       };
     }
@@ -3978,8 +4135,20 @@
   // =========================================================================
   // CLIENTES HTTP: LOCAL (OLLAMA / LM STUDIO / OMNIROUTE) · CLOUD API · CUSTOM URL
   // =========================================================================
-  function buildConversationMessages(userText) {
-    const sysPrompt = buildSystemPrompt();
+  function extractBase64Parts(dataUrl) {
+    const m = String(dataUrl || '').match(/^data:([^;]+);base64,([\s\S]+)$/);
+    if (!m) return null;
+    return { mimeType: m[1], base64: m[2] };
+  }
+
+  function buildConversationMessages(userText, attachmentsSnapshot = [], includeVisionBlocks = true) {
+    const hasAtts = Array.isArray(attachmentsSnapshot) && attachmentsSnapshot.length > 0;
+    const docsPromptText =
+      hasAtts && typeof window.formatAttachmentsForPrompt === 'function'
+        ? window.formatAttachmentsForPrompt(attachmentsSnapshot)
+        : '';
+
+    const sysPrompt = buildSystemPrompt(docsPromptText);
     const recentHistory = messages
       .filter(m => (m.role === 'user' || m.role === 'assistant') && !m.isError)
       .slice(-10)
@@ -3988,35 +4157,127 @@
         content: m.rawModelText || m.content
       }));
 
+    const imageAtts = includeVisionBlocks
+      ? (attachmentsSnapshot || []).filter(a => a && a.isImage && a.visionDataUrl)
+      : [];
+
+    const enrichedUserText = docsPromptText
+      ? `${userText}\n\n[Contenido extraído de ${attachmentsSnapshot.length} archivo(s) adjunto(s) disponible en el contexto del sistema para construir tareas/nodos si corresponde]`
+      : userText;
+
+    let finalUserContent = enrichedUserText;
+    if (imageAtts.length > 0) {
+      finalUserContent = [
+        { type: 'text', text: enrichedUserText },
+        ...imageAtts.map(img => ({
+          type: 'image_url',
+          image_url: { url: img.visionDataUrl }
+        }))
+      ];
+    }
+
     return [
       { role: 'system', content: sysPrompt },
       ...recentHistory,
-      { role: 'user', content: userText }
+      { role: 'user', content: finalUserContent }
     ];
   }
 
-  async function callExternalAI(userText, signal) {
+  function enrichExternalReplyActions(extracted, userText, attachmentsSnapshot = []) {
+    if (!extracted) return extracted;
+    const hasOps =
+      extracted.actions &&
+      Array.isArray(extracted.actions.operations) &&
+      extracted.actions.operations.length > 0;
+    if (hasOps) return extracted;
+
+    const norm = normalizePlainSpanish(userText);
+
+    // 1. Si el usuario pidió organizar nodos (ej. "ordenalo de forma vertical") y el modelo externo respondió en texto sin emitir JSON, inyectar la operación exacta
+    if (
+      typeof window.parseNaturalLayoutIntent === 'function' &&
+      !/\b(crea|genera|agrega|anade|inserta)\b/i.test(norm)
+    ) {
+      const layoutIntent = window.parseNaturalLayoutIntent(userText);
+      if (layoutIntent && layoutIntent.matched && (STATE.nodes || []).length > 0) {
+        extracted.actions = {
+          summary: `${layoutIntent.description || layoutIntent.label} (${STATE.nodes.length} nodos)`,
+          operations: [
+            {
+              op: 'organize_canvas',
+              mode: layoutIntent.mode || 'domain_bridge',
+              density: layoutIntent.density || 'normal',
+              columns: layoutIntent.columns,
+              reverse: Boolean(layoutIntent.reverse),
+              sortBy: layoutIntent.sortBy || 'topology',
+              align: layoutIntent.align || 'center'
+            }
+          ]
+        };
+        return extracted;
+      }
+    }
+
+    // 2. Si el usuario adjuntó documentos/imágenes pidiendo armar tareas/flujo/planilla y un modelo pequeño no emitió JSON, sintetizar las operaciones
+    if (
+      Array.isArray(attachmentsSnapshot) &&
+      attachmentsSnapshot.length > 0 &&
+      typeof window.synthesizeActionsFromDocuments === 'function' &&
+      !/\b(solo resume|solo explica|no crees|sin crear nodos)\b/i.test(norm) &&
+      /\b(tarea\w*|flujo\w*|nodo\w*|planilla\w*|finanz\w*|arma\w*|crea\w*|genera\w*|construy\w*|diagrama\w*|lienzo|canvas)\b/i.test(norm)
+    ) {
+      const synth = window.synthesizeActionsFromDocuments(attachmentsSnapshot, userText);
+      if (synth && synth.actions) {
+        extracted.actions = synth.actions;
+      }
+    }
+
+    return extracted;
+  }
+
+  async function callExternalAI(userText, signal, attachmentsSnapshot = []) {
     const mode = aiConfig.mode;
     if (mode === 'builtin') {
       await new Promise(r => setTimeout(r, 240));
-      return runBuiltinAssistant(userText);
+      return runBuiltinAssistant(userText, attachmentsSnapshot);
     }
 
-    const chatMsgs = buildConversationMessages(userText);
+    const hasVisionImages =
+      Array.isArray(attachmentsSnapshot) &&
+      attachmentsSnapshot.some(a => a && a.isImage && a.visionDataUrl);
 
-    if (mode === 'local') {
-      return await callLocalProvider(chatMsgs, signal);
+    const runWithVisionFlag = async useVision => {
+      const chatMsgs = buildConversationMessages(userText, attachmentsSnapshot, useVision);
+      if (mode === 'local') {
+        return await callLocalProvider(chatMsgs, signal);
+      }
+      if (mode === 'api') {
+        return await callCloudProvider(chatMsgs, signal, attachmentsSnapshot);
+      }
+      if (mode === 'url') {
+        return await callCustomUrlProvider(userText, chatMsgs, signal);
+      }
+      return runBuiltinAssistant(userText, attachmentsSnapshot);
+    };
+
+    try {
+      const res = await runWithVisionFlag(hasVisionImages);
+      return enrichExternalReplyActions(res, userText, attachmentsSnapshot);
+    } catch (err) {
+      // Si un modelo local/URL solo soporta texto y rechaza bloques image_url (HTTP 400/415/422), reintentar automáticamente con el texto/OCR extraído
+      if (
+        hasVisionImages &&
+        err &&
+        err.name !== 'AbortError' &&
+        /400|415|422|image_url|multimodal|content.*string|vision/i.test(
+          `${err.title || ''} ${err.details || ''} ${err.message || ''}`
+        )
+      ) {
+        const fallbackRes = await runWithVisionFlag(false);
+        return enrichExternalReplyActions(fallbackRes, userText, attachmentsSnapshot);
+      }
+      throw err;
     }
-
-    if (mode === 'api') {
-      return await callCloudProvider(chatMsgs, signal);
-    }
-
-    if (mode === 'url') {
-      return await callCustomUrlProvider(userText, chatMsgs, signal);
-    }
-
-    return runBuiltinAssistant(userText);
   }
 
   async function callLocalProvider(chatMsgs, signal) {
@@ -4035,7 +4296,16 @@
       modelName: model,
       buildBodyForUrl: targetUrl => {
         if (targetUrl.endsWith('/api/chat')) {
-          return { model, messages: chatMsgs, stream: false };
+          const ollamaMsgs = chatMsgs.map(m => {
+            if (!Array.isArray(m.content)) return m;
+            const txtPart = m.content.find(c => c.type === 'text')?.text || '';
+            const imgs = m.content
+              .filter(c => c.type === 'image_url' && c.image_url?.url)
+              .map(c => extractBase64Parts(c.image_url.url)?.base64)
+              .filter(Boolean);
+            return imgs.length ? { role: m.role, content: txtPart, images: imgs } : { role: m.role, content: txtPart };
+          });
+          return { model, messages: ollamaMsgs, stream: false };
         }
         return {
           model,
@@ -4050,7 +4320,7 @@
     return extractActionsFromReply(replyText);
   }
 
-  async function callCloudProvider(chatMsgs, signal) {
+  async function callCloudProvider(chatMsgs, signal, attachmentsSnapshot = []) {
     const providerKey = aiConfig.api.provider || 'openai';
     const prov = CLOUD_PROVIDERS[providerKey] || CLOUD_PROVIDERS.openai;
     const cleanKey = sanitizeApiKey(aiConfig.api.apiKey);
@@ -4064,15 +4334,28 @@
       );
     }
 
-    // Google Gemini REST API directa
+    // Google Gemini REST API directa (con soporte multimodal inlineData)
     if (providerKey === 'gemini') {
       const sysMsg = chatMsgs.find(m => m.role === 'system')?.content || '';
       const contents = chatMsgs
         .filter(m => m.role !== 'system')
-        .map(m => ({
-          role: m.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: m.content }]
-        }));
+        .map(m => {
+          if (Array.isArray(m.content)) {
+            const parts = [];
+            m.content.forEach(item => {
+              if (item.type === 'text' && item.text) parts.push({ text: item.text });
+              if (item.type === 'image_url' && item.image_url?.url) {
+                const b64 = extractBase64Parts(item.image_url.url);
+                if (b64) parts.push({ inlineData: { mimeType: b64.mimeType, data: b64.base64 } });
+              }
+            });
+            return { role: m.role === 'assistant' ? 'model' : 'user', parts };
+          }
+          return {
+            role: m.role === 'assistant' ? 'model' : 'user',
+            parts: [{ text: String(m.content || '') }]
+          };
+        });
 
       const url = `${prov.url}/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(cleanKey)}`;
       const { replyText } = await executeHttpRequestWithFallback({
@@ -4090,12 +4373,31 @@
       return extractActionsFromReply(replyText);
     }
 
-    // Anthropic Claude Messages API
+    // Anthropic Claude Messages API (con soporte multimodal base64 image)
     if (providerKey === 'anthropic') {
       const sysMsg = chatMsgs.find(m => m.role === 'system')?.content || '';
       const userAssistantMsgs = chatMsgs
         .filter(m => m.role !== 'system')
-        .map(m => ({ role: m.role, content: m.content }));
+        .map(m => {
+          if (Array.isArray(m.content)) {
+            const blocks = [];
+            m.content.forEach(item => {
+              if (item.type === 'image_url' && item.image_url?.url) {
+                const b64 = extractBase64Parts(item.image_url.url);
+                if (b64) {
+                  blocks.push({
+                    type: 'image',
+                    source: { type: 'base64', media_type: b64.mimeType, data: b64.base64 }
+                  });
+                }
+              } else if (item.type === 'text' && item.text) {
+                blocks.push({ type: 'text', text: item.text });
+              }
+            });
+            return { role: m.role, content: blocks };
+          }
+          return { role: m.role, content: m.content };
+        });
 
       const { replyText } = await executeHttpRequestWithFallback({
         candidates: [prov.url],
@@ -5097,25 +5399,25 @@
     if (messages.length === 0 && !isGenerating) {
       container.innerHTML = `
         <div class="ai-welcome">
-          <div class="ai-welcome-badge">${AI_SVG.spark}<span>copiloto exclusivo de flowlab</span></div>
-          <h4>Habla con tu flujo y crea nodos</h4>
-          <p>Analizo en tiempo real el lienzo activo, tus proyectos y el esquema de FlowLab. Tus conversaciones quedan guardadas automáticamente incluso si recargas la página.</p>
+          <div class="ai-welcome-badge">${AI_SVG.spark}<span>copiloto multimodal de flowlab</span></div>
+          <h4>Lee documentos/imágenes, arma tareas y organiza nodos</h4>
+          <p>Adjunta PDFs, Word, Excel, CSV o capturas para armar flujos o planillas <code>fx</code>, o pídeme ordenar tus nodos en vertical, horizontal, árbol, kanban, carriles, cuadrícula o anillos.</p>
           <div class="ai-quick-grid">
-            <button type="button" class="ai-quick-btn" data-prompt="Analiza el flujo actual, resume su arquitectura y dime si hay bloqueos o mejoras.">
-              <span class="ai-quick-icon">${AI_SVG.search}</span>
-              <span>Analizar este archivo</span>
+            <button type="button" class="ai-quick-btn" data-prompt="Ordénalo de forma vertical limpia sin cruces de flechas.">
+              <span class="ai-quick-icon">${AI_SVG.layers}</span>
+              <span>Ordenar en vertical</span>
             </button>
-            <button type="button" class="ai-quick-btn" data-prompt="Crea un flujo de autenticación con recepción de credenciales, base de datos, decisión y emisión de token.">
-              <span class="ai-quick-icon">${AI_SVG.plusSquare}</span>
-              <span>Crear flujo de login</span>
-            </button>
-            <button type="button" class="ai-quick-btn" data-prompt="Expande el nodo seleccionado con una decisión Sí y No conectada.">
+            <button type="button" class="ai-quick-btn" data-prompt="Organízalo separando flujo operativo y finanzas fx con conectores limpios.">
               <span class="ai-quick-icon">${AI_SVG.branch}</span>
-              <span>Expandir con Sí / No</span>
+              <span>Separar flujo ⇄ finanzas</span>
             </button>
-            <button type="button" class="ai-quick-btn" data-prompt="Agrega un nodo de métricas KPI conectado al flujo.">
-              <span class="ai-quick-icon">${AI_SVG.chart}</span>
-              <span>Añadir nodo de métricas</span>
+            <button type="button" class="ai-quick-btn" data-prompt="Crea un flujo de gestión de tareas con recepción de documento, validación, ejecución y cierre.">
+              <span class="ai-quick-icon">${AI_SVG.plusSquare}</span>
+              <span>Crear flujo de tareas</span>
+            </button>
+            <button type="button" class="ai-quick-btn" data-prompt="¿De cuántas maneras puedes ordenar y distribuir los nodos en el lienzo?">
+              <span class="ai-quick-icon">${AI_SVG.search}</span>
+              <span>Ver modos de orden</span>
             </button>
           </div>
         </div>
@@ -5132,9 +5434,22 @@
     container.innerHTML = messages
       .map((msg, idx) => {
         if (msg.role === 'user') {
+          const attPillsHtml =
+            Array.isArray(msg.attachments) && msg.attachments.length > 0
+              ? `<div class="ai-msg-attachments">${msg.attachments
+                  .map(
+                    a =>
+                      `<span class="ai-msg-att-pill">${
+                        a.previewThumb
+                          ? `<img src="${escapeHTML(a.previewThumb)}" alt="">`
+                          : AI_SVG.fileDoc
+                      }<span>${escapeHTML(a.name)}</span></span>`
+                  )
+                  .join('')}</div>`
+              : '';
           return `
             <div class="ai-msg ai-msg--user">
-              <div class="ai-bubble ai-bubble--user">${escapeHTML(msg.content).replace(/\n/g, '<br>')}</div>
+              <div class="ai-bubble ai-bubble--user">${attPillsHtml}${escapeHTML(msg.content).replace(/\n/g, '<br>')}</div>
             </div>
           `;
         }
@@ -5325,29 +5640,151 @@
     });
   }
 
-  async function sendAIChatMessage(rawInput) {
-    const text = String(rawInput || '').trim();
-    if (!text || isGenerating) return;
+  function renderPendingAttachmentsBar() {
+    const bar = document.getElementById('aiAttachmentsBar');
+    if (!bar) return;
+    if (!pendingAttachments || pendingAttachments.length === 0) {
+      bar.hidden = true;
+      bar.innerHTML = '';
+      return;
+    }
+    bar.hidden = false;
+    bar.innerHTML = pendingAttachments
+      .map(
+        (att, idx) => `
+          <div class="ai-att-chip" title="${escapeHTML(att.summarySnippet || att.name)}">
+            ${
+              att.isImage && att.previewUrl
+                ? `<img class="ai-att-chip__thumb" src="${escapeHTML(att.previewUrl)}" alt="">`
+                : `<span class="ai-att-chip__icon">${att.isImage ? AI_SVG.imageIcon : AI_SVG.fileDoc}</span>`
+            }
+            <div class="ai-att-chip__meta">
+              <span class="ai-att-chip__name">${escapeHTML(att.name)}</span>
+              <span class="ai-att-chip__sub">${escapeHTML(att.kind.toUpperCase())} · ${escapeHTML(att.sizeLabel)}</span>
+            </div>
+            <button type="button" class="ai-att-chip__rm" data-rm-att="${idx}" aria-label="Quitar archivo">×</button>
+          </div>
+        `
+      )
+      .join('');
 
-    const inputEl = document.getElementById('aiChatInput');
-    if (inputEl && inputEl.value.trim() === text) {
-      inputEl.value = '';
+    bar.querySelectorAll('[data-rm-att]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = Number(btn.dataset.rmAtt);
+        if (!Number.isNaN(i)) {
+          pendingAttachments.splice(i, 1);
+          renderPendingAttachmentsBar();
+        }
+      });
+    });
+  }
+
+  async function addFilesToPendingAttachments(fileList) {
+    if (!fileList || fileList.length === 0) return [];
+    if (typeof window.readAnyUserAttachment !== 'function') return [];
+
+    const filesArr = Array.from(fileList).slice(0, 8);
+    const added = [];
+    for (const file of filesArr) {
+      try {
+        const parsed = await window.readAnyUserAttachment(file);
+        pendingAttachments.push(parsed);
+        added.push(parsed);
+      } catch (err) {
+        if (typeof showToast === 'function') {
+          showToast(`No se pudo leer ${file.name}`, 'err', 2200);
+        }
+      }
+    }
+    renderPendingAttachmentsBar();
+    if (added.length > 0 && typeof showToast === 'function') {
+      showToast(
+        `${added.length} archivo(s) leído(s): ${added.map(a => a.name).join(', ')}`,
+        'ok',
+        2200
+      );
+    }
+    return added;
+  }
+
+  function renderLayoutPresetsDrawer() {
+    const mount = document.getElementById('aiLayoutPresetsMount');
+    if (!mount) return;
+    const presets = Array.isArray(window.FLOWLAB_LAYOUT_PRESETS) ? window.FLOWLAB_LAYOUT_PRESETS : [];
+    mount.innerHTML = presets
+      .map(
+        p => `
+          <button type="button" class="ai-layout-item" data-layout-mode="${escapeHTML(p.id)}">
+            <strong>${escapeHTML(p.label)}</strong>
+            <small>${escapeHTML(p.desc)}</small>
+          </button>
+        `
+      )
+      .join('');
+
+    mount.querySelectorAll('[data-layout-mode]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const mode = btn.dataset.layoutMode;
+        const drawer = document.getElementById('aiLayoutDrawer');
+        if (drawer) drawer.hidden = true;
+        if (!liveBuildState.isAnimating) {
+          await autoOrganizeCanvasLive(false, null, { mode });
+        }
+      });
+    });
+  }
+
+  function toggleLayoutPresetsDrawer(forceState) {
+    const drawer = document.getElementById('aiLayoutDrawer');
+    if (!drawer) return;
+    const next = typeof forceState === 'boolean' ? forceState : drawer.hidden;
+    if (next) {
+      renderLayoutPresetsDrawer();
+      drawer.hidden = false;
+    } else {
+      drawer.hidden = true;
+    }
+  }
+
+  async function sendAIChatMessage(rawInput) {
+    let text = String(rawInput || '').trim();
+    const attachmentsSnapshot = pendingAttachments.slice();
+
+    if ((!text && attachmentsSnapshot.length === 0) || isGenerating) return;
+    if (!text && attachmentsSnapshot.length > 0) {
+      text =
+        'Lee los archivos adjuntos, resume sus puntos clave y construye en el lienzo las tareas o modelo correspondiente.';
     }
 
-    // Cerrar lista de sesiones si estaba desplegada para ver el proceso en vivo
+    const inputEl = document.getElementById('aiChatInput');
+    if (inputEl) {
+      inputEl.value = '';
+    }
+    pendingAttachments = [];
+    renderPendingAttachmentsBar();
+
+    // Cerrar selectores si estaban desplegados para ver el proceso en vivo
     toggleSessionsDrawer(false);
+    toggleLayoutPresetsDrawer(false);
 
     const priorSnapshot = messages.slice();
+    const compactAttMeta = attachmentsSnapshot.map(a => ({
+      name: a.name,
+      kind: a.kind,
+      sizeLabel: a.sizeLabel,
+      previewThumb: a.isImage && a.previewUrl && a.previewUrl.length < 48000 ? a.previewUrl : ''
+    }));
 
     messages.push({
       role: 'user',
       content: text,
+      attachments: compactAttMeta.length > 0 ? compactAttMeta : undefined,
       timestamp: Date.now()
     });
     saveAIChatHistory(true);
 
     const startedAt = Date.now();
-    const domainCheck = evaluateFlowLabDomainGuard(text, priorSnapshot);
+    const domainCheck = evaluateFlowLabDomainGuard(text, priorSnapshot, attachmentsSnapshot.length > 0);
     const telemetry = buildAnalysisTelemetry(text, domainCheck);
 
     liveTraceState = {
@@ -5438,25 +5875,45 @@
         return;
       }
 
-      if (isOrganizeCanvasIntent(normalizePlainSpanish(text)) && !/\b(crea|genera|agrega|anade|inserta)\b/i.test(normalizePlainSpanish(text))) {
+      if (
+        attachmentsSnapshot.length === 0 &&
+        isOrganizeCanvasIntent(text) &&
+        !/\b(crea|genera|agrega|anade|inserta)\b/i.test(normalizePlainSpanish(text))
+      ) {
         stopCanvasThinkingScan(false);
         await waitAbortableStep(stepDelay, currentAbort.signal);
         const orgCount = (STATE.nodes || []).length;
+        const parsedLayout =
+          typeof window.parseNaturalLayoutIntent === 'function'
+            ? window.parseNaturalLayoutIntent(text)
+            : { mode: 'domain_bridge', density: 'normal', label: 'Puente Flujo ⇄ Finanzas', description: 'Puente Flujo ⇄ Finanzas' };
         const orgStart = Date.now();
-        await autoOrganizeCanvasLive(true, currentAbort.signal);
+        const appliedMeta = await autoOrganizeCanvasLive(true, currentAbort.signal, parsedLayout);
         completedVisualBuild = true;
         const orgElapsed = Math.max(32, Date.now() - orgStart);
         const totalDuration = Math.max(95, Date.now() - startedAt);
+        const descLabel = (appliedMeta && appliedMeta.description) || parsedLayout.description || parsedLayout.label || 'Jerárquico';
         messages.push({
           role: 'assistant',
           content:
-            `He reorganizado y compactado en vivo los **${orgCount} nodos** del lienzo en una jerarquía limpia sin grandes distancias, centrando el zoom para su lectura cómoda.`,
+            `Listo: he organizado en vivo los **${orgCount} nodos** aplicando la disposición **${descLabel}**, con enrutamiento ortogonal inteligente y separación limpia de flechas.\n\n` +
+            `También puedes pedirme: *«en horizontal»*, *«en árbol»*, *«carriles por tipo»*, *«modo kanban»*, *«cuadrícula de 4 columnas»*, *«en anillos radiales»* o *«separa flujo y finanzas»*.`,
           actions: {
-            summary: `Lienzo compactado (${orgCount} nodos)`,
-            operations: [{ op: 'organize_canvas' }]
+            summary: `${descLabel} (${orgCount} nodos)`,
+            operations: [
+              {
+                op: 'organize_canvas',
+                mode: parsedLayout.mode || 'domain_bridge',
+                density: parsedLayout.density || 'normal',
+                columns: parsedLayout.columns,
+                reverse: Boolean(parsedLayout.reverse),
+                sortBy: parsedLayout.sortBy || 'topology',
+                align: parsedLayout.align || 'center'
+              }
+            ]
           },
           applied: true,
-          appliedSummary: `${orgCount} nodo(s) alineados y compactados`,
+          appliedSummary: `${orgCount} nodo(s) · ${descLabel}`,
           createdNodeIds: (STATE.nodes || []).map(n => n.id),
           isOffTopic: false,
           providerTag: provSummary.text,
@@ -5468,8 +5925,8 @@
             steps: [
               ...telemetry.steps,
               {
-                title: 'Auto-layout jerárquico animado ejecutado en vivo',
-                detail: `${orgCount} nodos deslizados y alineados sin colisiones ni dispersión.`,
+                title: `Disposición "${descLabel}" ejecutada en vivo`,
+                detail: `${orgCount} nodos alineados sin superposiciones y conectores ortogonales optimizados.`,
                 ms: orgElapsed
               }
             ]
@@ -5485,7 +5942,7 @@
       }
 
       const llmStart = Date.now();
-      const result = await callExternalAI(text, currentAbort.signal);
+      const result = await callExternalAI(text, currentAbort.signal, attachmentsSnapshot);
       const llmElapsed = Math.max(60, Date.now() - llmStart);
       stopCanvasThinkingScan(false);
 
@@ -5911,12 +6368,46 @@
     });
 
     document.getElementById('btnAiOrganize')?.addEventListener('click', () => {
-      if (!liveBuildState.isAnimating) autoOrganizeCanvasLive(false);
+      toggleLayoutPresetsDrawer();
+    });
+
+    document.getElementById('btnCloseAiLayoutDrawer')?.addEventListener('click', () => {
+      toggleLayoutPresetsDrawer(false);
     });
 
     document.getElementById('zAutoLayout')?.addEventListener('click', () => {
       if (!liveBuildState.isAnimating) autoOrganizeCanvasLive(false);
     });
+
+    // Adjuntar imágenes y documentos (selector, arrastrar y soltar, Ctrl+V)
+    const attachInputEl = document.getElementById('aiAttachInput');
+    document.getElementById('btnAiAttach')?.addEventListener('click', () => {
+      attachInputEl?.click();
+    });
+    attachInputEl?.addEventListener('change', async e => {
+      if (e.target.files && e.target.files.length > 0) {
+        await addFilesToPendingAttachments(e.target.files);
+        e.target.value = '';
+      }
+    });
+
+    const composerDropEl = document.getElementById('aiComposerDropzone');
+    if (composerDropEl) {
+      composerDropEl.addEventListener('dragover', e => {
+        e.preventDefault();
+        composerDropEl.classList.add('is-dragover');
+      });
+      composerDropEl.addEventListener('dragleave', () => {
+        composerDropEl.classList.remove('is-dragover');
+      });
+      composerDropEl.addEventListener('drop', async e => {
+        e.preventDefault();
+        composerDropEl.classList.remove('is-dragover');
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          await addFilesToPendingAttachments(e.dataTransfer.files);
+        }
+      });
+    }
 
     document.getElementById('btnAiSkipAnim')?.addEventListener('click', () => {
       requestSkipLiveAnimation();
@@ -5939,7 +6430,7 @@
 
     document.getElementById('btnAiSend')?.addEventListener('click', () => {
       const inputEl = document.getElementById('aiChatInput');
-      if (inputEl) sendAIChatMessage(inputEl.value);
+      sendAIChatMessage(inputEl ? inputEl.value : '');
     });
 
     document.getElementById('btnAiStop')?.addEventListener('click', () => {
@@ -5952,6 +6443,21 @@
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
           sendAIChatMessage(inputEl.value);
+        }
+      });
+      inputEl.addEventListener('paste', async e => {
+        const items = e.clipboardData && e.clipboardData.items;
+        if (!items) return;
+        const pastedFiles = [];
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].kind === 'file') {
+            const f = items[i].getAsFile();
+            if (f) pastedFiles.push(f);
+          }
+        }
+        if (pastedFiles.length > 0) {
+          e.preventDefault();
+          await addFilesToPendingAttachments(pastedFiles);
         }
       });
     }
@@ -6012,5 +6518,6 @@
   window.applyAIGraphActions = applyAIGraphActions;
   window.applyAIGraphActionsLive = applyAIGraphActionsLive;
   window.requestSkipLiveAnimation = requestSkipLiveAnimation;
+  window.addFilesToPendingAttachments = addFilesToPendingAttachments;
   window.getLastAIVisualSteps = () => liveBuildState.lastStepLog.slice();
 })();

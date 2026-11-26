@@ -596,16 +596,44 @@ body.palette-drag-active * {
   border-color: var(--green);
 }
 
-/* Conexiones */
+/* Conexiones ortogonales con separación de carriles y distinción Flujo / Finanzas / Puente */
+.edge-casing {
+  fill: none;
+  stroke: var(--bg0);
+  stroke-width: 4.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+  opacity: 0.92;
+}
+
 .edge {
   fill: none;
   stroke: var(--edge);
-  stroke-width: 1.5;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.14s ease, stroke-width 0.14s ease;
+}
+
+.edge.edge--workflow {
+  stroke: #6da27f;
+}
+
+.edge.edge--finance {
+  stroke: #34d399;
+  stroke-width: 1.75;
+}
+
+.edge.edge--bridge {
+  stroke: #fbbf24;
+  stroke-width: 1.85;
+  stroke-dasharray: 6 3.5;
 }
 
 .edge.kind-error {
   stroke-dasharray: 5 4;
-  stroke: #6a6e72;
+  stroke: #f87171;
 }
 
 .edge.kind-cond {
@@ -614,7 +642,9 @@ body.palette-drag-active * {
 
 .edge.sel {
   stroke: var(--green);
-  stroke-width: 2.2;
+  stroke-width: 2.45;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.35));
 }
 
 .edge-hit {
@@ -625,13 +655,40 @@ body.palette-drag-active * {
   cursor: pointer;
 }
 
+.edge-label-bg {
+  fill: rgba(14, 16, 18, 0.94);
+  stroke: rgba(255, 255, 255, 0.13);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+.edge-label-bg--finance {
+  stroke: rgba(52, 211, 153, 0.35);
+  fill: rgba(10, 22, 18, 0.95);
+}
+
+.edge-label-bg--bridge {
+  stroke: rgba(251, 191, 36, 0.45);
+  fill: rgba(26, 20, 10, 0.95);
+}
+
+.edge-label-bg.is-sel {
+  stroke: var(--green);
+}
+
 .edge-label {
-  font: 500 10px 'JetBrains Mono';
-  fill: #cfd3d6;
-  stroke: var(--bg0);
-  stroke-width: 4;
-  paint-order: stroke;
+  font: 600 9.5px 'JetBrains Mono', monospace;
+  fill: #dbe0e4;
   text-anchor: middle;
+  pointer-events: none;
+}
+
+.edge-label--finance {
+  fill: #6ee7b7;
+}
+
+.edge-label--bridge {
+  fill: #fde68a;
 }
 
 /* Optimización táctil para teléfonos y tablets (puertos y líneas cómodos al dedo) */
