@@ -133,16 +133,28 @@
   }
 
   function buildProjectSnapshot(cleanName) {
+    if (window.FlowLabWorkbookEngine?.notifyActiveSheetChanged) {
+      try {
+        window.FlowLabWorkbookEngine.notifyActiveSheetChanged();
+      } catch {}
+    }
+    const workbookSession = window.FlowLabWorkbookEngine?.serializeWorkbookSession
+      ? window.FlowLabWorkbookEngine.serializeWorkbookSession()
+      : null;
+
     return {
-      version: 1,
+      version: 2,
       title: cleanName,
+      canvasDomain: STATE.canvasDomain || 'workflow',
+      financeCurrency: STATE.financeCurrency || 'USD',
       nodes: deepClone(STATE.nodes || []),
       edges: deepClone(STATE.edges || []),
       pan: deepClone(STATE.pan || { x: 60, y: 80 }),
       zoom: Number(STATE.zoom) || 1,
       snapOn: STATE.snapOn !== false,
       speed: Number(STATE.speed) || 1,
-      isBlankCanvas: STATE.nodes.length === 0 && STATE.edges.length === 0
+      isBlankCanvas: STATE.nodes.length === 0 && STATE.edges.length === 0,
+      workbookSession
     };
   }
 
@@ -256,7 +268,20 @@
     document.getElementById('btnSnap')?.classList.toggle('on', STATE.snapOn);
     const speedSel = document.getElementById('speedSel');
     if (speedSel) speedSel.value = String(STATE.speed);
-    if (typeof setWorkspaceDomain === 'function') {
+
+    if (typeof setSheetCurrency === 'function' && STATE.financeCurrency) {
+      setSheetCurrency(STATE.financeCurrency);
+    }
+
+    if (inferredDomain === 'finance' && snap.workbookSession && window.FlowLabWorkbookEngine?.restoreWorkbookSession) {
+      window.FlowLabWorkbookEngine.restoreWorkbookSession(snap.workbookSession);
+    } else if (window.FlowLabWorkbookEngine?.clearActiveWorkbook) {
+      window.FlowLabWorkbookEngine.clearActiveWorkbook();
+    }
+
+    if (typeof setCanvasDomain === 'function') {
+      setCanvasDomain(inferredDomain, true);
+    } else if (typeof setWorkspaceDomain === 'function') {
       setWorkspaceDomain(inferredDomain, { silent: true });
     }
 
@@ -351,6 +376,39 @@
     if (typeof showToast === 'function') showToast(`Renombrado a "${clean}"`, 'ok', 1600);
   }
 
+  function duplicateSavedProjectById(projectId) {
+    const list = getSavedProjects();
+    const src = list.find(p => p.id === projectId);
+    if (!src || !src.data) return null;
+
+    let baseCopyName = `${src.name}_copia`;
+    let suffix = 2;
+    while (list.some(p => p.name.toLowerCase() === baseCopyName.toLowerCase())) {
+      baseCopyName = `${src.name}_copia_${suffix++}`;
+    }
+
+    const now = Date.now();
+    const snapCopy = deepClone(src.data);
+    snapCopy.title = baseCopyName;
+
+    const copyRecord = {
+      id: 'proj_' + (typeof uid === 'function' ? uid() : Math.random().toString(36).slice(2, 10)),
+      name: baseCopyName,
+      createdAt: now,
+      updatedAt: now,
+      nodeCount: typeof src.nodeCount === 'number' ? src.nodeCount : (snapCopy.nodes?.length || 0),
+      edgeCount: typeof src.edgeCount === 'number' ? src.edgeCount : (snapCopy.edges?.length || 0),
+      data: snapCopy
+    };
+
+    list.unshift(copyRecord);
+    if (!persistSavedProjects(list)) return null;
+
+    renderProjectsPopoverList();
+    if (typeof showToast === 'function') showToast(`Copia "${baseCopyName}" creada`, 'ok', 1800);
+    return copyRecord;
+  }
+
   function exportSavedProjectJSON(projectId) {
     const record = getSavedProjects().find(p => p.id === projectId);
     if (!record || !record.data) return;
@@ -363,6 +421,9 @@
       nodes: record.data.nodes || [],
       edges: record.data.edges || [],
       title: record.name,
+      canvasDomain: record.data.canvasDomain || 'workflow',
+      financeCurrency: record.data.financeCurrency || 'USD',
+      workbookSession: record.data.workbookSession || null,
       exported: new Date().toISOString()
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -735,7 +796,7 @@
     const vpHeight = vv ? vv.height : window.innerHeight;
     const rect = btn.getBoundingClientRect();
 
-    const popW = Math.min(352, vpWidth - 16);
+    const popW = Math.min(392, vpWidth - 16);
     pop.style.width = popW + 'px';
 
     let left = rect.right - popW;
@@ -781,6 +842,22 @@
     positionProjectsPopover();
   }
 
+  function syncQuickSaveStatusHint() {
+    const hintEl = document.getElementById('projSaveStatusHint');
+    const quickInput = document.getElementById('quickSaveProjInput');
+    if (!hintEl) return;
+    const typed = (quickInput?.value || getProjectTitleInputValue() || 'mi_proyecto').trim().toLowerCase();
+    const list = getSavedProjects();
+    const exists = list.find(p => p.name.toLowerCase() === typed);
+    if (exists) {
+      hintEl.textContent = 'actualizará existente';
+      hintEl.classList.add('is-update');
+    } else {
+      hintEl.textContent = 'nuevo guardado';
+      hintEl.classList.remove('is-update');
+    }
+  }
+
   function renderProjectsPopoverList() {
     const listWrap = document.getElementById('savedProjectsList');
     const searchWrap = document.getElementById('savedProjectsSearchWrap');
@@ -789,14 +866,15 @@
     const allProjects = getSavedProjects();
 
     updateSavedProjectsBadge(allProjects.length);
+    syncQuickSaveStatusHint();
     if (headCount) {
-      headCount.textContent = `${allProjects.length} ${allProjects.length === 1 ? 'archivo' : 'archivos'}`;
+      headCount.textContent = `${allProjects.length} ${allProjects.length === 1 ? 'proyecto' : 'proyectos'}`;
     }
 
     if (!listWrap) return;
 
     if (searchWrap) {
-      searchWrap.hidden = allProjects.length < 4;
+      searchWrap.hidden = allProjects.length < 3;
     }
 
     const q = (searchInput && !searchWrap?.hidden ? searchInput.value : '').trim().toLowerCase();
@@ -811,8 +889,8 @@
       listWrap.innerHTML =
         '<div class="proj-empty-state">' +
         '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>' +
-        '<span>Aún no tienes proyectos guardados en el navegador.</span>' +
-        '<small>Escribe un nombre arriba y pulsa "Guardar" para conservar tu flujo actual.</small>' +
+        '<span>Aún no tienes proyectos guardados aquí.</span>' +
+        '<small>Ponle un nombre arriba y pulsa "Guardar" para tener todos tus flujos y planillas en un solo lugar.</small>' +
         '</div>';
       return;
     }
@@ -829,6 +907,21 @@
         const nCount = typeof p.nodeCount === 'number' ? p.nodeCount : (p.data?.nodes?.length || 0);
         const eCount = typeof p.edgeCount === 'number' ? p.edgeCount : (p.data?.edges?.length || 0);
         const relDate = formatRelativeDate(p.updatedAt);
+        const isFinProj =
+          p.data?.canvasDomain === 'finance' ||
+          Boolean(p.data?.workbookSession) ||
+          (Array.isArray(p.data?.nodes) &&
+            typeof isFinanceNodeType === 'function' &&
+            p.data.nodes.some(n => isFinanceNodeType(n.type)));
+        const sheetCount =
+          (p.data?.workbookSession?.wbMeta?.sheetCount || 0) +
+          (p.data?.workbookSession?.customTabs?.length || 0);
+        const domainBadge = isFinProj
+          ? `<span class="proj-domain-pill is-fin">fx${sheetCount > 1 ? ` · ${sheetCount}h` : ''}</span>`
+          : `<span class="proj-domain-pill">flujo</span>`;
+        const itemSvg = isFinProj
+          ? `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>`
+          : `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
 
         if (renamingProjectId === p.id) {
           return (
@@ -861,12 +954,11 @@
         return (
           `<div class="proj-item${isActive ? ' is-active' : ''}" data-proj-id="${escapeProjHtml(p.id)}">` +
           `<button type="button" class="proj-item-open" data-proj-action="open" data-id="${escapeProjHtml(p.id)}" title="Abrir proyecto ${escapeProjHtml(p.name)}">` +
-          `<span class="proj-item-icon" aria-hidden="true">` +
-          `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>` +
-          `</span>` +
+          `<span class="proj-item-icon${isFinProj ? ' is-fin' : ''}" aria-hidden="true">${itemSvg}</span>` +
           `<span class="proj-item-info">` +
           `<span class="proj-item-title-row">` +
           `<span class="proj-item-name">${escapeProjHtml(p.name)}</span>` +
+          domainBadge +
           (isActive ? '<span class="proj-active-pill">activo</span>' : '') +
           `</span>` +
           `<span class="proj-item-meta">${nCount} nodos · ${eCount} conex. · ${escapeProjHtml(relDate)}</span>` +
@@ -875,6 +967,9 @@
           `<div class="proj-item-actions">` +
           `<button type="button" class="proj-act-btn" data-proj-action="rename" data-id="${escapeProjHtml(p.id)}" title="Renombrar proyecto" aria-label="Renombrar">` +
           `<svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>` +
+          `</button>` +
+          `<button type="button" class="proj-act-btn" data-proj-action="duplicate" data-id="${escapeProjHtml(p.id)}" title="Duplicar proyecto" aria-label="Duplicar">` +
+          `<svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>` +
           `</button>` +
           `<button type="button" class="proj-act-btn" data-proj-action="download" data-id="${escapeProjHtml(p.id)}" title="Descargar archivo .json" aria-label="Descargar JSON">` +
           `<svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>` +
@@ -913,7 +1008,7 @@
 
     document.getElementById('btnSaveProj')?.addEventListener('click', e => {
       e.stopPropagation();
-      openSaveProjectModal();
+      toggleProjectsPopover(true);
     });
 
     document.getElementById('btnSavedProjects')?.addEventListener('click', e => {
@@ -929,6 +1024,25 @@
       const input = document.getElementById('quickSaveProjInput');
       const val = input ? input.value : '';
       saveCurrentProjectToLocal(val, { forceNew: false });
+    });
+
+    document.getElementById('btnQuickSaveCopyProj')?.addEventListener('click', () => {
+      const input = document.getElementById('quickSaveProjInput');
+      const baseName = (input?.value || getProjectTitleInputValue() || 'mi_proyecto').trim() || 'mi_proyecto';
+      const list = getSavedProjects();
+      let copyName = list.some(p => p.name.toLowerCase() === baseName.toLowerCase())
+        ? `${baseName}_copia`
+        : baseName;
+      let suffix = 2;
+      while (list.some(p => p.name.toLowerCase() === copyName.toLowerCase())) {
+        copyName = `${baseName}_copia_${suffix++}`;
+      }
+      if (input) input.value = copyName;
+      saveCurrentProjectToLocal(copyName, { forceNew: true });
+    });
+
+    document.getElementById('quickSaveProjInput')?.addEventListener('input', () => {
+      syncQuickSaveStatusHint();
     });
 
     document.getElementById('quickSaveProjInput')?.addEventListener('keydown', e => {
@@ -964,6 +1078,8 @@
         pendingDeleteId = null;
         renamingProjectId = id;
         renderProjectsPopoverList();
+      } else if (action === 'duplicate') {
+        duplicateSavedProjectById(id);
       } else if (action === 'confirm-rename') {
         const inp = document.querySelector(`[data-rename-input="${id}"]`);
         renameSavedProjectById(id, inp ? inp.value : '');
@@ -1027,17 +1143,32 @@
 
     window.addEventListener('resize', positionProjectsPopover);
 
-    // Atajo universal Ctrl+S / Cmd+S para guardar el proyecto con nombre
+    // Atajo universal Ctrl+S / Cmd+S para guardar o abrir el gestor de proyectos
     window.addEventListener('keydown', e => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
         e.preventDefault();
-        openSaveProjectModal();
+        const activeRec = STATE.activeProjectId
+          ? getSavedProjects().find(p => p.id === STATE.activeProjectId)
+          : null;
+        if (activeRec) {
+          saveCurrentProjectToLocal(activeRec.name, { forceNew: false });
+        } else {
+          toggleProjectsPopover(true);
+          setTimeout(() => {
+            const inp = document.getElementById('quickSaveProjInput');
+            if (inp) {
+              inp.focus();
+              inp.select();
+            }
+          }, 30);
+        }
       }
     });
   }
 
   window.initProjectManager = initProjectManager;
   window.saveCurrentProjectToLocal = saveCurrentProjectToLocal;
+  window.duplicateSavedProjectById = duplicateSavedProjectById;
   window.loadSavedProjectById = loadSavedProjectById;
   window.promptNewBlankCanvas = promptNewBlankCanvas;
   window.openSaveProjectModal = openSaveProjectModal;

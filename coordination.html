@@ -59,42 +59,13 @@
       </button>
     </div>
 
-    <div class="template-module">
-      <span class="template-module__icon" aria-hidden="true">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg>
-      </span>
-      <select id="templateSelect" aria-label="Seleccionar plantilla o planilla financiera">
-        <option value="">plantillas::</option>
-        <option value="comparacion_precios">comparacion_precios</option>
-        <option value="orquestador">orquestador_ia</option>
-        <option value="web">proyecto_web</option>
-        <option value="contratacion">contratacion_personal</option>
-        <option value="personal">plan_personal</option>
-        <option value="complex">pipeline_complejo</option>
-        <option value="fin_dashboard_pnl">tablero_ganancia_perdida</option>
-        <option value="fin_resultados">planilla_resultados_pnl</option>
-        <option value="fin_flujo_caja">planilla_van_tir_flujos</option>
-        <option value="fin_prestamo">planilla_credito_frances</option>
-        <option value="fin_blanco">planilla_financiera_vacia</option>
-        <option value="blank">lienzo_blanco</option>
-      </select>
-    </div>
-
     <div class="header-actions">
-      <div class="action-cluster" role="group" aria-label="Proyectos, archivo y exportación">
-        <button class="btn" id="btnSaveProj" type="button" aria-label="Guardar proyecto local">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-          <span>guardar</span>
-        </button>
-        <button class="btn" id="btnSavedProjects" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="projectsPopover" aria-label="Proyectos guardados">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+      <div class="action-cluster" role="group" aria-label="Proyectos y exportación">
+        <button class="btn proj-hub-trigger" id="btnSavedProjects" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="projectsPopover" aria-label="Gestor de proyectos">
+          <svg width="12.5" height="12.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-7l-2-2H5a2 2 0 0 0-2 2z"/></svg>
           <span>proyectos</span>
           <span class="proj-count-badge" id="savedProjectsCount" hidden>0</span>
           <svg class="proj-btn-chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <button class="btn" id="btnLoad" type="button">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          <span>abrir</span>
         </button>
         <span class="cluster-sep" aria-hidden="true"></span>
         <button class="btn" id="btnJson">.json</button>
@@ -299,10 +270,23 @@
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         <span>.csv</span>
       </button>
+      <button type="button" class="btn fin-dock-toggle-btn" id="btnFinCollapseDock" title="Guardar barra de planilla para usar toda la pantalla del mapa" aria-label="Guardar barra financiera">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><polyline points="18 15 12 9 6 15"/></svg>
+        <span>ocultar</span>
+      </button>
     </div>
 
     <!-- Barra de pestañas multi-hoja para libros Excel (.xlsx) importados en Finanzas -->
     <div id="finWorkbookSheetsBar" class="fin-workbook-bar" role="tablist" aria-label="Hojas del libro Excel importado" hidden></div>
+
+    <!-- Pestaña compacta en el borde superior para volver a sacar la barra financiera cuando está guardada -->
+    <button type="button" id="finDockPullTab" class="fin-dock-pull-tab" title="Volver a desplegar barra financiera y hojas de cálculo" aria-label="Desplegar barra financiera" hidden>
+      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>
+      <span class="fin-dock-pull-tab__fx">fx</span>
+      <span class="fin-dock-pull-tab__sheet" id="finPullTabSheet">Planilla</span>
+      <span class="fin-dock-pull-tab__net" id="finPullTabNet"></span>
+      <svg class="fin-dock-pull-tab__chev" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
 
     <!-- HUD flotante en vivo mientras la IA analiza, construye o edita en el lienzo -->
     <div id="aiBuildHud" class="ai-build-hud" role="status" aria-live="polite" hidden>
@@ -890,41 +874,48 @@
   </div>
 </div>
 
-<!-- Gestor / Selector Desplegable de Proyectos Guardados en localStorage -->
-<div id="projectsPopover" class="projects-popover" role="dialog" aria-label="Gestor de proyectos guardados" hidden>
+<!-- Gestor Unificado de Proyectos (guardar, abrir, renombrar, duplicar, importar y eliminar) -->
+<div id="projectsPopover" class="projects-popover" role="dialog" aria-label="Gestor de proyectos" hidden>
   <div class="proj-popover-head">
     <div class="proj-popover-title-wrap">
-      <span class="proj-popover-title">proyectos_guardados</span>
-      <span class="proj-popover-count" id="projectsPopoverCount">0 archivos</span>
+      <span class="proj-popover-title">mis_proyectos</span>
+      <span class="proj-popover-count" id="projectsPopoverCount">0 guardados</span>
     </div>
     <button type="button" class="exp-close" id="btnCloseProjectsPopover" title="Cerrar" aria-label="Cerrar gestor de proyectos">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
   </div>
 
-  <div class="proj-quick-save">
-    <input id="quickSaveProjInput" type="text" placeholder="Nombre para guardar proyecto actual..." aria-label="Nombre para guardar el proyecto actual">
-    <button type="button" class="btn primary" id="btnQuickSaveProj">
-      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
-      <span>Guardar</span>
-    </button>
+  <div class="proj-save-box">
+    <div class="proj-save-box__head">
+      <span class="proj-save-box__lbl">guardar proyecto actual</span>
+      <span class="proj-save-box__hint" id="projSaveStatusHint">listo para guardar</span>
+    </div>
+    <div class="proj-quick-save">
+      <input id="quickSaveProjInput" type="text" placeholder="Nombre del proyecto..." aria-label="Nombre para guardar el proyecto actual">
+      <button type="button" class="btn primary" id="btnQuickSaveProj" title="Guardar o actualizar proyecto con este nombre">
+        <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+        <span>Guardar</span>
+      </button>
+      <button type="button" class="btn proj-copy-btn" id="btnQuickSaveCopyProj" title="Guardar como una copia independiente">+ copia</button>
+    </div>
   </div>
 
   <div class="proj-search-wrap" id="savedProjectsSearchWrap" hidden>
     <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <input id="savedProjectsSearch" type="text" placeholder="Filtrar proyectos guardados..." aria-label="Filtrar proyectos guardados">
+    <input id="savedProjectsSearch" type="text" placeholder="Buscar entre tus proyectos..." aria-label="Buscar entre tus proyectos">
   </div>
 
   <div id="savedProjectsList" class="proj-list"></div>
 
   <div class="proj-popover-foot">
-    <button type="button" class="btn" id="btnProjImportFile">
-      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      <span>Importar archivo</span>
-    </button>
-    <button type="button" class="btn" id="btnProjNewBlank">
+    <button type="button" class="btn" id="btnProjNewBlank" title="Crear un nuevo proyecto o planilla desde cero">
       <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke-dasharray="4 3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      <span>Lienzo en blanco</span>
+      <span>Nuevo proyecto</span>
+    </button>
+    <button type="button" class="btn" id="btnProjImportFile" title="Abrir archivo externo (.json, .xlsx, .csv o .md)">
+      <svg width="11.5" height="11.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>Abrir archivo</span>
     </button>
   </div>
 </div>
