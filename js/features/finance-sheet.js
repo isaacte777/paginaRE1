@@ -2085,16 +2085,74 @@
     if (!silent && typeof saveState === 'function') saveState();
   }
 
+  const FIN_DOCK_COLLAPSED_KEY = 'flowlab-fin-dock-collapsed';
+  let isFinDockCollapsed = false;
+  try {
+    isFinDockCollapsed = localStorage.getItem(FIN_DOCK_COLLAPSED_KEY) === '1';
+  } catch {}
+
+  function setFinanceDockCollapsed(collapsed) {
+    isFinDockCollapsed = Boolean(collapsed);
+    try {
+      localStorage.setItem(FIN_DOCK_COLLAPSED_KEY, isFinDockCollapsed ? '1' : '0');
+    } catch {}
+    syncFormulaBarUI();
+    window.FlowLabWorkbookEngine?.renderWorkbookSheetsBar?.();
+    if (typeof updateNodeQuickBar === 'function') updateNodeQuickBar();
+  }
+
+  function toggleFinanceDockCollapsed() {
+    setFinanceDockCollapsed(!isFinDockCollapsed);
+  }
+
   function syncFormulaBarUI() {
     const bar = document.getElementById('finFormulaBar');
+    const pullTab = document.getElementById('finDockPullTab');
+    const wbBar = document.getElementById('finWorkbookSheetsBar');
     if (!bar || typeof STATE === 'undefined') return;
 
     const selNode = STATE.sel && STATE.sel.kind === 'node' ? byId(STATE.sel.id) : null;
     const hasFinNodes = Array.isArray(STATE.nodes) && STATE.nodes.some(n => isFinanceNodeType(n.type));
     const showBar = STATE.canvasDomain === 'finance' || Boolean(selNode && isFinanceNodeType(selNode.type)) || hasFinNodes;
 
-    bar.hidden = !showBar;
-    if (!showBar) return;
+    if (!showBar) {
+      bar.hidden = true;
+      if (wbBar) wbBar.hidden = true;
+      if (pullTab) pullTab.hidden = true;
+      return;
+    }
+
+    const s = lastComputedSheet.summary || {};
+    if (pullTab) {
+      const sheetSpan = document.getElementById('finPullTabSheet');
+      const netSpan = document.getElementById('finPullTabNet');
+      if (sheetSpan) {
+        const activeLbl = window.FlowLabWorkbookEngine?.getActiveViewLabel?.();
+        sheetSpan.textContent = activeLbl || document.getElementById('projTitle')?.value?.trim() || 'Planilla';
+      }
+      if (netSpan) {
+        if ((s.totalCells || 0) > 0) {
+          const sign = s.netBalance > 0 ? '+' : '';
+          netSpan.textContent = `${sign}${compactMoney(s.netBalance)}`;
+          netSpan.className =
+            'fin-dock-pull-tab__net ' +
+            (s.verdict === 'profit' ? 'is-profit' : s.verdict === 'loss' ? 'is-loss' : 'is-even');
+          netSpan.hidden = false;
+        } else {
+          netSpan.hidden = true;
+        }
+      }
+    }
+
+    if (isFinDockCollapsed) {
+      bar.hidden = true;
+      if (wbBar) wbBar.hidden = true;
+      if (pullTab) pullTab.hidden = false;
+      return;
+    }
+
+    if (pullTab) pullTab.hidden = true;
+    bar.hidden = false;
 
     const cellInput = document.getElementById('finBarCellRef');
     const fxInput = document.getElementById('finBarFormulaInput');
@@ -2106,7 +2164,6 @@
       curSel.value = activeSheetCurrency;
     }
 
-    const s = lastComputedSheet.summary || {};
     if (verdictSpan) {
       if ((s.totalCells || 0) > 0) {
         const vCls = s.verdict === 'profit' ? 'is-profit' : s.verdict === 'loss' ? 'is-loss' : 'is-even';
@@ -3097,6 +3154,16 @@
       btnCsv.addEventListener('click', exportFinanceSheetCSV);
     }
 
+    document.getElementById('btnFinCollapseDock')?.addEventListener('click', e => {
+      e.stopPropagation();
+      setFinanceDockCollapsed(true);
+    });
+
+    document.getElementById('finDockPullTab')?.addEventListener('click', e => {
+      e.stopPropagation();
+      setFinanceDockCollapsed(false);
+    });
+
     bindInteractiveFinanceNodeEvents();
 
     setCanvasDomain(STATE.canvasDomain || 'workflow', true);
@@ -3338,6 +3405,9 @@
   window.setCanvasDomain = setCanvasDomain;
   window.setWorkspaceDomain = (domain, opts) => setCanvasDomain(domain, Boolean(opts && opts.silent));
   window.syncFormulaBarUI = syncFormulaBarUI;
+  window.isFinanceDockCollapsed = () => isFinDockCollapsed;
+  window.setFinanceDockCollapsed = setFinanceDockCollapsed;
+  window.toggleFinanceDockCollapsed = toggleFinanceDockCollapsed;
   window.setSheetCurrency = setSheetCurrency;
   window.initFinanceSheetFeature = initFinanceSheetFeature;
 })();

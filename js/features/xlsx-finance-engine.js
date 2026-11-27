@@ -2738,13 +2738,28 @@
     }
 
     ensureNativeSpreadsheetBook();
-    bar.hidden = false;
-    fxBar?.classList.add('has-sheets-dock');
 
     const tabs = getWorkbookTabDescriptors();
     if (!tabs.some(t => t.key === activeWorkbookViewKey) && tabs[0]) {
       activeWorkbookViewKey = tabs[0].key;
     }
+
+    const isDockCollapsed = typeof window.isFinanceDockCollapsed === 'function' && window.isFinanceDockCollapsed();
+    const pullSheetEl = document.getElementById('finPullTabSheet');
+    if (pullSheetEl) {
+      pullSheetEl.textContent = getActiveViewLabel() || 'Planilla';
+    }
+
+    if (isDockCollapsed) {
+      bar.hidden = true;
+      fxBar?.classList.add('has-sheets-dock');
+      const pullTab = document.getElementById('finDockPullTab');
+      if (pullTab) pullTab.hidden = false;
+      return;
+    }
+
+    bar.hidden = false;
+    fxBar?.classList.add('has-sheets-dock');
 
     const sheetTabsCount = tabs.filter(t => t.key !== 'master').length;
     const displayTitle = activeFinancialWorkbook

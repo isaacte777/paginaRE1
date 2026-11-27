@@ -502,8 +502,8 @@ function registerEventListeners() {
     renderNodes();
   });
 
-  // Plantillas
-  document.getElementById('templateSelect').addEventListener('change', e => {
+  // Plantillas (opcional si existe selector)
+  document.getElementById('templateSelect')?.addEventListener('change', e => {
     const chosen = e.target.value;
     if (!chosen) return;
     e.target.value = '';
@@ -553,7 +553,7 @@ function registerEventListeners() {
 
   // Export/Import
   document.getElementById('btnJson').addEventListener('click', exportJSON);
-  document.getElementById('btnLoad').addEventListener('click', () => {
+  document.getElementById('btnLoad')?.addEventListener('click', () => {
     document.getElementById('fileInput').click();
   });
   document.getElementById('fileInput').addEventListener('change', e => {
@@ -753,6 +753,7 @@ function registerEventListeners() {
       e.target.closest('#nodeQuickBar') ||
       e.target.closest('#finFormulaBar') ||
       e.target.closest('#finWorkbookSheetsBar') ||
+      e.target.closest('#finDockPullTab') ||
       e.target.closest('.fin-interactive-zone')
     ) {
       return;
@@ -974,7 +975,8 @@ function registerEventListeners() {
   DOM.vp.addEventListener('dblclick', e => {
     if (
       e.target.closest('.fin-interactive-zone') ||
-      e.target.closest('#finWorkbookSheetsBar')
+      e.target.closest('#finWorkbookSheetsBar') ||
+      e.target.closest('#finDockPullTab')
     ) {
       return;
     }
