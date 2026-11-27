@@ -36,7 +36,10 @@
     </div>
 
     <div class="header-status-group">
-      <span class="bridge-pill"><span id="bridgeDot"></span>Claude+Qwen activo</span>
+      <button type="button" class="bridge-pill" id="btnHeaderAiStatus" data-ai-state="builtin" title="IA conectada — clic para abrir ajustes de conexión IA">
+        <span id="bridgeDot" aria-hidden="true"></span>
+        <span id="headerAiStatusText">IA integrada · local</span>
+      </button>
       <span id="liveSyncStatus" class="live-sync-status" data-state="syncing" aria-live="polite">◌ conectando</span>
       <button type="button" class="uw-header-btn" id="btnUserWorkspace" data-accent="green" data-guest="1" aria-haspopup="dialog" aria-expanded="false" aria-controls="userWorkspacePopover" aria-label="Perfil y espacio de trabajo">
         <span class="uw-header-avatar" id="uwHeaderAvatar" aria-hidden="true">FL</span>

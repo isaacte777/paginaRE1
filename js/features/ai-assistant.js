@@ -4131,6 +4131,7 @@
     ) {
       const lines = trimmed.split(/\r?\n/);
       let acc = '';
+      let streamModel = '';
       for (const line of lines) {
         const clean = line.trim();
         if (!clean.startsWith('data:')) continue;
@@ -4141,6 +4142,9 @@
           if (chunk?.error) {
             const errMsg = typeof chunk.error === 'string' ? chunk.error : chunk.error.message;
             throw new AIConnectionError('Error reportado por el stream de IA', errMsg || JSON.stringify(chunk.error));
+          }
+          if (!streamModel && typeof chunk?.model === 'string' && chunk.model.trim()) {
+            streamModel = chunk.model.trim();
           }
           const delta =
             normalizeContentField(chunk?.choices?.[0]?.delta?.content) ||
@@ -4155,7 +4159,7 @@
           if (e instanceof AIConnectionError) throw e;
         }
       }
-      if (acc) return { replyText: acc, parsedJson: null };
+      if (acc) return { replyText: acc, parsedJson: null, detectedModel: streamModel };
     }
 
     // 2. JSON estándar (OpenAI, Ollama, Anthropic, Gemini, Webhooks personalizados)
@@ -4169,6 +4173,7 @@
         throw new AIConnectionError('El proveedor devolvió un error', String(errMsg), 'PROVIDER_ERROR');
       }
 
+      const detectedModel = String(data?.model || data?.modelVersion || '').trim();
       const replyText =
         normalizeContentField(data?.choices?.[0]?.message?.content) ||
         (typeof data?.choices?.[0]?.text === 'string' ? data.choices[0].text : '') ||
@@ -4185,7 +4190,7 @@
         (typeof data?.content === 'string' ? data.content : '') ||
         (data?.candidates?.[0]?.content?.parts?.map(p => p?.text || '').join('') || '');
 
-      return { replyText, parsedJson: data };
+      return { replyText, parsedJson: data, detectedModel };
     } catch (e) {
       if (e instanceof AIConnectionError) throw e;
     }
@@ -4194,16 +4199,20 @@
     const ndLines = trimmed.split(/\r?\n/).filter(Boolean);
     if (ndLines.length > 1 && ndLines[0].startsWith('{')) {
       let ndAcc = '';
+      let ndModel = '';
       let parsedAny = false;
       for (const ln of ndLines) {
         try {
           const obj = JSON.parse(ln);
           parsedAny = true;
+          if (!ndModel && typeof obj?.model === 'string' && obj.model.trim()) {
+            ndModel = obj.model.trim();
+          }
           ndAcc += obj?.message?.content || obj?.response || obj?.choices?.[0]?.delta?.content || '';
         } catch {}
       }
       if (parsedAny && ndAcc) {
-        return { replyText: ndAcc, parsedJson: null };
+        return { replyText: ndAcc, parsedJson: null, detectedModel: ndModel };
       }
     }
 
@@ -4275,6 +4284,9 @@
 
       if (responseInfo.ok) {
         const parsed = parseUniversalAIResponse(responseInfo.rawText, responseInfo.contentType);
+        if (parsed.detectedModel) {
+          connectionHealth.detectedModel = parsed.detectedModel;
+        }
         return {
           ...parsed,
           endpointUsed: candidateUrl
@@ -4931,7 +4943,8 @@
           state: 'ok',
           title: `Conexión verificada (${ms} ms)`,
           detail: resolvedNote,
-          resolvedEndpoint: connectionHealth.resolvedEndpoint
+          resolvedEndpoint: connectionHealth.resolvedEndpoint,
+          detectedModel: connectionHealth.detectedModel
         };
       }
       setStatusIndicator(statusEl, 'ok', `Conexión exitosa (${ms} ms)`, resolvedNote);
@@ -4968,13 +4981,190 @@
   }
 
   // =========================================================================
-  // INTERFAZ DE USUARIO DEL PANEL LATERAL IA
+  // INTERFAZ DE USUARIO DEL PANEL LATERAL IA Y PÍLDORA SUPERIOR (#btnHeaderAiStatus)
   // =========================================================================
+  const CLOUD_SHORT_LABELS = {
+    openai: 'OpenAI',
+    gemini: 'Gemini',
+    anthropic: 'Claude',
+    openrouter: 'OpenRouter',
+    groq: 'Groq',
+    deepseek: 'DeepSeek'
+  };
+
+  function formatCompactModelName(rawModel) {
+    const raw = String(rawModel || '').trim();
+    if (!raw || raw === 'default' || raw === 'local-model') return '';
+    let clean = raw.includes('/') ? raw.split('/').pop() : raw;
+    clean = clean
+      .replace(/:free$/i, '')
+      .replace(/:latest$/i, '')
+      .replace(/-latest$/i, '')
+      .replace(/-instruct$/i, '')
+      .replace(/-\d{8}$/, '');
+    if (clean.length > 24) clean = clean.slice(0, 23) + '…';
+    return clean;
+  }
+
+  function detectKnownGatewayLabel(rawUrl) {
+    const u = String(rawUrl || '').trim();
+    if (!u) return 'URL';
+    const low = u.toLowerCase();
+    if (low.includes(':11434') || low.includes('ollama')) return 'Ollama';
+    if (low.includes(':20128') || low.includes('omniroute')) return 'Omniroute';
+    if (low.includes(':1234') || low.includes('lmstudio')) return 'LM Studio';
+    if (low.includes(':1337')) return 'Jan AI';
+    if (low.includes('api.openai.com')) return 'OpenAI';
+    if (low.includes('api.anthropic.com')) return 'Claude';
+    if (low.includes('generativelanguage.googleapis.com')) return 'Gemini';
+    if (low.includes('openrouter.ai')) return 'OpenRouter';
+    if (low.includes('api.groq.com')) return 'Groq';
+    if (low.includes('api.deepseek.com')) return 'DeepSeek';
+    try {
+      const norm = normalizeGatewayUrl(u);
+      const host = new URL(norm).hostname.replace(/^(www|api)\./i, '');
+      return host || 'URL';
+    } catch {
+      return u.slice(0, 18);
+    }
+  }
+
+  function getHeaderAIConnectionDisplay() {
+    const detectedMod = formatCompactModelName(connectionHealth.detectedModel);
+
+    if (aiConfig.mode === 'local') {
+      const preset = LOCAL_PRESETS[aiConfig.local.preset];
+      const provShort = preset ? preset.name.replace(' (Local)', '') : 'IA Local';
+      const hasUrl = Boolean(aiConfig.local.url && aiConfig.local.url.trim());
+      const cfgMod = formatCompactModelName(aiConfig.local.model);
+      const effMod = cfgMod || detectedMod;
+      const baseLabel = effMod ? `${provShort} · ${effMod}` : provShort;
+
+      if (!hasUrl) {
+        return {
+          state: 'offline',
+          pillText: `${provShort} · sin URL`,
+          tooltip: 'Falta la URL local — clic para configurar conexión IA',
+          isActive: false
+        };
+      }
+      if (connectionHealth.state === 'error') {
+        return {
+          state: 'error',
+          pillText: `${provShort} · sin conexión`,
+          tooltip: `${connectionHealth.title || 'Sin conexión con IA local'} — clic para revisar ajustes`,
+          isActive: false
+        };
+      }
+      if (connectionHealth.state === 'offline') {
+        return {
+          state: 'offline',
+          pillText: `${baseLabel} · apagado`,
+          tooltip: `No se detectó respuesta en ${aiConfig.local.url} — clic para probar o cambiar IA`,
+          isActive: false
+        };
+      }
+      if (connectionHealth.state === 'ok') {
+        return {
+          state: 'live',
+          pillText: `${baseLabel} activo`,
+          tooltip: `Conectado a ${baseLabel} (${aiConfig.local.url}) — clic para ajustes IA`,
+          isActive: true
+        };
+      }
+      return {
+        state: 'configured',
+        pillText: baseLabel,
+        tooltip: `Configurado en ${baseLabel} — clic para verificar o cambiar IA`,
+        isActive: true
+      };
+    }
+
+    if (aiConfig.mode === 'api') {
+      const provKey = aiConfig.api.provider || 'openai';
+      const prov = CLOUD_PROVIDERS[provKey] || CLOUD_PROVIDERS.openai;
+      const provShort = CLOUD_SHORT_LABELS[provKey] || prov.name;
+      const hasKey = Boolean(aiConfig.api.apiKey && aiConfig.api.apiKey.trim());
+      const effMod = detectedMod || formatCompactModelName(aiConfig.api.model || prov.defaultModel);
+      const baseLabel = effMod ? `${provShort} · ${effMod}` : provShort;
+
+      if (!hasKey) {
+        return {
+          state: 'offline',
+          pillText: `${provShort} · sin clave`,
+          tooltip: `Falta API Key de ${prov.name} — clic para conectarla`,
+          isActive: false
+        };
+      }
+      if (connectionHealth.state === 'error') {
+        return {
+          state: 'error',
+          pillText: `${provShort} · error`,
+          tooltip: `${connectionHealth.title || 'Error de conexión con ' + prov.name} — clic para revisar`,
+          isActive: false
+        };
+      }
+      return {
+        state: connectionHealth.state === 'ok' ? 'live' : 'configured',
+        pillText: `${baseLabel} activo`,
+        tooltip: `Conectado a ${prov.name} (${aiConfig.api.model || prov.defaultModel}) — clic para ajustes IA`,
+        isActive: true
+      };
+    }
+
+    if (aiConfig.mode === 'url') {
+      const rawEndpoint = (aiConfig.url.endpoint || '').trim();
+      const hasUrl = Boolean(rawEndpoint);
+      const gwLabel = detectKnownGatewayLabel(rawEndpoint);
+      const effMod = detectedMod || formatCompactModelName(aiConfig.url.model);
+      const baseLabel = effMod ? `${gwLabel} · ${effMod}` : gwLabel;
+
+      if (!hasUrl) {
+        return {
+          state: 'offline',
+          pillText: 'URL · sin configurar',
+          tooltip: 'Endpoint URL sin configurar — clic para conectar tu IA',
+          isActive: false
+        };
+      }
+      if (connectionHealth.state === 'error') {
+        return {
+          state: 'error',
+          pillText: `${gwLabel} · sin conexión`,
+          tooltip: `${connectionHealth.title || 'Error en endpoint IA'} — clic para revisar ajustes`,
+          isActive: false
+        };
+      }
+      if (connectionHealth.state === 'offline') {
+        return {
+          state: 'offline',
+          pillText: `${baseLabel} · apagado`,
+          tooltip: `Servidor ${rawEndpoint} sin respuesta — clic para probar o cambiar IA`,
+          isActive: false
+        };
+      }
+      return {
+        state: connectionHealth.state === 'ok' ? 'live' : 'configured',
+        pillText: `${baseLabel} activo`,
+        tooltip: `Conectado a ${baseLabel} (${rawEndpoint}) — clic para ajustes IA`,
+        isActive: true
+      };
+    }
+
+    return {
+      state: 'builtin',
+      pillText: 'IA integrada · local',
+      tooltip: 'Asistente integrado local activo — clic para conectar Claude, OpenAI, Gemini, Ollama u otra IA',
+      isActive: true
+    };
+  }
+
   function getActiveProviderSummary() {
     if (aiConfig.mode === 'local') {
       const preset = LOCAL_PRESETS[aiConfig.local.preset];
       const label = preset ? preset.name.replace(' (Local)', '') : 'IA Local';
-      const mod = aiConfig.local.model ? ` · ${aiConfig.local.model}` : '';
+      const effModel = formatCompactModelName(aiConfig.local.model) || formatCompactModelName(connectionHealth.detectedModel);
+      const mod = effModel ? ` · ${effModel}` : '';
       const hasUrl = Boolean(aiConfig.local.url && aiConfig.local.url.trim());
       return { configured: hasUrl, text: `${label}${mod}` };
     }
@@ -4989,16 +5179,12 @@
     if (aiConfig.mode === 'url') {
       const rawEndpoint = (aiConfig.url.endpoint || '').trim();
       const hasUrl = Boolean(rawEndpoint);
-      let host = 'URL personalizada';
-      if (hasUrl) {
-        try {
-          const norm = normalizeGatewayUrl(rawEndpoint);
-          host = new URL(norm).host || host;
-        } catch {
-          host = rawEndpoint.slice(0, 24);
-        }
-      }
-      return { configured: hasUrl, text: hasUrl ? `URL · ${host}` : 'URL (sin configurar)' };
+      const gwLabel = detectKnownGatewayLabel(rawEndpoint);
+      const effModel = formatCompactModelName(connectionHealth.detectedModel || aiConfig.url.model);
+      return {
+        configured: hasUrl,
+        text: hasUrl ? (effModel ? `${gwLabel} · ${effModel}` : `URL · ${gwLabel}`) : 'URL (sin configurar)'
+      };
     }
     return { configured: false, text: 'Asistente integrado' };
   }
@@ -5006,7 +5192,59 @@
   let sessionsDrawerHideTimer = null;
   let activeDrawerView = 'chats'; // 'chats' | 'settings'
 
+  function syncHeaderAIStatusPill() {
+    const hdr = getHeaderAIConnectionDisplay();
+    const topPill = document.getElementById('btnHeaderAiStatus');
+    const topText = document.getElementById('headerAiStatusText');
+    if (topPill) {
+      topPill.dataset.aiState = hdr.state;
+      topPill.title = hdr.tooltip;
+    }
+    if (topText) {
+      topText.textContent = hdr.pillText;
+    }
+    if (typeof STATE !== 'undefined') {
+      STATE.bridgeActive = hdr.isActive;
+    }
+  }
+
+  async function probeActiveAIConnectionSilently() {
+    let probeUrl = '';
+    let probeKey = '';
+    if (aiConfig.mode === 'local' && aiConfig.local?.url?.trim()) {
+      probeUrl = aiConfig.local.url.trim();
+      probeKey = aiConfig.local.apiKey || '';
+    } else if (
+      aiConfig.mode === 'url' &&
+      aiConfig.url?.endpoint?.trim() &&
+      /localhost|127\.0\.0\.1/i.test(aiConfig.url.endpoint)
+    ) {
+      probeUrl = aiConfig.url.endpoint.trim();
+      probeKey = aiConfig.url.apiKey || '';
+    } else {
+      return;
+    }
+
+    const modeSnap = aiConfig.mode;
+    try {
+      const models = await fetchGatewayModels(probeUrl, probeKey);
+      if (aiConfig.mode !== modeSnap) return;
+      connectionHealth.state = 'ok';
+      if (Array.isArray(models) && models[0] && !connectionHealth.detectedModel) {
+        connectionHealth.detectedModel = models[0];
+      }
+      updateProviderHeaderUI();
+    } catch {
+      if (aiConfig.mode !== modeSnap) return;
+      if (connectionHealth.state === 'idle') {
+        connectionHealth.state = 'offline';
+        updateProviderHeaderUI();
+      }
+    }
+  }
+
   function updateProviderHeaderUI() {
+    syncHeaderAIStatusPill();
     const info = getActiveProviderSummary();
     const lbl = document.getElementById('aiProviderLabel');
     const pill = document.getElementById('btnAiProviderPill');
@@ -6319,7 +6557,8 @@
           state: 'ok',
           title: 'Conectado',
           detail: '',
-          resolvedEndpoint: connectionHealth.resolvedEndpoint
+          resolvedEndpoint: connectionHealth.resolvedEndpoint,
+          detectedModel: connectionHealth.detectedModel
         };
         updateProviderHeaderUI();
       }
@@ -6634,7 +6873,11 @@
     updateAIChatContextUI();
     updateAISessionBarUI();
     renderAIMessages(true);
+    probeActiveAIConnectionSilently();
 
+    document.getElementById('btnHeaderAiStatus')?.addEventListener('click', () => {
+      openAISidebarTab(true);
+    });
     document.getElementById('btnAiConfig')?.addEventListener('click', () => toggleConfigDrawer());
     document.getElementById('btnAiProviderPill')?.addEventListener('click', () => toggleConfigDrawer());
     document.getElementById('btnAiFixConn')?.addEventListener('click', () => toggleConfigDrawer(true));
@@ -6924,10 +7167,14 @@
     updateAIChatContextUI();
     updateAISessionBarUI();
     renderAIMessages(true);
+    probeActiveAIConnectionSilently();
   }
 
   window.initAIAssistant = initAIAssistant;
   window.openAISidebarTab = openAISidebarTab;
+  window.syncHeaderAIStatusPill = syncHeaderAIStatusPill;
+  window.getHeaderAIConnectionDisplay = getHeaderAIConnectionDisplay;
+  window.getActiveAIStatusLabel = () => getHeaderAIConnectionDisplay().pillText;
   window.updateAIChatContextUI = updateAIChatContextUI;
   window.sendAIChatMessage = sendAIChatMessage;
   window.reloadAIAssistantForActiveUser = reloadAIAssistantForActiveUser;
