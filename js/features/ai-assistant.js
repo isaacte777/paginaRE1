@@ -5609,18 +5609,27 @@
       .replace(/\n/g, '<br>');
   }
 
-  const CC_SPINNER_FRAMES = ['·', '✢', '✳', '✶', '✻', '✽', '✻', '✶', '✳', '✢'];
-
   function renderTraceAccordionHtml() {
-    // El estado de análisis estilo Claude Code aparece únicamente en vivo mientras analiza.
+    // El estado de análisis de FlowLab aparece únicamente en vivo mientras procesa.
     return '';
+  }
+
+  function formatFlowLabLiveProseHtml(rawParagraph) {
+    const safe = escapeHTML(rawParagraph || '');
+    return safe
+      .replace(/«([^»]+)»/g, '«<span class="fl-ai-tok">$1</span>»')
+      .replace(
+        /\b(\d+\s+(?:nodos?|conexi(?:ón|ones)|raí(?:z|ces)|terminales?|proyectos?|tipos de nodo|mensajes? previos?|entradas?|salidas?))\b/g,
+        '<span class="fl-ai-tok--num">$1</span>'
+      )
+      .replace(/\bFlowLab\b/g, '<span class="fl-ai-tok--brand">FlowLab</span>')
+      .replace(/(?:https?:\/\/[^\s,)]+|localhost:\d+)/g, '<span class="fl-ai-tok--code">$&</span>');
   }
 
   function computeLiveThinkingSnapshot() {
     if (!liveTraceState) {
       return {
-        glyph: '✻',
-        verb: 'Analizando…',
+        verb: 'analizando flujo',
         elapsedText: '0.0s',
         paragraph: 'Verificando contexto activo de FlowLab…'
       };
@@ -5630,8 +5639,6 @@
     const activeIdx = Math.max(0, liveTraceState.activeStepIndex || 0);
     const clauses = Array.isArray(liveTraceState.clauses) ? liveTraceState.clauses : [];
     const steps = Array.isArray(liveTraceState.steps) ? liveTraceState.steps : [];
-    const tick = Math.floor(elapsedMs / 120) % CC_SPINNER_FRAMES.length;
-    const glyph = CC_SPINNER_FRAMES[tick] || '✻';
 
     let paragraph = '';
     if (clauses.length > 0) {
@@ -5656,10 +5663,9 @@
       paragraph += '…';
     }
 
-    const verb = liveTraceState.isBuildingCanvas ? 'Construyendo en el lienzo…' : 'Analizando…';
+    const verb = liveTraceState.isBuildingCanvas ? 'trazando nodos en vivo' : 'analizando flujo';
 
     return {
-      glyph,
       verb,
       elapsedText: formatDurationShort(elapsedMs),
       paragraph
@@ -5669,16 +5675,25 @@
   function buildLiveTraceCardInnerHtml() {
     const snap = computeLiveThinkingSnapshot();
     return `
-      <div class="ai-cc-thinking" role="status" aria-live="polite">
-        <div class="ai-cc-thinking__head">
-          <span class="ai-cc-thinking__glyph" id="aiLiveTraceGlyph" aria-hidden="true">${snap.glyph}</span>
-          <span class="ai-cc-thinking__verb" id="aiLiveTraceVerb">${escapeHTML(snap.verb)}</span>
-          <span class="ai-cc-thinking__meta">(<span id="aiLiveTraceElapsed">${escapeHTML(snap.elapsedText)}</span>)</span>
+      <div class="fl-ai-live" role="status" aria-live="polite">
+        <div class="fl-ai-live__head">
+          <span class="fl-ai-live__emblem" aria-hidden="true">
+            <svg width="15" height="15" viewBox="0 0 18 18" fill="none">
+              <circle class="fl-ai-live__orbit" cx="9" cy="9" r="6.8" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3.2 2.4"/>
+              <rect class="fl-ai-live__core" x="6.3" y="6.3" width="5.4" height="5.4" rx="1.1" transform="rotate(45 9 9)" fill="currentColor"/>
+            </svg>
+          </span>
+          <span class="fl-ai-live__badge">fl::ia</span>
+          <span class="fl-ai-live__verb" id="aiLiveTraceVerb">${escapeHTML(snap.verb)}</span>
+          <span class="fl-ai-live__sep" aria-hidden="true">·</span>
+          <span class="fl-ai-live__timer" id="aiLiveTraceElapsed">${escapeHTML(snap.elapsedText)}</span>
         </div>
-        <p class="ai-cc-thinking__paragraph">
-          <span class="ai-cc-thinking__branch" aria-hidden="true">⎿</span>
-          <span class="ai-cc-thinking__prose" id="aiLiveTraceProse">${escapeHTML(snap.paragraph)}</span>
-        </p>
+        <div class="fl-ai-live__body">
+          <span class="fl-ai-live__wire" aria-hidden="true"></span>
+          <p class="fl-ai-live__paragraph">
+            <span class="fl-ai-live__prose" id="aiLiveTraceProse">${formatFlowLabLiveProseHtml(snap.paragraph)}</span><i class="fl-ai-live__caret" aria-hidden="true"></i>
+          </p>
+        </div>
       </div>
     `;
   }
@@ -5907,13 +5922,11 @@
       const proseEl = bubble.querySelector('#aiLiveTraceProse');
       const verbEl = bubble.querySelector('#aiLiveTraceVerb');
       const timerEl = bubble.querySelector('#aiLiveTraceElapsed');
-      const glyphEl = bubble.querySelector('#aiLiveTraceGlyph');
-      if (proseEl && verbEl && timerEl && glyphEl) {
+      if (proseEl && verbEl && timerEl) {
         const snap = computeLiveThinkingSnapshot();
-        glyphEl.textContent = snap.glyph;
         verbEl.textContent = snap.verb;
         timerEl.textContent = snap.elapsedText;
-        proseEl.textContent = snap.paragraph;
+        proseEl.innerHTML = formatFlowLabLiveProseHtml(snap.paragraph);
       } else {
         bubble.innerHTML = buildLiveTraceCardInnerHtml();
       }
@@ -6160,11 +6173,6 @@
       const timerEl = document.getElementById('aiLiveTraceElapsed');
       if (timerEl) {
         timerEl.textContent = formatDurationShort(elapsed);
-      }
-      const glyphEl = document.getElementById('aiLiveTraceGlyph');
-      if (glyphEl) {
-        const tick = Math.floor(elapsed / 120) % CC_SPINNER_FRAMES.length;
-        glyphEl.textContent = CC_SPINNER_FRAMES[tick] || '✻';
       }
     }, 100);
 
