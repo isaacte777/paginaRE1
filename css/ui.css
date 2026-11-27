@@ -5679,7 +5679,7 @@ select.fl-select-native {
 }
 
 /* =========================================================================
-   ESTADO DE ANÁLISIS EN VIVO ESTILO CLAUDE CODE (SOLO MIENTRAS ANALIZA)
+   ESTADO DE ANÁLISIS EN VIVO — IDENTIDAD FLOWLAB (NODO + PULSO DE CIRCUITO)
    ========================================================================= */
 
 .ai-bubble.ai-bubble--assistant.ai-bubble--live {
@@ -5690,80 +5690,167 @@ select.fl-select-native {
   border-radius: 0;
 }
 
-.ai-cc-thinking {
+.fl-ai-live {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  animation: flItemIn 0.14s ease;
+  gap: 5px;
+  animation: flItemIn 0.16s ease;
 }
 
-.ai-cc-thinking__head {
+.fl-ai-live__head {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 10.8px;
+  font-size: 10.4px;
   line-height: 1.35;
 }
 
-.ai-cc-thinking__glyph {
-  width: 13px;
+.fl-ai-live__emblem {
+  width: 16px;
+  height: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  color: #e08a63;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
+  color: var(--green-strong);
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.52));
 }
 
-.ai-cc-thinking__verb {
+.fl-ai-live__orbit {
+  transform-origin: 9px 9px;
+  opacity: 0.72;
+  animation: aiSpin360 4.2s linear infinite;
+}
+
+.fl-ai-live__core {
+  transform-origin: 9px 9px;
+  animation: flAiCorePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes flAiCorePulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+.fl-ai-live__badge {
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(134, 239, 172, 0.26);
+  background: rgba(74, 222, 128, 0.09);
+  color: var(--green);
+  font-size: 8.4px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+}
+
+.fl-ai-live__verb {
   font-weight: 600;
   letter-spacing: -0.01em;
-  background: linear-gradient(90deg, #cbd5e1 0%, #f8fafc 42%, #f0ab86 52%, #cbd5e1 100%);
+  background: linear-gradient(90deg, #a7b0b8 0%, #f2f2f2 38%, #86efac 52%, #a7b0b8 100%);
   background-size: 220% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  animation: aiCcShimmer 2.1s linear infinite;
+  animation: flAiMintShimmer 2.2s linear infinite;
 }
 
-@keyframes aiCcShimmer {
+@keyframes flAiMintShimmer {
   0% { background-position: 100% 0; }
   100% { background-position: -120% 0; }
 }
 
-.ai-cc-thinking__meta {
-  font-size: 9.2px;
+.fl-ai-live__sep {
   color: var(--tx3);
+  font-size: 9px;
+}
+
+.fl-ai-live__timer {
+  font-size: 9px;
+  color: rgba(134, 239, 172, 0.78);
   font-variant-numeric: tabular-nums;
 }
 
-.ai-cc-thinking__paragraph {
-  margin: 0;
-  padding-left: 2px;
+.fl-ai-live__body {
   display: flex;
-  align-items: flex-start;
-  gap: 6px;
+  align-items: stretch;
+  gap: 9px;
+  padding-left: 7px;
+}
+
+.fl-ai-live__wire {
+  position: relative;
+  width: 1.5px;
+  flex: 0 0 1.5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(134, 239, 172, 0.42) 0%, rgba(134, 239, 172, 0.08) 100%);
+  overflow: hidden;
+}
+
+.fl-ai-live__wire::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -45%;
+  width: 100%;
+  height: 45%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, transparent 0%, #4ade80 55%, transparent 100%);
+  animation: flAiWireFlow 1.5s ease-in-out infinite;
+}
+
+@keyframes flAiWireFlow {
+  0% { top: -45%; opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { top: 105%; opacity: 0.3; }
+}
+
+.fl-ai-live__paragraph {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 9.4px;
-  line-height: 1.48;
+  line-height: 1.54;
   color: var(--tx2);
 }
 
-.ai-cc-thinking__branch {
-  flex: 0 0 auto;
-  color: var(--tx3);
-  opacity: 0.72;
-  font-size: 10px;
-  line-height: 1.35;
-  user-select: none;
+.fl-ai-live__prose {
+  color: #939a9f;
+  word-break: break-word;
 }
 
-.ai-cc-thinking__prose {
-  flex: 1 1 auto;
-  min-width: 0;
-  color: rgba(148, 163, 184, 0.9);
-  word-break: break-word;
+.fl-ai-tok--brand {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.fl-ai-tok {
+  color: var(--tx0);
+  font-weight: 500;
+}
+
+.fl-ai-tok--num {
+  color: #c9ccd0;
+}
+
+.fl-ai-tok--code {
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(134, 239, 172, 0.16);
+  color: var(--green);
+  font-size: 8.8px;
+}
+
+.fl-ai-live__caret {
+  display: inline-block;
+  width: 5px;
+  height: 10px;
+  margin-left: 4px;
+  vertical-align: -1px;
+  border-radius: 1px;
+  background: rgba(74, 222, 128, 0.72);
+  animation: blink 0.95s steps(1) infinite;
 }
 
 @keyframes aiSpin360 {
