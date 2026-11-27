@@ -49,13 +49,17 @@ function initApp() {
   initMobileUI();
   initLiveSync();
 
-  // Simular bridge activo
-  STATE.bridgeActive = true;
-  updateBridgeIndicator();
+  // Sincronizar indicador real de IA conectada en el encabezado superior
+  if (typeof window.syncHeaderAIStatusPill === 'function') {
+    window.syncHeaderAIStatusPill();
+  }
 
   // Log de inicio
   log('ok', 'FlowLab v3 - paginaRE iniciado');
-  log('sync', 'Claude Code ↔ Qwen Coder');
+  log(
+    'sync',
+    `IA activa: ${typeof window.getActiveAIStatusLabel === 'function' ? window.getActiveAIStatusLabel() : 'IA integrada · local'}`
+  );
   log('agent', 'orquestador de agentes IA activo');
 
   if (typeof initPowerShellTerminal === 'function') {
@@ -1114,12 +1118,10 @@ function drawMinimap() {
   });
 }
 
-// Función auxiliar para actualizar indicador de bridge
+// Función auxiliar para actualizar indicador superior de IA conectada
 function updateBridgeIndicator() {
-  const dot = document.getElementById('bridgeDot');
-  if (dot) {
-    dot.style.color = STATE.bridgeActive ? '#4ade80' : '#ef4444';
-    dot.textContent = STATE.bridgeActive ? '●' : '○';
+  if (typeof window.syncHeaderAIStatusPill === 'function') {
+    window.syncHeaderAIStatusPill();
   }
 }
 
