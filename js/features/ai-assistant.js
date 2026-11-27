@@ -732,7 +732,7 @@
     }
   }
 
-  function buildAnalysisTelemetry(rawPrompt, domainCheck) {
+  function buildAnalysisTelemetry(rawPrompt, domainCheck, attachments = []) {
     const activeUser =
       typeof getActiveUser === 'function'
         ? getActiveUser()
@@ -740,6 +740,9 @@
     const prov = getActiveProviderSummary();
     const activeSession = getActiveAISession();
     const priorTurns = Math.max(0, (messages || []).length - 1);
+    const attNames = Array.isArray(attachments)
+      ? attachments.map(a => a && a.name).filter(Boolean)
+      : [];
 
     if (!domainCheck.allowed) {
       return {
@@ -767,12 +770,17 @@
             detail: `${domainCheck.reason}. Se omite respuesta fuera de propósito.`,
             ms: 54
           }
+        ],
+        clauses: [
+          'Inspeccionando el alcance semántico de la consulta',
+          ` y verificando el ámbito exclusivo de FlowLab (${domainCheck.reason}) mediante ${prov.text}`
         ]
       };
     }
 
     const sources = [];
     const steps = [];
+    const clauses = [];
 
     steps.push({
       title: 'Validación de dominio FlowLab',
@@ -785,6 +793,12 @@
       label: 'dominio:: verificado FlowLab',
       detail: 'Consulta autorizada dentro del ámbito de la plataforma'
     });
+
+    clauses.push(
+      attNames.length > 0
+        ? `Verificando dominio FlowLab y leyendo ${attNames.map(n => `«${n}»`).join(', ')}`
+        : 'Verificando dominio FlowLab'
+    );
 
     if (aiConfig.includeContext) {
       const ctx = buildWorkspaceContext();
@@ -805,6 +819,10 @@
         ms: 92
       });
 
+      clauses.push(
+        ` sobre el lienzo «${ctx.projectTitle}» (${ctx.summary.totalNodes} ${ctx.summary.totalNodes === 1 ? 'nodo' : 'nodos'} y ${ctx.summary.totalEdges} ${ctx.summary.totalEdges === 1 ? 'conexión' : 'conexiones'})`
+      );
+
       if (ctx.selected) {
         if (ctx.selected.kind === 'node') {
           const shortTxt = String(ctx.selected.text || '').split('\n')[0].slice(0, 28);
@@ -818,6 +836,9 @@
             detail: `Nodo "${shortTxt}" (${ctx.selected.type}, id ${ctx.selected.id}) con ${ctx.selected.incoming.length} conexiones entrantes y ${ctx.selected.outgoing.length} salientes.`,
             ms: 68
           });
+          clauses.push(
+            `, inspeccionando el nodo «${shortTxt}» (${ctx.selected.type}, ${ctx.selected.incoming.length} entradas y ${ctx.selected.outgoing.length} salidas)`
+          );
         } else {
           sources.push({
             kind: 'target',
@@ -829,6 +850,9 @@
             detail: `Conexión activa desde ${ctx.selected.from} hacia ${ctx.selected.to}${ctx.selected.label ? ` ("${ctx.selected.label}")` : ''}.`,
             ms: 56
           });
+          clauses.push(
+            `, inspeccionando la conexión seleccionada (${ctx.selected.from} → ${ctx.selected.to})`
+          );
         }
       } else {
         const incomingSet = new Set((STATE.edges || []).map(e => e.to));
@@ -840,6 +864,9 @@
           detail: `Recorrido global sin selección fija: ${roots} nodo(s) raíz y ${leaves} nodo(s) terminales evaluados.`,
           ms: 74
         });
+        clauses.push(
+          `, evaluando la topología (${roots} ${roots === 1 ? 'raíz' : 'raíces'} y ${leaves} ${leaves === 1 ? 'terminal' : 'terminales'})`
+        );
       }
     } else {
       sources.push({
@@ -852,6 +879,7 @@
         detail: 'El usuario desactivó temporalmente el envío del archivo actual; se usa solo el esquema de FlowLab.',
         ms: 28
       });
+      clauses.push(' con lectura del lienzo desactivada manualmente');
     }
 
     const savedProjects = countSavedProjectsSafe();
@@ -875,14 +903,18 @@
       ms: 64
     });
 
-    let engineDetail = 'Motor estructurado local sin latencia externa';
+    clauses.push(
+      `, consultando el espacio ${activeUser.name} (${savedProjects} ${savedProjects === 1 ? 'proyecto' : 'proyectos'}, ${nodeTypesCount} tipos de nodo y ${priorTurns} ${priorTurns === 1 ? 'mensaje previo' : 'mensajes previos'})`
+    );
+
+    let engineDetail = 'motor estructurado local';
     if (aiConfig.mode === 'local') {
-      engineDetail = `Endpoint local ${aiConfig.local.url || 'localhost'}`;
+      engineDetail = `endpoint local ${aiConfig.local.url || 'localhost'}`;
     } else if (aiConfig.mode === 'api') {
       const p = CLOUD_PROVIDERS[aiConfig.api.provider];
-      engineDetail = `${p ? p.name : aiConfig.api.provider} · modelo ${aiConfig.api.model}`;
+      engineDetail = `${p ? p.name : aiConfig.api.provider} · ${aiConfig.api.model}`;
     } else if (aiConfig.mode === 'url') {
-      engineDetail = `Gateway ${aiConfig.url.endpoint || 'URL personalizada'}`;
+      engineDetail = `gateway ${aiConfig.url.endpoint || 'URL personalizada'}`;
     }
 
     sources.push({
@@ -897,10 +929,15 @@
       ms: 110
     });
 
+    clauses.push(
+      ` y sintetizando respuesta con ${prov.text} (${engineDetail}${aiConfig.autoApply ? ', auto-aplicación activa' : ''})`
+    );
+
     return {
       domainStatus: 'flowlab',
       sources,
-      steps
+      steps,
+      clauses
     };
   }
 
@@ -5572,139 +5609,76 @@
       .replace(/\n/g, '<br>');
   }
 
-  function renderTraceAccordionHtml(trace, msgIdx, isExpanded) {
-    if (!trace || (!Array.isArray(trace.sources) && !Array.isArray(trace.steps))) {
-      return '';
-    }
-    const sources = Array.isArray(trace.sources) ? trace.sources : [];
-    const steps = Array.isArray(trace.steps) ? trace.steps : [];
-    const isBlocked = trace.domainStatus === 'blocked_offtopic';
-    const headIcon = isBlocked ? AI_SVG.shield : AI_SVG.spark;
-    const summaryLabel = isBlocked
-      ? `Ámbito FlowLab verificado · consulta filtrada (${formatDurationShort(trace.durationMs)})`
-      : `Analizado · ${sources.length} fuente${sources.length === 1 ? '' : 's'} · ${formatDurationShort(trace.durationMs)}`;
+  const CC_SPINNER_FRAMES = ['·', '✢', '✳', '✶', '✻', '✽', '✻', '✶', '✳', '✢'];
 
-    const sourcesHtml = sources.length
-      ? `
-        <div class="ai-trace-section">
-          <div class="ai-trace-sec-title">:: de dónde obtiene la información</div>
-          <div class="ai-trace-sources">
-            ${sources
-              .map(
-                s => `
-              <div class="ai-source-chip" title="${escapeHTML(s.detail || '')}">
-                <span class="ai-source-chip__icon">${getTraceSourceIcon(s.kind)}</span>
-                <span class="ai-source-chip__label">${escapeHTML(s.label || '')}</span>
-                ${s.detail ? `<span class="ai-source-chip__detail">${escapeHTML(s.detail)}</span>` : ''}
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        </div>
-      `
-      : '';
-
-    const stepsHtml = steps.length
-      ? `
-        <div class="ai-trace-section">
-          <div class="ai-trace-sec-title">:: registros de análisis paso a paso</div>
-          <div class="ai-trace-steps">
-            ${steps
-              .map(
-                st => `
-              <div class="ai-trace-step">
-                <span class="ai-trace-step__icon">${isBlocked ? AI_SVG.shield : AI_SVG.check}</span>
-                <div class="ai-trace-step__body">
-                  <div class="ai-trace-step__head">
-                    <strong>${escapeHTML(st.title || '')}</strong>
-                    ${st.ms ? `<span class="ai-trace-step__ms">${escapeHTML(formatDurationShort(st.ms))}</span>` : ''}
-                  </div>
-                  ${st.detail ? `<div class="ai-trace-step__detail">${escapeHTML(st.detail)}</div>` : ''}
-                </div>
-              </div>
-            `
-              )
-              .join('')}
-          </div>
-        </div>
-      `
-      : '';
-
-    return `
-      <div class="ai-trace-box ${isExpanded ? 'is-open' : ''} ${isBlocked ? 'is-guard' : ''}">
-        <button type="button" class="ai-trace-toggle" data-trace-toggle="${msgIdx}" aria-expanded="${isExpanded ? 'true' : 'false'}">
-          <span class="ai-trace-toggle__left">
-            <span class="ai-trace-toggle__icon">${headIcon}</span>
-            <span class="ai-trace-toggle__text">${escapeHTML(summaryLabel)}</span>
-          </span>
-          <span class="ai-trace-toggle__right">
-            <span>registros</span>
-            <span class="ai-trace-chev">${AI_SVG.chevronDown}</span>
-          </span>
-        </button>
-        <div class="ai-trace-panel" ${isExpanded ? '' : 'hidden'}>
-          ${sourcesHtml}
-          ${stepsHtml}
-        </div>
-      </div>
-    `;
+  function renderTraceAccordionHtml() {
+    // El estado de análisis estilo Claude Code aparece únicamente en vivo mientras analiza.
+    return '';
   }
 
-  function buildLiveTraceCardInnerHtml() {
+  function computeLiveThinkingSnapshot() {
     if (!liveTraceState) {
-      return `
-        <div class="ai-typing">
-          <span class="ai-typing-dots"><i></i><i></i><i></i></span>
-          <span>analizando contexto de FlowLab...</span>
-        </div>
-      `;
+      return {
+        glyph: '✻',
+        verb: 'Analizando…',
+        elapsedText: '0.0s',
+        paragraph: 'Verificando contexto activo de FlowLab…'
+      };
     }
 
     const elapsedMs = Math.max(0, Date.now() - liveTraceState.startedAt);
-    const activeIdx = liveTraceState.activeStepIndex || 0;
-    const steps = liveTraceState.steps || [];
-    const sources = liveTraceState.sources || [];
-    const visibleSources = sources.slice(0, Math.min(sources.length, activeIdx + 2));
+    const activeIdx = Math.max(0, liveTraceState.activeStepIndex || 0);
+    const clauses = Array.isArray(liveTraceState.clauses) ? liveTraceState.clauses : [];
+    const steps = Array.isArray(liveTraceState.steps) ? liveTraceState.steps : [];
+    const tick = Math.floor(elapsedMs / 120) % CC_SPINNER_FRAMES.length;
+    const glyph = CC_SPINNER_FRAMES[tick] || '✻';
 
+    let paragraph = '';
+    if (clauses.length > 0) {
+      paragraph = clauses
+        .slice(0, Math.min(clauses.length, activeIdx + 1))
+        .join('')
+        .replace(/\s+/g, ' ')
+        .trim();
+    } else if (steps.length > 0) {
+      paragraph = steps
+        .slice(0, Math.min(steps.length, activeIdx + 1))
+        .map(st => [st.title, st.detail].filter(Boolean).join(': '))
+        .join('; ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    if (!paragraph) {
+      paragraph = 'Analizando el contexto activo de FlowLab';
+    }
+    if (!/[.…]$/.test(paragraph)) {
+      paragraph += '…';
+    }
+
+    const verb = liveTraceState.isBuildingCanvas ? 'Construyendo en el lienzo…' : 'Analizando…';
+
+    return {
+      glyph,
+      verb,
+      elapsedText: formatDurationShort(elapsedMs),
+      paragraph
+    };
+  }
+
+  function buildLiveTraceCardInnerHtml() {
+    const snap = computeLiveThinkingSnapshot();
     return `
-      <div class="ai-live-trace">
-        <div class="ai-live-trace__head">
-          <span class="ai-live-trace__title">
-            <span class="ai-typing-dots"><i></i><i></i><i></i></span>
-            <span>Analizando registros de FlowLab…</span>
-          </span>
-          <span class="ai-live-trace__timer" id="aiLiveTraceElapsed">${escapeHTML(formatDurationShort(elapsedMs))}</span>
+      <div class="ai-cc-thinking" role="status" aria-live="polite">
+        <div class="ai-cc-thinking__head">
+          <span class="ai-cc-thinking__glyph" id="aiLiveTraceGlyph" aria-hidden="true">${snap.glyph}</span>
+          <span class="ai-cc-thinking__verb" id="aiLiveTraceVerb">${escapeHTML(snap.verb)}</span>
+          <span class="ai-cc-thinking__meta">(<span id="aiLiveTraceElapsed">${escapeHTML(snap.elapsedText)}</span>)</span>
         </div>
-        <div class="ai-live-trace__sources">
-          ${visibleSources
-            .map(
-              s => `
-            <span class="ai-live-source-pill">
-              ${getTraceSourceIcon(s.kind)}
-              <span>${escapeHTML(s.label)}</span>
-            </span>
-          `
-            )
-            .join('')}
-        </div>
-        <div class="ai-live-trace__steps">
-          ${steps
-            .slice(0, activeIdx + 1)
-            .map((st, idx) => {
-              const done = idx < activeIdx;
-              return `
-                <div class="ai-live-step ${done ? 'is-done' : 'is-running'}">
-                  <span class="ai-live-step__mark">${done ? AI_SVG.check : AI_SVG.loader}</span>
-                  <div class="ai-live-step__text">
-                    <strong>${escapeHTML(st.title)}</strong>
-                    <span>${escapeHTML(st.detail)}</span>
-                  </div>
-                </div>
-              `;
-            })
-            .join('')}
-        </div>
+        <p class="ai-cc-thinking__paragraph">
+          <span class="ai-cc-thinking__branch" aria-hidden="true">⎿</span>
+          <span class="ai-cc-thinking__prose" id="aiLiveTraceProse">${escapeHTML(snap.paragraph)}</span>
+        </p>
       </div>
     `;
   }
@@ -5930,7 +5904,19 @@
     if (!wrap) return;
     const bubble = wrap.querySelector('.ai-bubble--live');
     if (bubble) {
-      bubble.innerHTML = buildLiveTraceCardInnerHtml();
+      const proseEl = bubble.querySelector('#aiLiveTraceProse');
+      const verbEl = bubble.querySelector('#aiLiveTraceVerb');
+      const timerEl = bubble.querySelector('#aiLiveTraceElapsed');
+      const glyphEl = bubble.querySelector('#aiLiveTraceGlyph');
+      if (proseEl && verbEl && timerEl && glyphEl) {
+        const snap = computeLiveThinkingSnapshot();
+        glyphEl.textContent = snap.glyph;
+        verbEl.textContent = snap.verb;
+        timerEl.textContent = snap.elapsedText;
+        proseEl.textContent = snap.paragraph;
+      } else {
+        bubble.innerHTML = buildLiveTraceCardInnerHtml();
+      }
     }
     if (container) {
       container.scrollTop = container.scrollHeight;
@@ -6150,14 +6136,16 @@
 
     const startedAt = Date.now();
     const domainCheck = evaluateFlowLabDomainGuard(text, priorSnapshot, attachmentsSnapshot.length > 0);
-    const telemetry = buildAnalysisTelemetry(text, domainCheck);
+    const telemetry = buildAnalysisTelemetry(text, domainCheck, compactAttMeta);
 
     liveTraceState = {
       startedAt,
       activeStepIndex: 0,
+      isBuildingCanvas: false,
       domainStatus: telemetry.domainStatus,
       sources: telemetry.sources,
-      steps: telemetry.steps
+      steps: telemetry.steps,
+      clauses: Array.isArray(telemetry.clauses) ? telemetry.clauses.slice() : []
     };
 
     isGenerating = true;
@@ -6167,9 +6155,16 @@
 
     if (liveTraceTimer) clearInterval(liveTraceTimer);
     liveTraceTimer = setInterval(() => {
+      if (!liveTraceState) return;
+      const elapsed = Math.max(0, Date.now() - liveTraceState.startedAt);
       const timerEl = document.getElementById('aiLiveTraceElapsed');
-      if (timerEl && liveTraceState) {
-        timerEl.textContent = formatDurationShort(Date.now() - liveTraceState.startedAt);
+      if (timerEl) {
+        timerEl.textContent = formatDurationShort(elapsed);
+      }
+      const glyphEl = document.getElementById('aiLiveTraceGlyph');
+      if (glyphEl) {
+        const tick = Math.floor(elapsed / 120) % CC_SPINNER_FRAMES.length;
+        glyphEl.textContent = CC_SPINNER_FRAMES[tick] || '✻';
       }
     }, 100);
 
@@ -6338,6 +6333,10 @@
           detail: 'Preparando boceto jerárquico...',
           ms: 0
         });
+        if (Array.isArray(liveTraceState.clauses)) {
+          liveTraceState.clauses[liveStepIdx] = ' — construyendo en vivo sobre el lienzo (preparando boceto jerárquico)';
+        }
+        liveTraceState.isBuildingCanvas = true;
         liveTraceState.activeStepIndex = liveStepIdx;
         updateLiveThinkingDOM();
 
@@ -6346,7 +6345,11 @@
           signal: currentAbort.signal,
           onProgressStep: ev => {
             if (liveTraceState && liveTraceState.steps[liveStepIdx]) {
+              const stepText = `paso ${ev.index}/${ev.total} · ${ev.label}`;
               liveTraceState.steps[liveStepIdx].detail = `Paso ${ev.index}/${ev.total} · ${ev.label}`;
+              if (Array.isArray(liveTraceState.clauses)) {
+                liveTraceState.clauses[liveStepIdx] = ` — construyendo en vivo sobre el lienzo (${stepText})`;
+              }
               updateLiveThinkingDOM();
             }
           }
